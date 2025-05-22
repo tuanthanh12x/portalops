@@ -1,23 +1,37 @@
-/* src/components/Navbar.css */
 @import url('https://fonts.googleapis.com/css?family=Arvo&display=swap');
 
 .primary-navigation {
   margin: 0 auto;
-  display: block;
-  padding: 20px 0;
-  text-align: center;
+  padding: 20px;
   font-size: 16px;
-  /* background-color: #fff; */
   box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
   font-family: 'Arvo', serif;
+  background: white;
 }
 
-.primary-navigation ul {
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hamburger {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   padding: 0;
   margin: 0;
 }
 
-.primary-navigation ul li {
+.nav-menu li {
   list-style: none;
   border-left: 2px solid #3ca0e7;
   display: inline-block;
@@ -25,27 +39,26 @@
   position: relative;
 }
 
-.primary-navigation li a {
+.nav-menu li a {
   color: black;
   text-decoration: none;
 }
 
-.primary-navigation li a:hover {
+.nav-menu li a:hover {
   color: #3ca0e7;
 }
 
-.primary-navigation ul li ul {
+.nav-menu li ul {
   visibility: hidden;
   opacity: 0;
   position: absolute;
-  padding-left: 0;
   left: 0;
-  display: none;
   background: white;
+  display: none;
   z-index: 10;
 }
 
-.primary-navigation ul li:hover > ul {
+.nav-menu li:hover > ul {
   visibility: visible;
   opacity: 1;
   display: block;
@@ -55,12 +68,12 @@
   box-shadow: 0px 3px 5px -1px #ccc;
 }
 
-.primary-navigation ul li ul li {
+.nav-menu li ul li {
   display: block;
   padding: 10px 20px;
 }
 
-.primary-navigation ul li ul li a:hover {
+.nav-menu li ul li a:hover {
   padding-left: 10px;
   border-left: 2px solid #3ca0e7;
   transition: all 0.3s ease;
@@ -73,4 +86,41 @@
   color: #3ca0e7;
   cursor: pointer;
   font-weight: bold;
+}
+
+/* ========== Mobile Styles ========== */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .nav-menu {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .nav-menu.open {
+    display: flex;
+  }
+
+  .nav-menu li {
+    display: block;
+    border-left: none;
+    padding: 10px 0;
+  }
+
+  .nav-menu li ul {
+    position: relative;
+    display: none;
+    visibility: visible;
+    opacity: 1;
+    box-shadow: none;
+  }
+
+  .nav-menu li:hover ul {
+    display: block;
+  }
 }
