@@ -14,9 +14,9 @@ RUN npm run build
 # 2. Serve phase
 FROM nginx:alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-# hoặc nếu dùng CRA:
-# COPY --from=builder /app/build /usr/share/nginx/html
+# Dùng thư mục /build nếu dùng Create React App
+COPY --from=builder /app/build /usr/share/nginx/html
 
+# Expose port và chạy nginx
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
