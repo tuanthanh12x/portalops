@@ -94,3 +94,50 @@ class MyInstancesView(APIView):
             result.append(instance)
 
         return Response(result)
+
+class LimitSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        redis_key = f"keystone_token:{username}"
+        token = redis_client.get(redis_key)
+
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+
+        token = token.decode()
+        project_id = request.auth.get("project_id")
+
+        nova_url = "http://172.93.187.251/compute/v2.1"
+        nova_headers = {"X-Auth-Token": token}
+        try:
+            nova_response = requests.get(f"{nova_url}/limits", headers=nova_headers)
+            nova_response.raise_for_status()
+            absolute = nova_response.json().get("limits", {}).get("absolute", {})
+        except requests.RequestException as e:
+            return Response({"error": "Failed to fetch compute limits", "details": str(e)}, status=500)
+
+        cpu_used = absolute.get("totalCoresUsed", 0)
+        cpu_limit = absolute.get("maxTotalCores", 0)
+        ram_used = absolute.get("totalRAMUsed", 0)
+        ram_limit = absolute.get("maxTotalRAMSize", 0)
+
+        # 2. Cinder: Lấy Storage
+        cinder_url = f"http://172.93.187.251/volume/v3/{project_id}/os-quota-sets/{project_id}?usage=True"
+        cinder_headers = {"X-Auth-Token": token}
+        try:
+            cinder_response = requests.get(cinder_url, headers=cinder_headers)
+            cinder_response.raise_for_status()
+            quota = cinder_response.json().get("quota_set", {})
+        except requests.RequestException as e:
+            return Response({"error": "Failed to fetch storage quota", "details": str(e)}, status=500)
+
+        storage_used = quota.get("gigabytes", {}).get("in_use", 0)
+        storage_limit = quota.get("gigabytes", {}).get("limit", 0)
+
+        return Response({
+            "cpu": {"used": cpu_used, "limit": cpu_limit},
+            "ram": {"used": ram_used, "limit": ram_limit},       # MB
+            "storage": {"used": storage_used, "limit": storage_limit}  # GB
+        })
