@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
     container_name: portalops-frontend
     ports:
-      - "80:80"  # 👈 exposes on your VPS public IP at port 80
+      - "80:80"
     depends_on:
       - backend
 
