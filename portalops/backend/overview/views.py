@@ -54,7 +54,7 @@ class MyInstancesView(APIView):
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
-        project_id = request.auth.get('project_id')  # nếu bạn gắn vào JWT
+        project_id = request.auth.get('project_id')
 
         nova_url = "http://172.93.187.251/compute/v2.1"
         headers = {"X-Auth-Token": token.decode()}
@@ -71,7 +71,6 @@ class MyInstancesView(APIView):
         result = []
 
         for s in servers:
-            # Lấy địa chỉ IP đầu tiên nếu có
             ip = ""
             for net in s.get("addresses", {}).values():
                 if isinstance(net, list) and net:
