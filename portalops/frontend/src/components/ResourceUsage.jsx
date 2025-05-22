@@ -23,7 +23,11 @@ export default function ResourceUsage() {
     fetchUsage();
   }, []);
 
-  const calcPercent = (used, limit) => Math.min(100, Math.round((used / limit) * 100));
+  const calcPercent = (used, limit) => {
+    if (!limit || limit === 0) return 0;
+    const percent = (used / limit) * 100;
+    return used > 0 ? Math.max(1, Math.round(percent)) : 0;
+  };
 
   const cpuUsage = calcPercent(usage.cpu.used, usage.cpu.limit);
   const ramUsage = calcPercent(usage.ram.used, usage.ram.limit);
