@@ -78,9 +78,22 @@ class MyInstancesView(APIView):
                     ip = net[0].get("addr", "")
                     break
 
-            # Mô tả plan nếu có flavor
-            flavor = s.get("flavor", {})
-            plan = flavor.get("original_name", "Unknown")
+            flavor_id = s.get("flavor", {}).get("id")
+            plan = "Unknown"
+
+            if flavor_id:
+                flavor_url = f"{nova_url}/flavors/{flavor_id}"
+                try:
+                    flavor_res = requests.get(flavor_url, headers=headers)
+                    flavor_res.raise_for_status()
+                    flavor_info = flavor_res.json().get("flavor", {})
+                    vcpus = flavor_info.get("vcpus")
+                    ram = flavor_info.get("ram")  # MB
+                    disk = flavor_info.get("disk")  # GB
+                    name = flavor_info.get("name", "Unnamed Plan")
+                    plan = f"{name} ({vcpus} vCPU / {ram}MB / {disk}GB)"
+                except Exception:
+                    plan = "Unknown"
 
             instance = {
                 "id": s.get("id"),

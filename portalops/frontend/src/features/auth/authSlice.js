@@ -22,10 +22,10 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.roles = action.payload.roles;
 
-      // Lưu token và roles vào localStorage
+
       localStorage.setItem('accessToken', action.payload.accessToken);
       localStorage.setItem('roles', JSON.stringify(action.payload.roles));
-      // Nếu có user info, bạn cũng có thể lưu:
+
       if(action.payload.user) {
         localStorage.setItem('user', JSON.stringify(action.payload.user));
       }
@@ -39,7 +39,7 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.roles = [];
 
-      // Xóa dữ liệu khỏi localStorage khi logout
+
       localStorage.removeItem('accessToken');
       localStorage.removeItem('roles');
       localStorage.removeItem('user');
