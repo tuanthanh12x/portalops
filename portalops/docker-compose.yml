@@ -4,6 +4,7 @@ services:
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: portalops-backend
     ports:
       - "8000:8000"
@@ -29,6 +30,7 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: portalops-frontend
     ports:
       - "3000:3000"
