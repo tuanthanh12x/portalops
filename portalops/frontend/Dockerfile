@@ -17,6 +17,6 @@ FROM nginx:alpine
 # Dùng thư mục /build nếu dùng Create React App
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Expose port và chạy nginx
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
