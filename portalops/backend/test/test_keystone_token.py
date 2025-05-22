@@ -15,11 +15,6 @@ payload = {
                     "password": "GreenOps0192"
                 }
             }
-        },
-        "scope": {
-            "project": {
-                "id": "3f4c60e0ee614e128a38a644ef5c4101",
-            }
         }
     }
 }

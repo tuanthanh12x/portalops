@@ -6,8 +6,10 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
+  
   (config) => {
-    // Thêm token JWT nếu có
+    console.log("✅ BASE_URL = ", process.env.REACT_APP_API_BASE_URL)
+
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

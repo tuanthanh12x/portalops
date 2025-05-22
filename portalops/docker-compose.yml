@@ -30,6 +30,7 @@ services:
   frontend:
     build:
       context: ./frontend
+
       dockerfile: Dockerfile
     container_name: portalops-frontend
     ports:

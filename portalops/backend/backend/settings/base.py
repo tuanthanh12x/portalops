@@ -169,6 +169,6 @@ OPENSTACK_AUTH_URL = OPENSTACK_AUTH.get("auth_url", "").rstrip("/")
 USER_DOMAIN_NAME = OPENSTACK_AUTH.get("user_domain_name", "Default")
 PROJECT_DOMAIN_NAME = OPENSTACK_AUTH.get("project_domain_name", "Default")
 
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 REDIS_DB = int(os.getenv("REDIS_DB", 0))
