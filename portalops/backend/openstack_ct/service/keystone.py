@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from utils.redis_client import redis_client  # điều chỉnh import nếu khác
+from utils.redis_client import redis_client
 
 def login_with_keystone(username: str, password: str, project_name: str) -> dict:
     if not all([username, password, project_name]):

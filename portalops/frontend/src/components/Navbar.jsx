@@ -23,7 +23,7 @@ const Navbar = () => {
       </div>
 
       <ul className={menuOpen ? 'nav-menu open' : 'nav-menu'}>
-        <li><a href="/">Dashboard</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
         <li>
           <a href="#">Compute ▾</a>
           <ul>
