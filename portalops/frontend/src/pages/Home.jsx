@@ -25,7 +25,7 @@ export default function Home() {
             <Navbar credits={150} />
 
             {/* Main Content Container */}
-            <div className="container mx-auto px-4 mt-20 md:mt-24"> {/* Tăng margin-top để tránh Navbar */}
+            <div className="container mx-auto px-4 mt-10 md:mt-10"> {/* Tăng margin-top để tránh Navbar */}
                 {/* Header Section */}
                 <div className="hidden md:block">
                     <div className="flex justify-between items-center gap-3 mb-6">
