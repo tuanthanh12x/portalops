@@ -101,7 +101,7 @@ class MyInstancesView(APIView):
                 "ip": ip,
                 "plan": plan,
                 "region": s.get("OS-EXT-AZ:availability_zone", ""),
-                "created": s.get("created", "")[:10]  # YYYY-MM-DD
+                "created": s.get("created", "")[:10]
             }
             result.append(instance)
 
@@ -135,7 +135,7 @@ class LimitSummaryView(APIView):
         ram_used = absolute.get("totalRAMUsed", 0)
         ram_limit = absolute.get("maxTotalRAMSize", 0)
 
-        # 2. Cinder: Lấy Storage
+
         cinder_url = f"http://172.93.187.251/volume/v3/{project_id}/os-quota-sets/{project_id}?usage=True"
         cinder_headers = {"X-Auth-Token": token}
         try:
@@ -150,6 +150,6 @@ class LimitSummaryView(APIView):
 
         return Response({
             "cpu": {"used": cpu_used, "limit": cpu_limit},
-            "ram": {"used": ram_used, "limit": ram_limit},       # MB
-            "storage": {"used": storage_used, "limit": storage_limit}  # GB
+            "ram": {"used": ram_used, "limit": ram_limit},
+            "storage": {"used": storage_used, "limit": storage_limit}
         })
