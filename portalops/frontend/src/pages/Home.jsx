@@ -1,15 +1,11 @@
 import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar'; // Đảm bảo đường dẫn này đúng
 import './Home.css'; // Giữ lại nếu bạn có CSS tùy chỉnh không phải Tailwind
-
+import { useLogout } from '../features/auth/Logout';
 export default function Home() {
-    // Xử lý logic bật/tắt chế độ sáng/tối
-    // Trong React, bạn thường sẽ quản lý trạng thái này bằng state và context
-    // hoặc một thư viện quản lý theme. Đoạn script ban đầu chỉ là một ví dụ.
+  const logout = useLogout();
     useEffect(() => {
-        // Đây là nơi bạn sẽ thêm logic để toggle theme khi component mount
-        // hoặc từ một component/context quản lý theme.
-        // Ví dụ: lightDarkToggle('load');
+
     }, []);
 
     return (
@@ -32,7 +28,7 @@ export default function Home() {
             <div className="container mx-auto px-4 mt-20 md:mt-24"> {/* Tăng margin-top để tránh Navbar */}
                 {/* Header Section */}
                 <div className="hidden md:block">
-                    <div className="flex justify-between items-center gap-3">
+                    <div className="flex justify-between items-center gap-3 mb-6">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-300">Greetings, <span className="text-gray-400">Tuan Thanh</span></h1>
                             <p className="text-gray-300">Dashboard</p>
@@ -50,7 +46,12 @@ export default function Home() {
                                     <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3V2zm1 13h8V2H4v13z"></path>
                                     <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"></path>
                                 </svg>
-                                <span className="hidden md:block whitespace-nowrap text-gray-200">Logout</span>
+                                <button
+  className="hidden md:inline-block whitespace-nowrap px-3 py-1 text-sm text-white  rounded-md transition"
+     onClick={logout}
+>
+  Logout
+</button>
                             </div>
                         </div>
                     </div>
@@ -99,58 +100,52 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="col-span-1">
-                        <div className="shadow-sm bg-white dark:bg-gray-800 rounded-lg h-full relative">
-                            {/* Biểu đồ traffic: Placeholder */}
-                            <div id="daily-traffic-chart" className="w-full absolute top-0 bottom-0 overflow-hidden rounded-b-lg flex items-center justify-center bg-gray-100 dark:bg-gray-900 opacity-10">
-                                <p className="text-gray-400">Traffic Chart Placeholder</p>
-                            </div>
-                            <div className="p-4 xl:p-6 flex flex-col h-full relative z-10">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Traffic Consumption</h4>
-                                </div>
-                                <table className="w-full text-sm text-gray-700 dark:text-gray-300"> {/* mini-table */}
-                                    <thead>
-                                        <tr>
-                                            <td className="w-min pr-0"></td>
-                                            <td className="text-right">In</td>
-                                            <td className="text-right">Out</td>
-                                            <td className="text-right">Total</td>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td className="text-right pr-0 cursor-pointer">
-                                                <span title="Traffic used so far this week. All times based on UTC 0">Wk</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">9.1 GB</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">117.4 MB</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">9.2 GB</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="text-right pr-0 cursor-pointer">
-                                                <span title="Traffic used so far this month. All times based on UTC 0">Mo</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">9.1 GB</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">117.4 MB</span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">9.2 GB</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+  <div className="shadow-sm bg-white dark:bg-gray-800 rounded-lg h-full relative">
+
+
+    <div className="p-4 xl:p-6 flex flex-col h-full relative z-10">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">My Credits</h4>
+        <button className="text-xs text-blue-600 dark:text-blue-300 hover:underline">Top up</button>
+      </div>
+
+      <div className="mb-4 text-sm">
+        <p className="text-gray-700 dark:text-gray-300">
+          💰 <strong>Remaining:</strong> <span className="text-green-600 dark:text-green-400">55 Credits</span>
+        </p>
+        <p className="text-gray-500 dark:text-gray-400">
+          You can use credits to launch instances, buy storage, and more.
+        </p>
+      </div>
+
+      <table className="w-full text-sm text-gray-700 dark:text-gray-300">
+        <thead>
+          <tr>
+            <td className="text-left">Period</td>
+            <td className="text-right">Used</td>
+            <td className="text-right">Remaining</td>
+            <td className="text-right">Total</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Week</td>
+            <td className="text-right text-yellow-600 dark:text-yellow-400">12</td>
+            <td className="text-right text-green-600 dark:text-green-400">88</td>
+            <td className="text-right text-blue-600 dark:text-blue-400">100</td>
+          </tr>
+          <tr>
+            <td>Month</td>
+            <td className="text-right text-yellow-600 dark:text-yellow-400">45</td>
+            <td className="text-right text-green-600 dark:text-green-400">55</td>
+            <td className="text-right text-blue-600 dark:text-blue-400">100</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
                 </div>
             </div>
 
