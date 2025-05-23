@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import Navbar from '../../components/Navbar';
 const CreateInstancePage = () => {
 
   const [region, setRegion] = useState('region-3');
