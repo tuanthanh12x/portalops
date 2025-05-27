@@ -15,6 +15,11 @@ payload = {
                     "password": "GreenOps0192"
                 }
             }
+        },
+        "scope": {
+            "project": {
+                "id": "96dd9d0b7c114350959d57631c4097db"
+            }
         }
     }
 }
@@ -26,7 +31,6 @@ print("Response Headers:")
 print(response.headers)
 print("Response Body:")
 print(response.text)
-
 
 token = response.headers.get("X-Subject-Token")
 if token:

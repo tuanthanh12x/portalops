@@ -8,10 +8,10 @@ const Navbar = () => {
   const [computeDropdownOpen, setComputeDropdownOpen] = useState(false); // State cho dropdown Compute
 
   return (
-    <nav className="relative z-50 w-full bg-gray-900 text-white shadow-md fixtop">
+    <nav className="sticky top-0 z-50 w-full bg-gray-900 text-white shadow-md">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Brand/Logo - có thể thêm logo hoặc tên ở đây */}
-        <a className="text-xl font-semibold tracking-wide" href="/dashboard">GreenCloud</a>
+        <a className="text-xl font-semibold tracking-wide" href="/">GreenCloud</a>
 
         {/* Hamburger Button for Mobile */}
         <button

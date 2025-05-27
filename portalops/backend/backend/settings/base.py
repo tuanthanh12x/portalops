@@ -87,6 +87,12 @@ DATABASES = {
     }
 }
 
+
+
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_DB = int(os.getenv("REDIS_DB", 0))
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -158,6 +164,16 @@ except FileNotFoundError:
     raise FileNotFoundError(f"OpenStack config file not found at {OPENSTACK_CONFIG_PATH}")
 except yaml.YAMLError as e:
     raise RuntimeError(f"Error parsing OpenStack config: {str(e)}")
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",  # dùng db=1 cho cache
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Có thể thêm password nếu Redis có auth
+        }
+    }
+}
 
 
 OPENSTACK_AUTH = OPENSTACK_CONFIG.get("auth", {})
@@ -168,6 +184,3 @@ OPENSTACK_AUTH_URL = OPENSTACK_AUTH.get("auth_url", "").rstrip("/")
 USER_DOMAIN_NAME = OPENSTACK_AUTH.get("user_domain_name", "Default")
 PROJECT_DOMAIN_NAME = OPENSTACK_AUTH.get("project_domain_name", "Default")
 
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB", 0))

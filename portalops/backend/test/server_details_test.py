@@ -12,7 +12,6 @@ headers = {
 
 response = requests.get(nova_url, headers=headers)
 
-# Kiểm tra và hiển thị kết quả
 if response.status_code == 200:
     data = response.json()
     for server in data.get("servers", []):

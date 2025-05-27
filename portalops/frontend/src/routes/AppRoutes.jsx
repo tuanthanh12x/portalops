@@ -3,26 +3,23 @@ import LoginPage from "../pages/LoginPage";
 import Dashboard from "../pages/Dashboard";
 import Home from "../pages/Home";
 import CreateInstancePage from "../pages/client/CreateInstance";
-import PrivateRoute from "../components/PrivateRoute";
-import { useSelector } from 'react-redux';
-function AppRoutes() {
-  const accessToken = useSelector(state => state.auth.accessToken);
+import RequireAuth from "../components/RequireAuth";
 
+function AppRoutes() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/create-instance" element={<CreateInstancePage />} />
-        <Route path="/login" element={accessToken ? <Navigate to="/dashboard" /> : <LoginPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        {/* Thêm các route cần bảo vệ tương tự */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Các route bên dưới đều phải đăng nhập mới xem được */}
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/create-instance" element={<CreateInstancePage />} />
+          {/* Add thêm các route private khác ở đây */}
+        </Route>
+
+        {/* Nếu truy cập route không hợp lệ, có thể redirect về login hoặc 404 */}
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
   );

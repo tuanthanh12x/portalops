@@ -10,6 +10,31 @@ function LoginPage() {
   const [selectedProject, setSelectedProject] = useState('')
   const [error, setError] = useState('')
 
+  // Hàm lưu token với thời gian hết hạn 1h (3600000 ms)
+  const setTokenWithExpiry = (key, token, ttl = 3600000) => {
+    const now = new Date()
+    const item = {
+      token: token,
+      expiry: now.getTime() + ttl,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  }
+
+  // Hàm lấy token, nếu hết hạn thì xóa và trả về null
+  const getTokenWithExpiry = (key) => {
+    const itemStr = localStorage.getItem(key)
+    if (!itemStr) return null
+
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return null
+    }
+    return item.token
+  }
+
   const handleGetProjects = async (e) => {
     e.preventDefault()
     setError('')
@@ -42,10 +67,11 @@ function LoginPage() {
       })
 
       const { access, refresh } = response.data
-      localStorage.setItem('accessToken', access)
-      localStorage.setItem('refreshToken', refresh)
+      // Lưu token có kèm expiry
+      setTokenWithExpiry('accessToken', access)
+      setTokenWithExpiry('refreshToken', refresh)
 
-      window.location.href = '/dashboard'
+      window.location.href = '/'
     } catch (err) {
       setError('Đăng nhập thất bại. Vui lòng kiểm tra lại.')
     }

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   backend:
     build:
@@ -9,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-       - ./backend:/app
+      - ./backend:/app
     env_file:
       - .env
     depends_on:
@@ -17,6 +15,43 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      DJANGO_SETTINGS_MODULE: portalops.settings.base
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portalops-celery
+    command: celery -A portalops worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DJANGO_SETTINGS_MODULE: portalops.settings.base
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portalops-celery-beat
+    command: celery -A portalops beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DJANGO_SETTINGS_MODULE: portalops.settings.base
 
   redis:
     image: redis:7.2-alpine
