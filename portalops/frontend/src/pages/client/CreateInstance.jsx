@@ -31,7 +31,7 @@ const CreateInstancePage = () => {
   });
 
   useEffect(() => {
-    axiosInstance.get('/overview/instance-option')
+    axiosInstance.get('/openstack-portal/instance-option')
       .then(res => {
         const data = res.data;
         setInstanceOptions(data);
@@ -75,7 +75,7 @@ const CreateInstancePage = () => {
   console.log("📤 Sending create-instance payload:", payload);
 
   try {
-    const res = await axiosInstance.post('/overview/create-instance/', payload);
+    const res = await axiosInstance.post('/openstack-portal/create-instance/', payload);
     alert('✅ Instance created successfully!');
     console.log(res.data);
   } catch (err) {

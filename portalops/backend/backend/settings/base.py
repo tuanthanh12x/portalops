@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'core',
     'userauth',
     'billing',
-    'openstack_ct',
+    'openstack_portal',
 ]
 
 MIDDLEWARE = [
