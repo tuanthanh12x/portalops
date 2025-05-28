@@ -41,71 +41,38 @@ class ResourceOverviewView(APIView):
             "online_servers": online,
             "offline_servers": offline,
         })
-
+import redis
+import os
+from .tasks import cache_user_instances
+import ast  # để parse string dict từ redis
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 
 class MyInstancesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         username = request.user.username
-        redis_key = f"keystone_token:{username}"
-        token = redis_client.get(redis_key)
+        redis_key = f"instances_cache:{username}"
+        cached_data = redis_client.get(redis_key)
 
+        if cached_data:
+            # Lấy data từ cache
+            result = ast.literal_eval(cached_data)
+            return Response(result)
+
+        # Nếu không có cache thì lấy token từ redis, gọi API, cache lại
+        token_key = f"keystone_token:{username}"
+        token = redis_client.get(token_key)
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
-        project_id = request.auth.get('project_id')
+        # Gọi task Celery để cache data
+        cache_user_instances.delay(username, token)
 
-        nova_url = "http://172.93.187.251/compute/v2.1"
-        headers = {"X-Auth-Token": token.decode()}
-        url = f"{nova_url}/servers/detail"
-
-        try:
-            r = requests.get(url, headers=headers)
-            r.raise_for_status()
-            data = r.json()
-        except requests.RequestException as e:
-            return Response({"error": "Failed to fetch instances", "details": str(e)}, status=500)
-
-        servers = data.get("servers", [])
-        result = []
-
-        for s in servers:
-            ip = ""
-            for net in s.get("addresses", {}).values():
-                if isinstance(net, list) and net:
-                    ip = net[0].get("addr", "")
-                    break
-
-            flavor_id = s.get("flavor", {}).get("id")
-            plan = "Unknown"
-
-            if flavor_id:
-                flavor_url = f"{nova_url}/flavors/{flavor_id}"
-                try:
-                    flavor_res = requests.get(flavor_url, headers=headers)
-                    flavor_res.raise_for_status()
-                    flavor_info = flavor_res.json().get("flavor", {})
-                    vcpus = flavor_info.get("vcpus")
-                    ram = flavor_info.get("ram")  # MB
-                    disk = flavor_info.get("disk")  # GB
-                    name = flavor_info.get("name", "Unnamed Plan")
-                    plan = f"{name} ({vcpus} vCPU / {ram}MB / {disk}GB)"
-                except Exception:
-                    plan = "Unknown"
-
-            instance = {
-                "id": s.get("id"),
-                "name": s.get("name"),
-                "status": "Online" if s.get("status") == "ACTIVE" else "Offline",
-                "ip": ip,
-                "plan": plan,
-                "region": s.get("OS-EXT-AZ:availability_zone", ""),
-                "created": s.get("created", "")[:10]
-            }
-            result.append(instance)
-
-        return Response(result)
+        # Tạm thời trả dữ liệu empty, client sẽ gọi lại sau để lấy cache
+        return Response({"message": "Caching in progress, try again shortly."}, status=202)
 
 class LimitSummaryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -118,7 +85,7 @@ class LimitSummaryView(APIView):
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
-        token = token.decode()
+        # token = token.decode()
         project_id = request.auth.get("project_id")
 
         nova_url = "http://172.93.187.251/compute/v2.1"
@@ -165,7 +132,7 @@ class InstanceOptionsView(APIView):
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
-        token = token.decode()
+        # token = token.decode()
         project_id = request.auth.get('project_id')
         headers = {"X-Auth-Token": token}
 
@@ -256,7 +223,7 @@ class CreateInstanceAPI(APIView):
         token = redis_client.get(redis_key)
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
-        token = token.decode()
+        # token = token.decode()
         project_id = request.auth.get('project_id')
 
         # 3. Lấy dữ liệu đầu vào từ request.data

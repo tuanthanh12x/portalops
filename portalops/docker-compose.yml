@@ -15,14 +15,15 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      DJANGO_SETTINGS_MODULE: portalops.settings.base
+      DJANGO_SETTINGS_MODULE: backend.settings.base
+      CELERY_BROKER_URL: redis://redis:6379/0
 
   celery:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: portalops-celery
-    command: celery -A portalops worker --loglevel=info
+    command: celery -A backend worker --loglevel=info
     volumes:
       - ./backend:/app
     env_file:
@@ -33,14 +34,14 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      DJANGO_SETTINGS_MODULE: portalops.settings.base
+      DJANGO_SETTINGS_MODULE: backend.settings.base
 
   celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: portalops-celery-beat
-    command: celery -A portalops beat --loglevel=info
+    command: celery -A backend beat --loglevel=info
     volumes:
       - ./backend:/app
     env_file:
@@ -51,7 +52,7 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      DJANGO_SETTINGS_MODULE: portalops.settings.base
+      DJANGO_SETTINGS_MODULE: backend.settings.base
 
   redis:
     image: redis:7.2-alpine

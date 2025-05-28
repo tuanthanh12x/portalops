@@ -54,7 +54,7 @@ class LimitSummaryView(APIView):
             compute_api_version='2.1',
         )
 
-        # 1. CPU & RAM từ Nova
+
         nova_limits = conn.compute.get_limits()
         absolute = nova_limits['absolute']
         cpu_used = absolute['totalCoresUsed']
@@ -62,7 +62,6 @@ class LimitSummaryView(APIView):
         ram_used = absolute['totalRAMUsed']          # MB
         ram_limit = absolute['maxTotalRAMSize']      # MB
 
-        # 2. Storage từ Cinder
         cinder_quota = conn.block_storage.get_quota_set(project_id, usage=True)
         storage_used = cinder_quota['gigabytes']['in_use']
         storage_limit = cinder_quota['gigabytes']['limit']
