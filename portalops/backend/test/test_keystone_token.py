@@ -12,7 +12,7 @@ payload = {
                 "user": {
                     "name": "admin",
                     "domain": {"name": "Default"},
-                    "password": "GreenOps0192"
+                    "password": ""
                 }
             }
         },

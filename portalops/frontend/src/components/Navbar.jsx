@@ -33,7 +33,7 @@ const Navbar = () => {
 
     
         <ul className={`absolute md:static top-full left-0 w-full md:w-auto bg-gray-900 md:bg-transparent shadow-lg md:shadow-none flex flex-col md:flex-row md:items-center md:space-x-6 lg:space-x-8 transition-all duration-300 ease-in-out ${menuOpen ? 'block py-2' : 'hidden md:flex'}`}>
-          <li><a className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 md:hover:bg-transparent rounded-md" href="/dashboard">Dashboard</a></li>
+          <li><a className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 md:hover:bg-transparent rounded-md" href="/">Dashboard</a></li>
 
           {/* Compute Dropdown */}
           <li className="relative">
@@ -47,7 +47,7 @@ const Navbar = () => {
               </svg>
             </button>
             <ul className={`absolute md:absolute top-full left-0 md:left-auto md:right-0 bg-gray-800 rounded-md shadow-lg py-1 mt-2 w-48 z-10 transition-all duration-300 ease-in-out ${computeDropdownOpen ? 'block' : 'hidden'}`}>
-              <li><a className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" href="/compute/instances">Instances</a></li>
+              <li><a className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" href="/create-instance">Instances</a></li>
               <li><a className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" href="/create-image">Images</a></li>
               <li><a className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" href="/create-keypair">Key Pair</a></li>
             </ul>
