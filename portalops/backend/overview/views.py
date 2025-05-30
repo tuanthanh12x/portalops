@@ -2,48 +2,20 @@ import json
 
 import redis
 import requests
-from django.shortcuts import render
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from openstack_portal.tasks import fetch_and_cache_instance_options
 
+from utils.conn import connect_with_token
+
+from utils.conn import connect_with_token_v5
+
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
 
-class ResourceOverviewView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        username = request.user.username
-        redis_key = f"keystone_token:{username}"
-        token = redis_client.get(redis_key)
-
-        if not token:
-            return Response({"error": "Token expired or missing"}, status=401)
-
-        nova_url = "http://172.93.187.251/compute/v2.1"
-        headers = {"X-Auth-Token": token.decode()}
-        url = f"{nova_url}/servers/detail"
-
-        try:
-            r = requests.get(url, headers=headers)
-            r.raise_for_status()
-            data = r.json()
-        except requests.RequestException as e:
-            return Response({"error": "Failed to fetch server data", "details": str(e)}, status=500)
-
-        servers = data.get("servers", [])
-        total = len(servers)
-        online = sum(1 for s in servers if s.get("status") == "ACTIVE")
-        offline = total - online
-
-        return Response({
-            "total_servers": total,
-            "online_servers": online,
-            "offline_servers": offline,
-        })
 import redis
 import os
 from .tasks import cache_user_instances
@@ -57,7 +29,8 @@ class MyInstancesView(APIView):
 
     def get(self, request):
         username = request.user.username
-        redis_key = f"instances_cache:{username}"
+        project_id = request.auth.get('project_id')
+        redis_key = f"instances_cache:{username}:{project_id}"
         cached_data = redis_client.get(redis_key)
 
         if cached_data:
@@ -65,16 +38,13 @@ class MyInstancesView(APIView):
             result = ast.literal_eval(cached_data)
             return Response(result)
 
-        # Nếu không có cache thì lấy token từ redis, gọi API, cache lại
-        token_key = f"keystone_token:{username}"
+        token_key = f"keystone_token:{username}:{project_id}"
         token = redis_client.get(token_key)
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
-        # Gọi task Celery để cache data
-        cache_user_instances.delay(username, token)
 
-        # Tạm thời trả dữ liệu empty, client sẽ gọi lại sau để lấy cache
+        cache_user_instances.delay(username, token,project_id)
         return Response({"message": "Caching in progress, try again shortly."}, status=202)
 
 class LimitSummaryView(APIView):
@@ -82,7 +52,8 @@ class LimitSummaryView(APIView):
 
     def get(self, request):
         username = request.user.username
-        redis_key = f"keystone_token:{username}"
+        project_id = request.auth.get('project_id')
+        redis_key = f"keystone_token:{username}:{project_id}"
         token = redis_client.get(redis_key)
 
         if not token:
@@ -125,53 +96,81 @@ class LimitSummaryView(APIView):
         })
 
 
-class CreateInstanceAPI(APIView):
+class CreateConsoleAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # 1. Lấy token từ Redis theo username
-        username = request.user.username
-        redis_key = f"keystone_token:{username}"
-        token = redis_client.get(redis_key)
-        if not token:
-            return Response({"error": "Token expired or missing"}, status=401)
-        # token = token.decode()
-        project_id = request.auth.get('project_id')
+        """
+        Create a VNC console for a specified server.
 
-        # 3. Lấy dữ liệu đầu vào từ request.data
-        name = request.data.get('name')
-        image_id = request.data.get('image_id')
-        flavor_id = request.data.get('flavor_id')
-        network_id = request.data.get('network_id')
+        Args:
+            request: Contains user authentication and server details.
 
-        if not all([name, image_id, flavor_id, network_id]):
-            return Response({"error": "Missing required fields"}, status=400)
-
-        # 4. Chuẩn bị URL và payload gửi lên OpenStack Nova API
-        nova_url = f"http://172.93.187.251/compute/v2.1/{project_id}/servers"
-        payload = {
-            "server": {
-                "name": name,
-                "imageRef": image_id,
-                "flavorRef": flavor_id,
-                "networks": [{"uuid": network_id}],
-                "availability_zone": "nova",
-            }
-        }
-        headers = {
-            "X-Auth-Token": token,
-            "Content-Type": "application/json"
-        }
-
-        # 5. Gửi request POST lên Nova API tạo instance
+        Returns:
+            Response: Console details or error message.
+        """
         try:
-            response = requests.post(nova_url, json=payload, headers=headers)
-            if response.status_code in [200, 202]:
-                # Tạo thành công trả về 201 với dữ liệu response
-                return Response(response.json(), status=201)
-            else:
-                # Trả về lỗi từ Nova API
-                return Response(response.json(), status=response.status_code)
+            # Extract username and project_id from request
+            username = request.user.username
+            project_id = request.auth.get("project_id")
+
+            if not project_id:
+                return Response(
+                    {"error": "Project ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check Redis for token
+            redis_key = f"keystone_token:{username}:{project_id}"
+            token = redis_client.get(redis_key)
+
+            if not token:
+                return Response(
+                    {"error": "Authentication token expired or missing"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            # Decode token if it's in bytes
+            if isinstance(token, bytes):
+                token = token.decode()
+
+            # Validate server_id
+            server_id = request.data.get("server_id")
+            if not server_id:
+                return Response(
+                    {"error": "Server ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get console type, default to 'novnc'
+            console_type = request.data.get("type", "novnc")
+
+            # Connect to Nova API and request VNC console
+            conn = connect_with_token_v5(token, project_id)
+            response = conn.compute.post(
+                f"/servers/{server_id}/action",
+                json={
+                    "os-getVNCConsole": {
+                        "type": console_type
+                    }
+                }
+            )
+
+            # Assuming response contains the console data directly
+            console_data = response.json().get("console")
+            if not console_data:
+                return Response(
+                    {"error": "Console data not found in response"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            return Response(
+                {"console": console_data},
+                status=status.HTTP_200_OK
+            )
+
         except Exception as e:
-            # Xử lý lỗi ngoại lệ (network, timeout,...)
-            return Response({"error": str(e)}, status=500)
+            return Response(
+                {"error": f"Failed to create console: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

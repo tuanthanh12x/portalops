@@ -19,7 +19,7 @@ const CreateKeypairForm = ({ onCreate }) => {
 
         setLoading(true);
         try {
-            const res = await axiosInstance.post('/openstack-portal/create-keypair/', { name });
+            const res = await axiosInstance.post('/openstack/compute/keypair/', { name });
             if (res.status === 201) {
                 onCreate && onCreate(res.data);
 
@@ -39,7 +39,6 @@ const CreateKeypairForm = ({ onCreate }) => {
         }
     };
 
-    // Tải private key về dưới dạng file .pem
     const downloadPrivateKey = () => {
         if (!privateKey) return;
         const blob = new Blob([privateKey], { type: 'text/plain' });

@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
-    'core',
+    'tests',
     'userauth',
-    'billing',
+
     'openstack_portal',
 ]
 
@@ -171,7 +171,6 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",  # dùng db=1 cho cache
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            # Có thể thêm password nếu Redis có auth
         }
     }
 }

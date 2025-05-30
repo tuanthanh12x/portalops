@@ -18,8 +18,8 @@ const QuickActions = () => {
 
   return (
     <div className="col-span-2 flex flex-col">
-      <h2 className="text-2xl font-bold text-gray-200 mb-4 font-fantasy">Quick Actions</h2>
-      <div className="flex flex-col gap-4">
+      <h2 className="text-2xl font-bold text-gray-200 mb-4 font-fantasy ml-1 mt-5">Quick Actions</h2>
+      <div className="flex flex-col gap-4 mt-5">
         <motion.div
           variants={buttonVariants}
           whileHover="hover"
@@ -39,7 +39,9 @@ const QuickActions = () => {
           whileTap="tap"
           className="relative bg-gradient-to-r from-[#1e3a2a] to-[#13301e] text-gray-200 py-3 px-6 rounded-xl shadow-md overflow-hidden group"
         >
-          <span className="relative z-10 font-semibold">Add Volume</span>
+          <Link to="/create-volume" className="relative z-10 inline-block text-center w-full font-semibold">
+            Add Volume
+          </Link>
           <div className="absolute inset-0 bg-[#121a12] opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
           <div className="absolute inset-0 neon-glow" />
         </motion.button>

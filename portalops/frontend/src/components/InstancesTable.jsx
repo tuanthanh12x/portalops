@@ -1,7 +1,48 @@
-import React from 'react';
+import React, { useState } from "react";
+import axiosInstance from '../api/axiosInstance'; // Ensure this file exists
 
 const InstancesTable = ({ instances }) => {
   const instancesArray = Array.isArray(instances) ? instances : [];
+  const [loadingId, setLoadingId] = useState(null);
+
+  const handleConsole = async (instanceId) => {
+    setLoadingId(instanceId);
+    try {
+      const res = await axiosInstance.post("/overview/console/", {
+        server_id: instanceId,
+        type: "novnc",
+      });
+
+      // Access console URL directly from response
+      const consoleUrl = res.data.console?.url;
+
+      if (consoleUrl) {
+        window.open(consoleUrl, "_blank");
+      } else {
+        alert("Console URL not found in response.");
+      }
+    } catch (error) {
+      alert(`Failed to open console: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleAction = async (instanceId, action) => {
+    setLoadingId(instanceId);
+    try {
+      const res = await axiosInstance.post(
+        `/openstack/compute/instances/${instanceId}/action/`,
+        { action }
+      );
+      alert(`Action "${action}" succeeded on instance ${instanceId}`);
+      // Optionally trigger a refresh of instances here
+    } catch (error) {
+      alert(`Failed to ${action} instance: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
   return (
     <div className="relative">
@@ -23,9 +64,7 @@ const InstancesTable = ({ instances }) => {
 
           <div className="divide-y divide-[#33344a]">
             {instancesArray.length === 0 ? (
-              <div className="text-center p-6 text-gray-500">
-                No instances found.
-              </div>
+              <div className="text-center p-6 text-gray-500">No instances found.</div>
             ) : (
               instancesArray.map((instance) => (
                 <div
@@ -40,9 +79,9 @@ const InstancesTable = ({ instances }) => {
                     <span className="md:hidden font-semibold">Status: </span>
                     <span
                       className={
-                        instance.status.toLowerCase() === 'online'
-                          ? 'text-green-400'
-                          : 'text-red-400'
+                        instance.status.toLowerCase() === "online"
+                          ? "text-green-400"
+                          : "text-red-400"
                       }
                     >
                       {instance.status}
@@ -54,7 +93,7 @@ const InstancesTable = ({ instances }) => {
                   </div>
                   <div>
                     <span className="md:hidden font-semibold">Flavor: </span>
-                    {instance.plan || '-'}
+                    {instance.plan || "-"}
                   </div>
                   <div>
                     <span className="md:hidden font-semibold">Region: </span>
@@ -65,13 +104,25 @@ const InstancesTable = ({ instances }) => {
                     {new Date(instance.created).toLocaleString()}
                   </div>
                   <div className="flex justify-start md:justify-end space-x-2">
-                    <button className="bg-[#3a3a5e] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#50507b] transition-colors">
+                    <button
+                      disabled={loadingId === instance.id}
+                      onClick={() => handleAction(instance.id, "start")}
+                      className="bg-[#3a3a5e] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#50507b] transition-colors disabled:opacity-50"
+                    >
                       Power On
                     </button>
-                    <button className="bg-[#333350] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#46466a] transition-colors">
+                    <button
+                      disabled={loadingId === instance.id}
+                      onClick={() => handleAction(instance.id, "stop")}
+                      className="bg-[#333350] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#46466a] transition-colors disabled:opacity-50"
+                    >
                       Shut Down
                     </button>
-                    <button className="bg-[#2d2d4a] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#42425f] transition-colors">
+                    <button
+                      disabled={loadingId === instance.id}
+                      onClick={() => handleConsole(instance.id)}
+                      className="bg-[#2d2d4a] text-gray-200 px-3 py-1 rounded text-xs hover:bg-[#42425f] transition-colors disabled:opacity-50"
+                    >
                       Console
                     </button>
                   </div>

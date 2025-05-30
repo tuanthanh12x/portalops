@@ -30,16 +30,30 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchInstances = async () => {
-      try {
-        const res = await axiosInstance.get('/overview/instances/');
+  let retryCount = 0;
+  const maxRetries = 3;
+
+  const fetchInstances = async () => {
+    try {
+      const res = await axiosInstance.get('/overview/instances/');
+      if (res.data && res.data.length > 0) {
         setInstances(res.data);
-      } catch (error) {
-        console.error("Failed to fetch instances", error);
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
+        setTimeout(fetchInstances, 2000); // retry after 2 seconds
+      } else {
+        console.warn("Max retries reached, no data available.");
+        setInstances([]); // set empty to avoid loading forever
       }
-    };
-    fetchInstances();
-  }, []);
+    } catch (error) {
+      console.error("Failed to fetch instances", error);
+    }
+  };
+
+  fetchInstances();
+}, []);
+
 
   useEffect(() => {
     const fetchLimits = async () => {
@@ -67,21 +81,30 @@ export default function Home() {
               <p className="text-gray-300">Dashboard</p>
             </div>
             <div className="flex justify-end items-center gap-1 md:gap-3">
-              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-200" viewBox="0 0 16 16">
+              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">
                   <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
                   <path fillRule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"></path>
                 </svg>
-                <span className="hidden md:block whitespace-nowrap text-gray-200">Account</span>
+                <span className="hidden md:block text-gray-300 group-hover:text-white transition">Account</span>
               </div>
-              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+
+              <div className="flex items-center space-x-2 p-2 rounded-md cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-200" viewBox="0 0 16 16">
                   <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3V2zm1 13h8V2H4v13z"></path>
                   <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"></path>
                 </svg>
-                <button className="hidden md:inline-block whitespace-nowrap px-3 py-1 text-sm text-white rounded-md transition" onClick={(e) => { e.preventDefault(); logout(); }}>
+                <button
+                  className="hidden md:inline-block whitespace-nowrap px-4 py-2 text-sm text-white bg-gray-800 rounded-md 
+  hover:bg-red-600 hover:text-white transition-all duration-200 ease-in-out shadow-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    logout();
+                  }}
+                >
                   Logout
                 </button>
+
               </div>
             </div>
           </div>
@@ -91,9 +114,13 @@ export default function Home() {
           <NotificationsCard />
           <CreditsCard />
         </div>
-        <div className="grid grid-cols-7 gap-4">
-          <ResourceUsage limits={limits} />
-          <QuickActions />
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-7">
+          <div className="col-span-7 md:col-span-4">
+            <ResourceUsage limits={limits} />
+          </div>
+          <div className="col-span-7 md:col-span-3">
+            <QuickActions />
+          </div>
         </div>
         <InstancesTable instances={instances} />
       </div>

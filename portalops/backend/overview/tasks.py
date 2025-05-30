@@ -10,8 +10,8 @@ redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_respon
 NOVA_URL = "http://172.93.187.251/compute/v2.1"
 
 @shared_task
-def cache_user_instances(username, token):
-    redis_key = f"instances_cache:{username}"
+def cache_user_instances(username, token, project_id):
+    redis_key = f"instances_cache:{username}:{project_id}"
     headers = {"X-Auth-Token": token}
     url = f"{NOVA_URL}/servers/detail"
 

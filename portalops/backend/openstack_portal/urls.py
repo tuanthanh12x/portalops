@@ -1,10 +1,14 @@
 from django.urls import path
 
-from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, CreateKeypairAPI
+from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, CreateKeypairAPI, InstanceActionAPI, \
+    VolumeOptionsView, CreateVolumeAPI
 
 urlpatterns = [
     path('instance-option/', InstanceOptionsView.as_view(), name='instance-option'),
-    path('create-instance/', CreateInstanceAPI.as_view(), name='create-instance'),
-    path('create-image/', CreateImageAPI.as_view(), name='create-image'),
-path('create-keypair/', CreateKeypairAPI.as_view(), name='create-keypair'),
+    path('volume-option/', VolumeOptionsView.as_view(), name='volume-option'),
+    path('compute/instances/', CreateInstanceAPI.as_view(), name='create-instance'),
+    path('storage/volumes/', CreateVolumeAPI.as_view(), name='create-volume'),
+    path('compute/images/', CreateImageAPI.as_view(), name='create-image'),
+    path('compute/keypair/', CreateKeypairAPI.as_view(), name='create-keypair'),
+    path("compute/instances/<str:id>/action/", InstanceActionAPI.as_view()),
 ]

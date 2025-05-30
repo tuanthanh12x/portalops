@@ -31,7 +31,7 @@ const CreateImageForm = ({ }) => {
       formData.append('file', file);
 
       const res = await axiosInstance.post(
-        '/openstack-portal/create-image/',
+        '/openstack/compute/images/',
         formData,
         {
           headers: {

@@ -31,13 +31,12 @@ const CreateInstancePage = () => {
   });
 
   useEffect(() => {
-    axiosInstance.get('/openstack-portal/instance-option')
+    axiosInstance.get('/openstack/instance-option')
       .then(res => {
         const data = res.data;
         setInstanceOptions(data);
 
         setRegion(data.regions[0] || '');
-        // Set mặc định image ưu tiên my_images, nếu rỗng thì tab khác
         if (data.images.my_images.length > 0) {
           setImageTab('my-images');
           setImage(data.images.my_images[0].id);
@@ -75,7 +74,7 @@ const CreateInstancePage = () => {
   console.log("📤 Sending create-instance payload:", payload);
 
   try {
-    const res = await axiosInstance.post('/openstack-portal/create-instance/', payload);
+    const res = await axiosInstance.post('/openstack/compute/instances/', payload);
     alert('✅ Instance created successfully!');
     console.log(res.data);
   } catch (err) {

@@ -1,11 +1,17 @@
 import React from 'react';
-import { formatPercentage, formatRAM, formatStorage } from '../utils/formatUtils';
+import { formatRAM, formatStorage } from '../utils/formatUtils';
 import './ResourceUsage.css';
 
 const ResourceUsage = ({ limits }) => {
+  // Format percentage with 1 decimal place, returns string
+  const formatPercentage = (used, max) => {
+    if (max === 0) return '0.0';
+    return ((used / max) * 100).toFixed(1);
+  };
+
   const renderGauge = (value, max, color) => {
-    const percentage = formatPercentage(value, max);
-    const strokeDashoffset = 283 - (283 * percentage) / 100;
+    const percentage = formatPercentage(value, max); // string like "75.3"
+    const strokeDashoffset = 283 - (283 * parseFloat(percentage)) / 100;
 
     return (
       <div className="relative w-32 h-32">
@@ -41,7 +47,7 @@ const ResourceUsage = ({ limits }) => {
   };
 
   const renderCard = (title, used, limit, color, formatter, unit) => (
-    <div className="relative bg-gradient-to-br  rounded-xl shadow-2xl p-6 overflow-hidden futuristic-card">
+    <div className="relative bg-gradient-to-br rounded-xl shadow-2xl p-6 overflow-hidden futuristic-card">
       <div className="absolute inset-0 neon-glow" />
       <div className="absolute inset-0 particle-bg">
         <div className="particle particle-1" />
@@ -71,7 +77,7 @@ const ResourceUsage = ({ limits }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {renderCard('Memory', limits.ram.used, limits.ram.limit, '#9333EA', formatRAM)}
         {renderCard('CPU', limits.cpu.used, limits.cpu.limit, '#00FFFF', val => val, 'Core')}
-        {renderCard('Storage', limits.storage.used, limits.storage.limit, '#FF00FF', formatStorage)}
+        {renderCard('Storage', limits.storage.used, limits.storage.limit, '#FF00FF', formatStorage, 'GB')}
       </div>
     </div>
   );

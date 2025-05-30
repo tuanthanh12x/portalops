@@ -1,8 +1,6 @@
 auth:
   auth_url: "http://172.93.187.251/identity/v3"
-  username: "admin"
-  password: "GreenOps0192"
-  project_name: "admin"
+
   user_domain_name: "Default"
   project_domain_name: "Default"
 
