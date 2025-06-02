@@ -29,7 +29,10 @@ def cache_user_instances(username, token, project_id):
         ip = ""
         for net in s.get("addresses", {}).values():
             if isinstance(net, list) and net:
-                ip = net[0].get("addr", "")
+                ip = next(
+                    (addr["addr"] for addr in net if addr.get("version") == 4),
+                    net[0].get("addr", "") if net else ""
+                )
                 break
 
         flavor_id = s.get("flavor", {}).get("id")
