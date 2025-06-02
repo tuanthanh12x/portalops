@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/Navbar";
 
@@ -29,6 +30,12 @@ const ImageListPage = () => {
           <h2 className="text-2xl font-semibold text-gray-200 font-fantasy">
             Images
           </h2>
+          <Link
+            to="/create-image"
+            className="inline-block bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-md transition-all duration-200"
+          >
+            + Create Image
+          </Link>
         </div>
 
         {loading ? (
