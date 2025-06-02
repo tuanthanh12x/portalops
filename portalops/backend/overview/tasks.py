@@ -60,5 +60,5 @@ def cache_user_instances(username, token, project_id):
         }
         result.append(instance)
 
-    redis_client.set(redis_key, str(result), ex=300)  # lưu cache 5 phút
+    redis_client.set(redis_key, str(result), ex=30)  # lưu cache 5 phút
     return result
