@@ -60,9 +60,6 @@ from keystoneauth1 import session
 from keystoneauth1.identity import v3
 import json
 
-# Redis client assumed to be imported already
-# from your_app.redis_config import redis_client
-
 def vl_connect_with_token(token, project_id):
     auth = v3.Token(
         auth_url=settings.OPENSTACK_AUTH["auth_url"],
@@ -113,7 +110,6 @@ class VolumeOptionsView(APIView):
         try:
             conn = vl_connect_with_token(token, project_id)
 
-            # Fallback GET /types
             def fetch_volume_types(conn):
                 try:
                     response = conn.block_storage.get("/types")

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axiosInstance from '../api/axiosInstance'; // Ensure this file exists
+import { Link } from "react-router-dom";
 
 const InstancesTable = ({ instances }) => {
   const instancesArray = Array.isArray(instances) ? instances : [];
@@ -13,7 +14,6 @@ const InstancesTable = ({ instances }) => {
         type: "novnc",
       });
 
-      // Access console URL directly from response
       const consoleUrl = res.data.console?.url;
 
       if (consoleUrl) {
@@ -36,7 +36,7 @@ const InstancesTable = ({ instances }) => {
         { action }
       );
       alert(`Action "${action}" succeeded on instance ${instanceId}`);
-      // Optionally trigger a refresh of instances here
+
     } catch (error) {
       alert(`Failed to ${action} instance: ${error.response?.data?.error || error.message}`);
     } finally {
@@ -46,9 +46,19 @@ const InstancesTable = ({ instances }) => {
 
   return (
     <div className="relative">
-      <h2 className="text-2xl font-semibold text-gray-200 mb-4 font-fantasy">
-        My Instances
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+  <h2 className="text-2xl font-semibold text-gray-200 font-fantasy">
+    My Instances
+  </h2>
+  <Link
+    to="/create-instance"
+    className="inline-block bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-md transition-all duration-200"
+  >
+    + Create Instance
+  </Link>
+</div>
+
+
       <div className="bg-[#1a1a2e] rounded shadow p-4 overflow-auto border border-[#2c2c3e]">
         <div className="min-w-[800px] w-full">
           {/* Header */}

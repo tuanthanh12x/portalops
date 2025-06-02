@@ -27,9 +27,9 @@ function getTokenWithExpiry(key) {
 // Request Interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (process.env.NODE_ENV !== 'production') {
+    // if (process.env.NODE_ENV === 'production') {
       console.log("✅ BASE_URL = ", process.env.REACT_APP_API_BASE_URL);
-    }
+    // }
 
     const token = getTokenWithExpiry("accessToken");
     if (token) {
