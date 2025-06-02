@@ -10,7 +10,7 @@ const ImageListPage = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const res = await axiosInstance.get("/openstack/images/");
+        const res = await axiosInstance.get("/openstack/image/images/");
         setImages(res.data || []);
       } catch (err) {
         console.error("Failed to fetch images:", err);
