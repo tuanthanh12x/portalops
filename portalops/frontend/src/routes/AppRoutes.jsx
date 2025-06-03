@@ -10,6 +10,7 @@ import AdminDashboard from "../pages/admin/AdminDashBoard";
 import MyInstancesPage from "../pages/client/InstancesPage";
 import ImageListPage from "../pages/client/ImageListPage";
 import VolumeListPage from "../pages/client/VolumeListPage";
+import KeypairListPage from "../pages/client/KeypairListPage";
 function AppRoutes() {
   return (
     <Router>
@@ -20,8 +21,9 @@ function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/create-instance" element={<CreateInstancePage />} />
           <Route path="/instances" element={<MyInstancesPage />} />
-       <Route path="/images" element={<ImageListPage />} />
-             <Route path="/volumes" element={<VolumeListPage />} />
+          <Route path="/images" element={<ImageListPage />} />
+          <Route path="/volumes" element={<VolumeListPage />} />
+          <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
           <Route path="/" element={<Home />} />
           {/* <Route path="/admin-dashboard" element={<AdminDashboard />} /> */}

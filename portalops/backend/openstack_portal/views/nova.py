@@ -356,52 +356,7 @@ class CreateImageAPI(APIView):
             return Response({"error": str(e)}, status=500)
 
 
-import redis
-import requests
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
-redis_client = redis.Redis(host='redis', port=6379, db=0)
-
-class CreateKeypairAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        username = request.user.username
-        project_id = request.auth.get('project_id')
-
-        redis_key = f"keystone_token:{username}:{project_id}"
-        token = redis_client.get(redis_key)
-        if not token:
-            return Response({"error": "Token expired or missing"}, status=401)
-
-        project_id = request.auth.get('project_id')
-        keypair_name = request.data.get('name')
-
-        if not keypair_name:
-            return Response({"error": "Keypair name is required"}, status=400)
-
-        nova_url = "http://172.93.187.251/compute/v2.1"
-        headers = {
-            "X-Auth-Token": token,
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "keypair": {
-                "name": keypair_name,
-            }
-        }
-
-        try:
-            response = requests.post(f"{nova_url}/os-keypairs", json=payload, headers=headers)
-            if response.status_code in [200, 201]:
-                return Response(response.json(), status=201)
-            else:
-                return Response(response.json(), status=response.status_code)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
 
 
 class InstanceActionAPI(APIView):
@@ -448,5 +403,72 @@ class InstanceActionAPI(APIView):
 
             return Response({"message": f"Action '{action}' executed successfully on instance {id}"})
 
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+
+
+class KeypairView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+
+        redis_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(redis_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+
+        try:
+            conn = connect_with_token(token, project_id)
+            keypairs = conn.compute.keypairs()
+
+            result = []
+            for keypair in keypairs:
+                result.append({
+                    "name": keypair.name,
+                    "fingerprint": keypair.fingerprint,
+                    "type": keypair.type,
+                    "public_key": keypair.public_key,
+                })
+
+            return Response(result)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get('project_id')
+
+        redis_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(redis_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+
+        keypair_name = request.data.get('name')
+        if not keypair_name:
+            return Response({"error": "Keypair name is required"}, status=400)
+
+        nova_url = "http://172.93.187.251/compute/v2.1"
+        headers = {
+            "X-Auth-Token": token.decode() if isinstance(token, bytes) else token,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "keypair": {
+                "name": keypair_name,
+            }
+        }
+
+        try:
+            response = requests.post(f"{nova_url}/os-keypairs", json=payload, headers=headers)
+            if response.status_code in [200, 201]:
+                return Response(response.json(), status=201)
+            else:
+                return Response(response.json(), status=response.status_code)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
