@@ -166,69 +166,6 @@ from django.conf import settings
 from openstack import connection
 
 
-class CreateVolumeAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        username = request.user.username
-        project_id = request.auth.get('project_id')
-
-        redis_key = f"keystone_token:{username}:{project_id}"
-        token = redis_client.get(redis_key)
-        if not token:
-            return Response({"error": "Token expired or missing"}, status=401)
-
-        if isinstance(token, bytes):
-            token = token.decode()
-
-        # Required fields
-        name = request.data.get('name')
-        size = request.data.get('size')
-        volume_type = request.data.get('volume_type')
-        availability_zone = request.data.get('availability_zone')
-
-        if not all([name, size, volume_type, availability_zone]):
-            return Response({"error": "Missing required fields"}, status=400)
-
-        # Optional fields
-        description = request.data.get('description', '')
-        bootable = request.data.get('bootable', False)
-        source_image = request.data.get('source_image')
-        source_volume = request.data.get('source_volume')
-        source_snapshot = request.data.get('source_snapshot')
-
-        try:
-            conn = connect_with_token(token, project_id)
-
-            create_kwargs = {
-                "name": name,
-                "size": size,
-                "volume_type": volume_type,
-                "availability_zone": availability_zone,
-                "description": description,
-            }
-
-            # Set source depending on bootable and source fields
-            if bootable and source_image:
-                create_kwargs["imageRef"] = source_image
-            elif source_volume:
-                create_kwargs["source_volid"] = source_volume
-            elif source_snapshot:
-                create_kwargs["snapshot_id"] = source_snapshot
-
-            volume = conn.block_storage.create_volume(**create_kwargs)
-
-            return Response({
-                "id": volume.id,
-                "name": volume.name,
-                "status": volume.status,
-                "size": volume.size,
-            }, status=201)
-
-        except Exception as e:
-            return Response({"error": f"Failed to create volume: {str(e)}"}, status=500)
-
-
 
 class CreateInstanceAPI(APIView):
     permission_classes = [IsAuthenticated]

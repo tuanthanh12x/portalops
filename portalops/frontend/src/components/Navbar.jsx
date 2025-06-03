@@ -138,10 +138,10 @@ const Navbar = () => {
             <ul className="absolute left-0 mt-2 w-40 bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto z-20">
               <li>
                 <a
-                  href="/create-volume"
+                  href="/volumes"
                   className="block px-4 py-2 hover:bg-gray-700"
                 >
-                  Volume
+                  Volumes
                 </a>
               </li>
               <li>
