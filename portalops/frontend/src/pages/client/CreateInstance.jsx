@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import Navbar from '../../components/Navbar';
-
+import { useNavigate } from "react-router-dom";
 const CreateInstancePage = () => {
   const [name, setName] = useState('');
   const [region, setRegion] = useState('');
@@ -12,7 +12,7 @@ const CreateInstancePage = () => {
   const [options, setOptions] = useState({ ha: true, floatingIp: false, backups: true });
   const [authMethod, setAuthMethod] = useState('ssh');
   const [sshKey, setSshKey] = useState('default-key');
-
+const navigate = useNavigate();
   const [instanceOptions, setInstanceOptions] = useState({
     regions: [],
     plans: [],
@@ -248,12 +248,13 @@ const CreateInstancePage = () => {
               🧮 Estimated Monthly Cost: <strong className="text-blue-400">$8/month</strong>
             </div>
             <div className="flex gap-4">
-              <button
-                className="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:border-gray-400 hover:text-white transition"
-                onClick={() => alert('Back button clicked')}
-              >
-                Back
-              </button>
+             <button
+      className="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:border-gray-400 hover:text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      onClick={() => navigate("/")}
+      aria-label="Go back to home page"
+    >
+      Back
+    </button>
               <button
                 onClick={handleCreate}
                 className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md"

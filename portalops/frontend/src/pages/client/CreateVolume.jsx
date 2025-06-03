@@ -40,7 +40,7 @@ const CreateVolumePage = () => {
 
   const handleCreateVolume = async () => {
     if (!name || !size || !volumeType || !availabilityZone) {
-      alert('Please fill all required fields.');
+      alert('❌ Please fill all required fields.');
       return;
     }
 
@@ -58,91 +58,93 @@ const CreateVolumePage = () => {
 
     try {
       const res = await axiosInstance.post('/openstack/storage/volumes/', payload);
-      alert('Volume created successfully!');
+      alert('✅ Volume created successfully!');
       console.log(res.data);
     } catch (err) {
-      console.error('Failed to create volume:', err);
-      alert('Failed to create volume. Check console.');
+      console.error('❌ Failed to create volume:', err);
+      alert('❌ Failed to create volume. Check console.');
     }
   };
 
   if (loading) {
-    return <div className="text-center text-white mt-10">Loading volume options...</div>;
+    return <div className="text-center text-gray-300 mt-10">Loading volume options...</div>;
   }
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
+    <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-6">Create New Volume</h1>
+      <div className="max-w-2xl mx-auto p-8 space-y-6 animate-fade-in">
+        <h1 className="text-3xl font-extrabold text-blue-400 tracking-wide drop-shadow mb-6">
+          📦 Create New Volume
+        </h1>
 
-        <div className="bg-gray-800 p-6 rounded-xl space-y-4">
+        <div className="bg-black/40 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 border border-gray-700">
           <div>
-            <label className="block mb-1">Volume Name</label>
+            <label className="block mb-2 text-white font-semibold">Volume Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter volume name"
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block mb-1">Size (GB)</label>
+            <label className="block mb-2 text-white font-semibold">Size (GB)</label>
             <input
               type="number"
               value={size}
               onChange={(e) => setSize(Number(e.target.value))}
               min={1}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block mb-1">Description (optional)</label>
+            <label className="block mb-2 text-white font-semibold">Description (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block mb-1">Volume Type</label>
+            <label className="block mb-2 text-white font-semibold">Volume Type</label>
             <select
               value={volumeType}
               onChange={(e) => setVolumeType(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
             >
               {options.volume_types.map((type) => (
-                <option key={type.id} value={type.id}>{type.name}</option>
+                <option key={type.id} value={type.id} className="bg-gray-900 text-white">{type.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block mb-1">Availability Zone</label>
+            <label className="block mb-2 text-white font-semibold">Availability Zone</label>
             <select
               value={availabilityZone}
               onChange={(e) => setAvailabilityZone(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
             >
               {options.availability_zones.map((zone, index) => (
-                <option key={index} value={zone}>{zone}</option>
+                <option key={index} value={zone} className="bg-gray-900 text-white">{zone}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="inline-flex items-center">
+            <label className="inline-flex items-center text-white font-semibold">
               <input
                 type="checkbox"
                 checked={isBootable}
                 onChange={() => setIsBootable(!isBootable)}
-                className="form-checkbox mr-2"
+                className="accent-blue-500 form-checkbox mr-2"
               />
               Bootable Volume
             </label>
@@ -150,43 +152,43 @@ const CreateVolumePage = () => {
 
           {isBootable && (
             <div>
-              <label className="block mb-1">Source Image</label>
+              <label className="block mb-2 text-white font-semibold">Source Image</label>
               <select
                 value={sourceImage}
                 onChange={(e) => setSourceImage(e.target.value)}
-                className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
               >
                 {options.images.map((img) => (
-                  <option key={img.id} value={img.id}>{img.name}</option>
+                  <option key={img.id} value={img.id} className="bg-gray-900 text-white">{img.name}</option>
                 ))}
               </select>
             </div>
           )}
 
           <div>
-            <label className="block mb-1">Source Volume (optional)</label>
+            <label className="block mb-2 text-white font-semibold">Source Volume (optional)</label>
             <select
               value={sourceVolume}
               onChange={(e) => setSourceVolume(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
             >
-              <option value="">None</option>
+              <option value="" className="bg-gray-900 text-white">None</option>
               {options.volumes.map((vol) => (
-                <option key={vol.id} value={vol.id}>{vol.name}</option>
+                <option key={vol.id} value={vol.id} className="bg-gray-900 text-white">{vol.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block mb-1">Source Snapshot (optional)</label>
+            <label className="block mb-2 text-white font-semibold">Source Snapshot (optional)</label>
             <select
               value={sourceSnapshot}
               onChange={(e) => setSourceSnapshot(e.target.value)}
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
             >
-              <option value="">None</option>
+              <option value="" className="bg-gray-900 text-white">None</option>
               {options.snapshots.map((snap) => (
-                <option key={snap.id} value={snap.id}>{snap.name}</option>
+                <option key={snap.id} value={snap.id} className="bg-gray-900 text-white">{snap.name}</option>
               ))}
             </select>
           </div>
@@ -194,7 +196,7 @@ const CreateVolumePage = () => {
           <div className="flex justify-end">
             <button
               onClick={handleCreateVolume}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
+              className="px-5 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md"
             >
               Create Volume
             </button>

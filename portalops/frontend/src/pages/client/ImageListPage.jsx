@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 
 const ImageListPage = () => {
   const [images, setImages] = useState([]);
+  const [loadingId, setLoadingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,59 +24,82 @@ const ImageListPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0f0f1c] text-white">
+    <section className="min-h-screen text-white">
       <Navbar credits={150} />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold text-gray-200 font-fantasy">
-            Images
-          </h2>
-          <Link
-            to="/create-image"
-            className="inline-block bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-md transition-all duration-200"
-          >
-            + Create Image
-          </Link>
-        </div>
 
-        {loading ? (
-          <div className="text-center text-gray-400 text-lg">Loading images...</div>
-        ) : (
-          <div className="bg-[#1a1a2e] rounded shadow p-4 overflow-auto border border-[#2c2c3e]">
-            <div className="min-w-[1000px] w-full">
-              <div className="grid grid-cols-7 gap-4 bg-[#2c2c3e] text-gray-300 text-sm p-3 rounded-t">
-                <div>Name</div>
-                <div>OS Type</div>
-                <div>Status</div>
-                <div>Size (GB)</div>
-                <div>Visibility</div>
-                <div>Created</div>
-                <div className="text-right">ID</div>
-              </div>
+      <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-8 mt-20">
+        <h2 className="text-4xl font-bold tracking-tight text-green-400 drop-shadow-md font-fantasy">
+          🖼️ My Images
+        </h2>
+        <Link
+          to="/create-image"
+          className="px-5 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-lg transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          + Create Image
+        </Link>
+      </header>
 
-              <div className="divide-y divide-[#33344a]">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 p-3 hover:bg-[#26263b] text-gray-300"
-                  >
-                    <div>{image.name}</div>
-                    <div>{image.os_type || "-"}</div>
-                    <div className={image.status === "active" ? "text-green-400" : "text-yellow-400"}>
+      <div className="container mx-auto px-4 py-6 max-w-7xl items-center  justify-between overflow-x-auto rounded-xl bg-black/30 backdrop-blur-lg shadow-xl border border-gray-700">
+        <table className="min-w-full divide-y divide-gray-700 text-sm">
+          <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
+            <tr>
+              {["Name", "OS Type", "Status", "Size (GB)", "Visibility", "Created", "ID"].map(
+                (header) => (
+                  <th key={header} className="px-6 py-4 text-left font-semibold">
+                    {header}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800 text-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="text-center py-10 text-gray-500 font-medium">
+                  ⏳ Loading images...
+                </td>
+              </tr>
+            ) : images.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="text-center py-10 text-gray-500 font-medium">
+                  🚫 No images found.
+                </td>
+              </tr>
+            ) : (
+              images.map((image) => (
+                <tr
+                  key={image.id}
+                  className="hover:bg-gray-900/30 transition"
+                >
+                  <td className="px-6 py-4 font-medium">{image.name}</td>
+                  <td className="px-6 py-4">{image.os_type || "-"}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-bold rounded-full ${
+                        image.status === "active"
+                          ? "bg-green-800 text-green-300"
+                          : "bg-yellow-800 text-yellow-300"
+                      }`}
+                    >
                       {image.status}
-                    </div>
-                    <div>{(image.size / (1024 ** 3)).toFixed(2)} GB</div>
-                    <div>{image.visibility}</div>
-                    <div>{new Date(image.created_at).toLocaleString()}</div>
-                    <div className="text-right text-xs break-words">{image.id}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">{(image.size / (1024 ** 3)).toFixed(2)}</td>
+                  <td className="px-6 py-4">{image.visibility || "-"}</td>
+                  <td
+                    className="px-6 py-4"
+                    title={new Date(image.created_at).toLocaleString()}
+                  >
+                    {new Date(image.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-xs break-words">{image.id}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 };
 

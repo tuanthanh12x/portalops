@@ -78,7 +78,7 @@ export default function Home() {
               <h1 className="text-3xl font-bold text-gray-300">
                 Greetings, <span className="text-gray-400">{userInfo?.username || 'User'}</span>
               </h1>
-              <p className="text-gray-300">Dashboard</p>
+
             </div>
             <div className="flex justify-end items-center gap-1 md:gap-3">
               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
