@@ -9,7 +9,7 @@ const VolumeListPage = () => {
   useEffect(() => {
     const fetchVolumes = async () => {
       try {
-        const res = await axiosInstance.get("/openstack/volumes/");
+        const res = await axiosInstance.get("/openstack/storage/volumes/");
         setVolumes(res.data || []);
       } catch (err) {
         console.error("Failed to fetch volumes:", err);
