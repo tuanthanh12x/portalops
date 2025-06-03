@@ -1,120 +1,145 @@
-import React, { useEffect, useState } from 'react';
-import Navbar from '../../components/Navbar';
-import { useLogout } from '../../features/auth/Logout';
+import React from 'react';
+import { Bar, Line } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 export default function AdminDashboard() {
-  const logout = useLogout();
-
-  // Fake data
-  const [data, setData] = useState({
-    userCount: 324,
-    activeTenants: 127,
-    newSignups: 24,
-    pendingApprovals: 3,
-    revenue: 15420.75,
-    recentLogins: [
-      { user: 'alice', time: '2 min ago' },
-      { user: 'bob', time: '10 min ago' },
-      { user: 'charlie', time: '30 min ago' },
-    ],
-    serverHealth: {
-      status: 'healthy',
-      uptime: '124h 37m',
-      lastCheck: '2025-06-03T11:45:00Z',
-    },
-    systemStats: {
-      totalInstances: 340,
-      totalCPU: 540,
-      totalRAM: 1024,
-      totalStorage: 7860,
-    },
-    supportTickets: [
-      { id: '#2341', subject: 'Billing issue', status: 'Open' },
-      { id: '#2342', subject: 'Cannot deploy instance', status: 'Pending' },
-      { id: '#2343', subject: 'Request feature', status: 'Closed' },
-    ]
-  });
-
   return (
-    <div className="dark bg-gray-900 min-h-screen">
-      <Navbar isAdmin />
-      <div className="container mx-auto px-4 py-10">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-400">System Overview & Control Panel</p>
-          </div>
-          <button
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            onClick={logout}
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-          {[
-            { title: 'Users', value: data.userCount, icon: '👥' },
-            { title: 'Active Tenants', value: data.activeTenants, icon: '🏘️' },
-            { title: 'Revenue (USD)', value: `$${data.revenue.toLocaleString()}`, icon: '💰' },
-            { title: 'Pending Approvals', value: data.pendingApprovals, icon: '🕓' },
-          ].map((item, i) => (
-            <div key={i} className="bg-gray-800 p-5 rounded-xl shadow-md">
-              <div className="text-4xl">{item.icon}</div>
-              <h2 className="text-white text-xl font-semibold mt-2">{item.title}</h2>
-              <p className="text-gray-300 text-lg">{item.value}</p>
-            </div>
+    <div className="min-h-screen bg-gray-950 text-white font-sans">
+      {/* Top Navbar */}
+      <div className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-800">
+        <div className="text-xl font-bold">🌐 AdminPanel</div>
+        <div className="flex gap-8">
+          {['Overview', 'Users', 'Resources', 'Billing', 'System', 'Support'].map((item) => (
+            <button key={item} className="text-gray-300 hover:text-white">
+              {item}
+            </button>
           ))}
         </div>
+      </div>
 
-        {/* System Stats + Server Health */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-white mb-4">System Resources</h3>
-            <ul className="space-y-2 text-gray-300">
-              <li>Total Instances: <span className="text-white">{data.systemStats.totalInstances}</span></li>
-              <li>Total CPU: <span className="text-white">{data.systemStats.totalCPU} cores</span></li>
-              <li>Total RAM: <span className="text-white">{data.systemStats.totalRAM} GB</span></li>
-              <li>Total Storage: <span className="text-white">{data.systemStats.totalStorage} GB</span></li>
-            </ul>
-          </div>
+      {/* Info Header */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-900 border-b border-gray-800">
+        <div className="bg-gray-800 p-4 rounded">👑 Admin: John Doe</div>
+        <div className="bg-gray-800 p-4 rounded">🔔 Alerts: 3</div>
+        <div className="bg-gray-800 p-4 rounded">✅ System Status: OK</div>
+      </div>
 
-          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-white mb-4">Server Health</h3>
-            <p>Status: <span className={`font-bold ${data.serverHealth.status === 'healthy' ? 'text-green-400' : 'text-red-400'}`}>{data.serverHealth.status}</span></p>
-            <p>Uptime: <span className="text-white">{data.serverHealth.uptime}</span></p>
-            <p>Last Check: <span className="text-white">{new Date(data.serverHealth.lastCheck).toLocaleString()}</span></p>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        {/* SYSTEM OVERVIEW */}
+        <div className="bg-gray-800 rounded p-4 col-span-2">
+          <h2 className="text-lg font-bold mb-4">System Overview</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <Card title="Active Users" value="324" />
+            <Card title="Total VMs" value="89" />
+            <Card title="Storage Used" value="76%" />
           </div>
         </div>
 
-        {/* Recent Logins + Support Tickets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-white mb-4">Recent Logins</h3>
-            <ul className="space-y-2 text-gray-300">
-              {data.recentLogins.map((login, i) => (
-                <li key={i} className="flex justify-between">
-                  <span>{login.user}</span>
-                  <span className="text-gray-400">{login.time}</span>
-                </li>
-              ))}
+        {/* QUICK ACTIONS */}
+        <div className="bg-gray-800 rounded p-4">
+          <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
+          <div className="flex flex-col gap-3">
+            {['Add New User', 'System Settings', 'View Reports'].map((text) => (
+              <button key={text} className="bg-gray-700 hover:bg-gray-600 p-3 rounded text-left">
+                {text}
+              </button>
+            ))}
+          </div>
+          <div className="mt-6">
+            <h2 className="text-lg font-bold mb-2">Active Incidents</h2>
+            <ul className="list-disc list-inside text-sm text-red-400">
+              <li>Region 2: Network Issue</li>
+              <li>DB Cluster Maintenance</li>
             </ul>
           </div>
+        </div>
 
-          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-white mb-4">Support Tickets</h3>
-            <ul className="space-y-2 text-gray-300">
-              {data.supportTickets.map((ticket, i) => (
-                <li key={i} className="flex justify-between">
-                  <span>{ticket.subject} <span className="text-sm text-gray-500">({ticket.id})</span></span>
-                  <span className={`text-sm ${ticket.status === 'Open' ? 'text-yellow-300' : ticket.status === 'Pending' ? 'text-orange-400' : 'text-green-400'}`}>{ticket.status}</span>
-                </li>
-              ))}
-            </ul>
+        {/* RESOURCE UTILIZATION */}
+        <div className="bg-gray-800 rounded p-4 col-span-2">
+          <h2 className="text-lg font-bold mb-4">Resource Utilization</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <ChartCard label="CPU Usage" value={[30, 45, 50, 40, 60]} />
+            <ChartCard label="RAM Usage" value={[60, 50, 70, 65, 80]} />
+            <ChartCard label="Storage Usage" value={[45, 55, 40, 60, 75]} />
+            <ChartCard label="Network Usage" value={[20, 35, 50, 45, 30]} />
+          </div>
+        </div>
+
+        {/* REVENUE + SUPPORT */}
+        <div className="bg-gray-800 rounded p-4">
+          <h2 className="text-lg font-bold mb-4">Revenue</h2>
+          <div className="flex gap-2 mb-2">
+            <button className="bg-gray-700 px-3 py-1 rounded">Daily</button>
+            <button className="bg-gray-700 px-3 py-1 rounded">Monthly</button>
+            <button className="bg-gray-700 px-3 py-1 rounded">Yearly</button>
+          </div>
+          <p className="text-3xl font-bold text-green-400">$15,420</p>
+
+          <h2 className="text-lg font-bold mt-6 mb-2">Support Tickets</h2>
+          <div className="bg-gray-700 p-3 rounded mb-2">Open: 5 | Urgent: 1</div>
+          <button className="text-blue-400 underline hover:text-blue-300">View All Tickets</button>
+        </div>
+
+        {/* RECENT ACTIVITY */}
+        <div className="bg-gray-800 rounded p-4 col-span-3">
+          <h2 className="text-lg font-bold mb-4">Recent Activity</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-700 text-gray-200">
+                  <th className="px-4 py-2">Time</th>
+                  <th className="px-4 py-2">User</th>
+                  <th className="px-4 py-2">Action</th>
+                  <th className="px-4 py-2">Resource</th>
+                  <th className="px-4 py-2">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['12:03', 'UserA', 'Created', 'VM', 'CentOS 7, 2GB RAM, Region 1'],
+                  ['12:01', 'UserB', 'Deleted', 'Volume', '50GB SSD'],
+                  ['11:59', 'Admin', 'Updated', 'Plan', 'Standard Plan → $19.99'],
+                ].map(([time, user, action, res, detail], i) => (
+                  <tr key={i} className="border-t border-gray-700">
+                    <td className="px-4 py-2">{time}</td>
+                    <td className="px-4 py-2">{user}</td>
+                    <td className="px-4 py-2">{action}</td>
+                    <td className="px-4 py-2">{res}</td>
+                    <td className="px-4 py-2">{detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Card({ title, value }) {
+  return (
+    <div className="bg-gray-700 p-4 rounded text-center">
+      <div className="text-sm text-gray-300">{title}</div>
+      <div className="text-2xl font-bold">{value}</div>
+    </div>
+  );
+}
+
+function ChartCard({ label, value }) {
+  const data = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+    datasets: [{
+      label,
+      data: value,
+      backgroundColor: '#4ade80',
+    }]
+  };
+  return (
+    <div className="bg-gray-700 p-4 rounded">
+      <div className="text-sm mb-2 text-gray-300">{label}</div>
+      <Bar data={data} options={{ responsive: true, plugins: { legend: { display: false } } }} />
     </div>
   );
 }
