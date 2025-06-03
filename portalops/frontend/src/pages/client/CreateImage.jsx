@@ -51,85 +51,84 @@ const CreateImageForm = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white min-h-screen">
+    <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
       <Navbar credits={150} />
+      <div className="max-w-3xl mx-auto p-8 space-y-6 animate-fade-in">
+        <h1 className="text-3xl font-extrabold text-blue-400 tracking-wide drop-shadow text-center">
+          🧱 Upload a Custom Image
+        </h1>
 
-      <div className="flex items-center justify-center py-12 px-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-lg backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_24px_rgba(0,0,0,0.7)] transition-all"
+          className="bg-black/40 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 border border-gray-700"
         >
-          <h2 className="text-3xl font-bold mb-6 text-center tracking-wide">
-            🚀 Deploy Image to Cloud
-          </h2>
-
           {error && (
-            <div className="mb-4 text-red-400 text-sm text-center bg-red-900/40 py-2 px-3 rounded">
+            <div className="text-red-400 text-sm bg-red-900/40 py-2 px-3 rounded text-center">
               {error}
             </div>
           )}
 
-          <label className="block mb-5">
-            <span className="block mb-1 text-sm font-medium">🖋️ Name</span>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Image Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nebula OS v1.0"
-              className="w-full px-4 py-3 rounded-lg bg-[#1f1f2e] border border-gray-700 focus:ring-2 focus:ring-cyan-500 outline-none"
+              placeholder="e.g., Nebula OS v1.0"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
-          </label>
+          </div>
 
-          <label className="block mb-5">
-            <span className="block mb-1 text-sm font-medium">💾 Disk Format</span>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Disk Format</label>
             <select
               value={diskFormat}
               onChange={(e) => setDiskFormat(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-[#1f1f2e] border border-gray-700 focus:ring-2 focus:ring-purple-500 outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-purple-500"
             >
               {diskFormats.map(df => (
                 <option key={df} value={df}>{df.toUpperCase()}</option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="block mb-5">
-            <span className="block mb-1 text-sm font-medium">🔐 Visibility</span>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Visibility</label>
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-[#1f1f2e] border border-gray-700 focus:ring-2 focus:ring-pink-500 outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-pink-500"
             >
               <option value="private">Private</option>
               <option value="public">Public</option>
             </select>
-          </label>
+          </div>
 
-          <label className="block mb-6">
-            <span className="block mb-1 text-sm font-medium">📂 Image File</span>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Upload Image File</label>
             <input
               type="file"
               onChange={(e) => setFile(e.target.files[0])}
               accept=".qcow2,.raw,.vmdk,.vdi,.iso"
-              className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 cursor-pointer"
+              className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
             />
-          </label>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 transition-all rounded-lg font-bold tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
                 Uploading...
               </span>
             ) : (
-              'Upload Image'
+              '🚀 Upload Image'
             )}
           </button>
         </form>

@@ -23,7 +23,7 @@ const MyInstancesPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0f0f1c] text-white">
+    <div className="min-h-screen text-white">
       <Navbar credits={150} />
 
       <main className="container mx-auto px-4 py-6">

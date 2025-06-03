@@ -1,61 +1,73 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import './QuickActions.css';
 
 const QuickActions = () => {
   const buttonVariants = {
     hover: {
-      scale: 1.05,
-      boxShadow: '0 0 10px rgba(100, 149, 237, 0.6), 0 0 20px rgba(100, 149, 237, 0.4)', // softer blue glow
-      transition: { duration: 0.3 },
+      scale: 1.03,
+      boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)', // Màu indigo glow
+      transition: { duration: 0.25 },
     },
     tap: {
-      scale: 0.95,
-      transition: { duration: 0.2 },
+      scale: 0.97,
+      transition: { duration: 0.15 },
     },
   };
 
+  const commonButtonClass =
+    'relative bg-black/30 backdrop-blur-lg border border-gray-700 text-gray-200 py-3 px-6 rounded-lg shadow-md overflow-hidden group transition';
+
   return (
-    <div className="col-span-2 flex flex-col">
-      <h2 className="text-2xl font-bold text-gray-200 mb-4 font-fantasy ml-1 mt-5">Quick Actions</h2>
+    <div className="quick-actions col-span-2 flex flex-col">
+      <h2 className="text-2xl font-bold text-indigo-400 mb-4 font-fantasy ml-1 mt-5 drop-shadow-md">
+        Quick Actions
+      </h2>
       <div className="flex flex-col gap-4 mt-5">
+        {/* Create Instance */}
         <motion.div
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
-          className="relative bg-gradient-to-r from-[#2a2a4e] to-[#1e1e3a] text-gray-200 py-3 px-6 rounded-xl shadow-md overflow-hidden group"
+          className={commonButtonClass}
         >
-          <Link to="/create-instance" className="relative z-10 inline-block text-center w-full font-semibold">
+          <Link
+            to="/create-instance"
+            className="relative z-10 inline-block text-center w-full font-semibold"
+          >
             Create Instance
           </Link>
-          <div className="absolute inset-0 bg-[#12122a] opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-          <div className="absolute inset-0 neon-glow" />
+          <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
         </motion.div>
 
-        <motion.button
+        {/* Add Volume */}
+        <motion.div
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
-          className="relative bg-gradient-to-r from-[#1e3a2a] to-[#13301e] text-gray-200 py-3 px-6 rounded-xl shadow-md overflow-hidden group"
+          className={commonButtonClass}
         >
-          <Link to="/create-volume" className="relative z-10 inline-block text-center w-full font-semibold">
+          <Link
+            to="/create-volume"
+            className="relative z-10 inline-block text-center w-full font-semibold"
+          >
             Add Volume
           </Link>
-          <div className="absolute inset-0 bg-[#121a12] opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-          <div className="absolute inset-0 neon-glow" />
-        </motion.button>
+          <div className="absolute inset-0 bg-green-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+        </motion.div>
 
-        <motion.button
+        {/* View Billing */}
+        <motion.div
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
-          className="relative bg-gradient-to-r from-[#3a3a3a] to-[#1e1e1e] text-gray-300 py-3 px-6 rounded-xl shadow-md overflow-hidden group"
+          className={commonButtonClass}
         >
-          <span className="relative z-10 font-semibold">View Billing</span>
-          <div className="absolute inset-0 bg-[#121212] opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-          <div className="absolute inset-0 neon-glow" />
-        </motion.button>
+          <span className="relative z-10 inline-block text-center w-full font-semibold">
+            View Billing
+          </span>
+          <div className="absolute inset-0 bg-gray-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+        </motion.div>
       </div>
     </div>
   );
