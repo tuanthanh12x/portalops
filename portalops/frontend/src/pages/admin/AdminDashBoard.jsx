@@ -1,6 +1,4 @@
 import React from 'react';
-import { Bar, Line } from 'react-chartjs-2';
-import 'chart.js/auto';
 
 export default function AdminDashboard() {
   return (
@@ -59,10 +57,10 @@ export default function AdminDashboard() {
         <div className="bg-gray-800 rounded p-4 col-span-2">
           <h2 className="text-lg font-bold mb-4">Resource Utilization</h2>
           <div className="grid grid-cols-2 gap-4">
-            <ChartCard label="CPU Usage" value={[30, 45, 50, 40, 60]} />
-            <ChartCard label="RAM Usage" value={[60, 50, 70, 65, 80]} />
-            <ChartCard label="Storage Usage" value={[45, 55, 40, 60, 75]} />
-            <ChartCard label="Network Usage" value={[20, 35, 50, 45, 30]} />
+            <SimpleBarChart label="CPU Usage" values={[30, 45, 50, 40, 60]} />
+            <SimpleBarChart label="RAM Usage" values={[60, 50, 70, 65, 80]} />
+            <SimpleBarChart label="Storage Usage" values={[45, 55, 40, 60, 75]} />
+            <SimpleBarChart label="Network Usage" values={[20, 35, 50, 45, 30]} />
           </div>
         </div>
 
@@ -127,19 +125,34 @@ function Card({ title, value }) {
   );
 }
 
-function ChartCard({ label, value }) {
-  const data = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-    datasets: [{
-      label,
-      data: value,
-      backgroundColor: '#4ade80',
-    }]
-  };
+// Simple Bar Chart with SVG, no lib
+function SimpleBarChart({ label, values }) {
+  const maxVal = Math.max(...values);
   return (
-    <div className="bg-gray-700 p-4 rounded">
+    <div className="bg-gray-700 p-4 rounded shadow">
       <div className="text-sm mb-2 text-gray-300">{label}</div>
-      <Bar data={data} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+      <svg
+        width="100%"
+        height="60"
+        viewBox={`0 0 ${values.length * 20} 60`}
+        preserveAspectRatio="none"
+      >
+        {values.map((val, i) => {
+          const barHeight = (val / maxVal) * 50;
+          return (
+            <rect
+              key={i}
+              x={i * 20 + 5}
+              y={60 - barHeight - 5}
+              width={10}
+              height={barHeight}
+              fill="#4ade80"
+              rx={2}
+              ry={2}
+            />
+          );
+        })}
+      </svg>
     </div>
   );
 }
