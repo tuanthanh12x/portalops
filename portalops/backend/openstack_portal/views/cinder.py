@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .openstack_utils import connect_with_token  # thay thế bằng path helper thực tế
-from .redis_client import redis_client  # thay thế bằng thực thể Redis bạn đang dùng
+from utils.conn import connect_with_token  # thay thế bằng path helper thực tế
+from utils.redis_client import redis_client  # thay thế bằng thực thể Redis bạn đang dùng
 
 class VolumeAPI(APIView):
     permission_classes = [IsAuthenticated]
