@@ -1,54 +1,53 @@
-.futuristic-card {
-  background-color: #1a1a2e;  /* dark, calm */
-  border: 1px solid #33344a;  /* subtle border */
-  position: relative;
-  overflow: hidden;
+/* Tooltip show/hide on focus/hover */
+[role="img"]:hover [role="tooltip"],
+[role="img"]:focus [role="tooltip"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 10px);
 }
 
-/* Soft subtle glow, no neon */
-.neon-glow {
-  background: radial-gradient(circle, rgba(100, 100, 120, 0.15), transparent);
-  opacity: 0.4;
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
+/* Reduced holographic effect removed for minimalism */
+/* Text styling */
+.text-white {
+  color: #ffffff;
 }
 
-/* Particles very muted, single gray tone */
-.particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #55596e;  /* muted gray-blue */
-  opacity: 0.1;
-  animation: float 6s ease-in-out infinite;
-}
-
-.particle-1 {
-  top: 20%;
-  left: 15%;
-}
-.particle-2 {
-  top: 50%;
-  left: 40%;
-}
-.particle-3 {
-  bottom: 20%;
-  right: 15%;
-}
-
-/* Trail circle in subtle gray */
-.trail {
-  stroke: #44475a;  /* darker gray */
-  opacity: 0.5;
-}
-
-/* Plain white text, no gradient */
-.holographic-text {
-  color: #ddd;
+.font-semibold {
   font-weight: 600;
 }
 
-/* Keep other styles as they are */
+.font-mono {
+  font-family: monospace, monospace;
+}
+
+.bg-gray-900 {
+  background-color: #111827;
+}
+
+.bg-opacity-90 {
+  opacity: 0.9;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3);
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.cursor-help {
+  cursor: help;
+}

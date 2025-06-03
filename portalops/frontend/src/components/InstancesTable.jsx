@@ -22,7 +22,7 @@ const InstancesTable = ({ instances }) => {
 
       const consoleUrl = res.data.console?.url;
       if (consoleUrl) {
-        window.open(consoleUrl, "_blank");
+        window.open(consoleUrl, "_blank", "noopener,noreferrer");
       } else {
         alert("Console URL not found in response.");
       }
@@ -56,87 +56,130 @@ const InstancesTable = ({ instances }) => {
         )
       );
     } catch (error) {
-      // Silent fail for now
+      // You might want to log the error for diagnostics
+      console.error("Action failed:", error);
     } finally {
       setLoadingId(null);
     }
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold text-gray-200 font-fantasy">My Instances</h2>
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <header className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-extrabold text-gray-100 tracking-wide font-sans">
+          My Instances
+        </h2>
         <Link
           to="/create-instance"
-          className="inline-block bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-md transition-all duration-200"
+          className="inline-flex items-center bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-6 py-2 rounded-lg shadow-lg transition focus:outline-none focus:ring-2 focus:ring-green-500"
+          aria-label="Create a new instance"
         >
           + Create Instance
         </Link>
-      </div>
+      </header>
 
-      <div className="bg-[#1a1a2e] rounded shadow p-4 overflow-auto border border-[#2c2c3e]">
-        <div className="min-w-[800px] w-full">
-          <div className="hidden md:grid grid-cols-7 gap-4 bg-[#2c2c3e] text-gray-300 text-sm p-3 rounded-t">
-            <div>Name</div>
-            <div>Status</div>
-            <div>IP</div>
-            <div>Flavor</div>
-            <div>Region</div>
-            <div>Created</div>
-            <div className="text-right">Actions</div>
-          </div>
-
-          <div className="divide-y divide-[#33344a]">
+      <div className="overflow-x-auto rounded-lg border border-gray-700 shadow-lg bg-[#1a1a2e]">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-[#2c2c3e]">
+            <tr>
+              {["Name", "Status", "IP", "Flavor", "Region", "Created", "Actions"].map((header) => (
+                <th
+                  key={header}
+                  scope="col"
+                  className="px-6 py-3 text-left text-sm font-semibold text-gray-300 uppercase tracking-wide select-none"
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
             {instanceList.length === 0 ? (
-              <div className="text-center p-6 text-gray-500">No instances found.</div>
+              <tr>
+                <td colSpan="7" className="text-center py-8 text-gray-500 font-medium">
+                  No instances found.
+                </td>
+              </tr>
             ) : (
               instanceList.map((instance) => {
                 const isOnline = instance.status.toLowerCase() === "online";
                 const actionLabel = isOnline ? "Shut Down" : "Power On";
                 const actionType = isOnline ? "stop" : "start";
 
-                const actionBg = isOnline ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700";
-                const consoleBg = "bg-blue-500 hover:bg-blue-600";
-
                 return (
-                  <div
+                  <tr
                     key={instance.id}
-                    className="grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 p-3 hover:bg-[#26263b] transition-colors text-gray-300"
+                    className="hover:bg-[#26263b] transition-colors"
                   >
-                    <div>{instance.name}</div>
-                    <div>
-                      <span className={isOnline ? "text-green-400" : "text-red-400"}>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-200 font-medium">{instance.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          isOnline ? "bg-green-800 text-green-400" : "bg-red-800 text-red-400"
+                        }`}
+                        aria-label={`Status: ${instance.status}`}
+                      >
                         {instance.status}
                       </span>
-                    </div>
-                    <div>{instance.ip}</div>
-                    <div>{instance.plan || "-"}</div>
-                    <div>{instance.region}</div>
-                    <div>{new Date(instance.created).toLocaleString()}</div>
-                    <div className="flex justify-start md:justify-end space-x-2">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">{instance.ip || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">{instance.plan || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">{instance.region || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300" title={new Date(instance.created).toLocaleString()}>
+                      {new Date(instance.created).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap flex space-x-2 justify-start md:justify-end">
                       <button
                         disabled={loadingId === instance.id}
                         onClick={() => handleAction(instance.id, actionType)}
-                        className={`${actionBg} text-white px-3 py-1 rounded text-xs transition-colors disabled:opacity-50`}
+                        className={`inline-flex items-center justify-center px-3 py-1 rounded-md text-xs font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+                          isOnline
+                            ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                            : "bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        aria-label={`${actionLabel} instance ${instance.name}`}
                       >
+                        {loadingId === instance.id ? (
+                          <svg
+                            className="animate-spin h-4 w-4 mr-2 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            ></path>
+                          </svg>
+                        ) : null}
                         {actionLabel}
                       </button>
                       <button
                         disabled={loadingId === instance.id}
                         onClick={() => handleConsole(instance.id)}
-                        className={`${consoleBg} text-white px-3 py-1 rounded text-xs transition-colors disabled:opacity-50`}
+                        className="inline-flex items-center justify-center px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={`Open console for instance ${instance.name}`}
                       >
                         Console
                       </button>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 );
               })
             )}
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -8,7 +8,6 @@ const Navbar = () => {
   const computeRef = useRef(null);
   const storageRef = useRef(null);
 
-  // Đóng menu khi click ngoài (mobile + desktop dropdowns)
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (
@@ -22,51 +21,42 @@ const Navbar = () => {
         setStorageDropdownOpen(false);
       }
     };
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Toggle dropdown desktop
-  const toggleCompute = () => {
-    setComputeDropdownOpen((prev) => {
-      if (!prev) setStorageDropdownOpen(false);
-      return !prev;
-    });
-  };
-  const toggleStorage = () => {
-    setStorageDropdownOpen((prev) => {
-      if (!prev) setComputeDropdownOpen(false);
-      return !prev;
-    });
-  };
-
-  // Toggle dropdown mobile (giữ nguyên)
-  const toggleComputeMobile = () => {
-    setComputeDropdownOpen((prev) => {
-      if (!prev) setStorageDropdownOpen(false);
-      return !prev;
-    });
-  };
-  const toggleStorageMobile = () => {
-    setStorageDropdownOpen((prev) => {
-      if (!prev) setComputeDropdownOpen(false);
-      return !prev;
-    });
+  const toggleDropdown = (dropdown) => {
+    if (dropdown === 'compute') {
+      setComputeDropdownOpen((prev) => {
+        if (!prev) setStorageDropdownOpen(false);
+        return !prev;
+      });
+    } else if (dropdown === 'storage') {
+      setStorageDropdownOpen((prev) => {
+        if (!prev) setComputeDropdownOpen(false);
+        return !prev;
+      });
+    }
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-900 text-white shadow-md">
-      <div className="container mx-auto flex justify-between items-center px-4 py-3">
-        <a href="/" className="text-2xl font-bold tracking-wide">
+    <nav className="sticky top-0 z-50 bg-gray-900 text-gray-100 shadow-lg font-sans">
+      <div className="container mx-auto flex justify-between items-center px-6 py-4">
+        <a
+          href="/"
+          className="text-3xl font-extrabold tracking-tight text-emerald-400 hover:text-emerald-300 transition-colors"
+          aria-label="GreenCloud Home"
+        >
           GreenCloud
         </a>
 
-        {/* Hamburger button (mobile) */}
+        {/* Hamburger Button (Mobile) */}
         <button
           id="hamburger-btn"
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden focus:outline-none"
           aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
         >
           {menuOpen ? (
             <svg
@@ -91,28 +81,28 @@ const Navbar = () => {
           )}
         </button>
 
-        {/* Desktop menu */}
-        <ul className="hidden md:flex md:items-center md:space-x-8 text-lg">
+        {/* Desktop Menu */}
+        <ul className="hidden md:flex md:items-center md:space-x-10 text-lg">
           <li>
             <a
               href="/"
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Dashboard
             </a>
           </li>
 
-          {/* Compute dropdown desktop */}
+          {/* Compute Dropdown */}
           <li className="relative" ref={computeRef}>
             <button
-              onClick={toggleCompute}
-              className="flex items-center hover:text-gray-300 transition-colors duration-200 focus:outline-none"
-              aria-expanded={computeDropdownOpen}
+              onClick={() => toggleDropdown('compute')}
+              className="flex items-center space-x-1 hover:text-emerald-400 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
               aria-haspopup="true"
+              aria-expanded={computeDropdownOpen}
             >
-              Compute
+              <span>Compute</span>
               <svg
-                className={`ml-1 h-4 w-4 transform transition-transform ${
+                className={`h-4 w-4 transform transition-transform duration-300 ${
                   computeDropdownOpen ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -124,11 +114,16 @@ const Navbar = () => {
               </svg>
             </button>
             {computeDropdownOpen && (
-              <ul className="absolute left-0 mt-2 w-40 bg-gray-800 rounded-md shadow-lg z-20">
+              <ul
+                className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30"
+                role="menu"
+                aria-label="Compute submenu"
+              >
                 <li>
                   <a
                     href="/instances"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Instances
                   </a>
@@ -136,7 +131,8 @@ const Navbar = () => {
                 <li>
                   <a
                     href="/images"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Images
                   </a>
@@ -144,7 +140,8 @@ const Navbar = () => {
                 <li>
                   <a
                     href="/keypairs"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Keypairs
                   </a>
@@ -153,17 +150,17 @@ const Navbar = () => {
             )}
           </li>
 
-          {/* Storage dropdown desktop */}
+          {/* Storage Dropdown */}
           <li className="relative" ref={storageRef}>
             <button
-              onClick={toggleStorage}
-              className="flex items-center hover:text-gray-300 transition-colors duration-200 focus:outline-none"
-              aria-expanded={storageDropdownOpen}
+              onClick={() => toggleDropdown('storage')}
+              className="flex items-center space-x-1 hover:text-emerald-400 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
               aria-haspopup="true"
+              aria-expanded={storageDropdownOpen}
             >
-              Storage
+              <span>Storage</span>
               <svg
-                className={`ml-1 h-4 w-4 transform transition-transform ${
+                className={`h-4 w-4 transform transition-transform duration-300 ${
                   storageDropdownOpen ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -175,27 +172,34 @@ const Navbar = () => {
               </svg>
             </button>
             {storageDropdownOpen && (
-              <ul className="absolute left-0 mt-2 w-40 bg-gray-800 rounded-md shadow-lg z-20">
+              <ul
+                className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30"
+                role="menu"
+                aria-label="Storage submenu"
+              >
                 <li>
                   <a
                     href="/volumes"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Volumes
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/create-image"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    href="/snapshots"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Snapshots
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/create-keypair"
-                    className="block px-4 py-2 hover:bg-gray-700"
+                    href="/buckets"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
                   >
                     Buckets
                   </a>
@@ -206,24 +210,24 @@ const Navbar = () => {
 
           <li>
             <a
-              href="/"
-              className="hover:text-gray-300 transition-colors duration-200"
+              href="/network"
+              className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Network
             </a>
           </li>
           <li>
             <a
-              href="/"
-              className="hover:text-gray-300 transition-colors duration-200"
+              href="/billing"
+              className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Billing
             </a>
           </li>
           <li>
             <a
-              href="/"
-              className="hover:text-gray-300 transition-colors duration-200"
+              href="/support"
+              className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Support
             </a>
@@ -231,17 +235,18 @@ const Navbar = () => {
         </ul>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu */}
       <div
         id="mobile-menu"
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 shadow-lg transform ${
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 shadow-xl transform ${
           menuOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 ease-in-out z-50`}
+        } transition-transform duration-300 ease-in-out z-40`}
+        aria-hidden={!menuOpen}
       >
-        <nav className="flex flex-col mt-16 space-y-4 px-6">
+        <nav className="flex flex-col mt-20 px-6 space-y-6 text-lg select-none">
           <a
             href="/"
-            className="text-white text-xl py-2 border-b border-gray-700"
+            className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
@@ -249,12 +254,15 @@ const Navbar = () => {
 
           <div>
             <button
-              onClick={toggleComputeMobile}
-              className="w-full flex justify-between items-center text-white text-lg py-2 border-b border-gray-700 focus:outline-none"
+              onClick={() => toggleDropdown('compute')}
+              className="w-full flex justify-between items-center text-gray-100 font-semibold py-3 border-b border-gray-700 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
+              aria-expanded={computeDropdownOpen}
+              aria-controls="mobile-compute-menu"
+              aria-haspopup="true"
             >
-              Compute
+              <span>Compute</span>
               <svg
-                className={`w-5 h-5 transform transition-transform ${
+                className={`w-5 h-5 transform transition-transform duration-300 ${
                   computeDropdownOpen ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -266,12 +274,18 @@ const Navbar = () => {
               </svg>
             </button>
             {computeDropdownOpen && (
-              <ul className="pl-4 mt-2 space-y-2">
+              <ul
+                id="mobile-compute-menu"
+                className="pl-6 mt-2 space-y-2"
+                role="menu"
+                aria-label="Mobile Compute submenu"
+              >
                 <li>
                   <a
                     href="/instances"
-                    className="block text-gray-300 hover:text-white"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     Instances
                   </a>
@@ -279,8 +293,9 @@ const Navbar = () => {
                 <li>
                   <a
                     href="/images"
-                    className="block text-gray-300 hover:text-white"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     Images
                   </a>
@@ -288,8 +303,9 @@ const Navbar = () => {
                 <li>
                   <a
                     href="/keypairs"
-                    className="block text-gray-300 hover:text-white"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     Keypairs
                   </a>
@@ -300,12 +316,15 @@ const Navbar = () => {
 
           <div>
             <button
-              onClick={toggleStorageMobile}
-              className="w-full flex justify-between items-center text-white text-lg py-2 border-b border-gray-700 focus:outline-none"
+              onClick={() => toggleDropdown('storage')}
+              className="w-full flex justify-between items-center text-gray-100 font-semibold py-3 border-b border-gray-700 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
+              aria-expanded={storageDropdownOpen}
+              aria-controls="mobile-storage-menu"
+              aria-haspopup="true"
             >
-              Storage
+              <span>Storage</span>
               <svg
-                className={`w-5 h-5 transform transition-transform ${
+                className={`w-5 h-5 transform transition-transform duration-300 ${
                   storageDropdownOpen ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -317,30 +336,38 @@ const Navbar = () => {
               </svg>
             </button>
             {storageDropdownOpen && (
-              <ul className="pl-4 mt-2 space-y-2">
+              <ul
+                id="mobile-storage-menu"
+                className="pl-6 mt-2 space-y-2"
+                role="menu"
+                aria-label="Mobile Storage submenu"
+              >
                 <li>
                   <a
-                    href="/create-volume"
-                    className="block text-gray-300 hover:text-white"
+                    href="/volumes"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
-                    Volume
+                    Volumes
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/create-image"
-                    className="block text-gray-300 hover:text-white"
+                    href="/snapshots"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     Snapshots
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/create-keypair"
-                    className="block text-gray-300 hover:text-white"
+                    href="/buckets"
+                    className="block text-gray-300 hover:text-emerald-400 transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     Buckets
                   </a>
@@ -350,22 +377,22 @@ const Navbar = () => {
           </div>
 
           <a
-            href="/"
-            className="text-white text-lg py-2 border-b border-gray-700"
+            href="/network"
+            className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Network
           </a>
           <a
-            href="/"
-            className="text-white text-lg py-2 border-b border-gray-700"
+            href="/billing"
+            className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Billing
           </a>
           <a
-            href="/"
-            className="text-white text-lg py-2 border-b border-gray-700"
+            href="/support"
+            className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Support
@@ -373,11 +400,11 @@ const Navbar = () => {
         </nav>
       </div>
 
-      {/* Overlay */}
+      {/* Overlay for mobile menu */}
       {menuOpen && (
         <div
           onClick={() => setMenuOpen(false)}
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
           aria-hidden="true"
         />
       )}

@@ -3,33 +3,35 @@ import './AccountCard.css';
 
 const AccountCard = () => {
   return (
-    <div className="futuristic-card p-5 rounded-lg shadow-sm relative overflow-hidden border border-[#2c2c3e]">
-      <h4 className="text-lg font-semibold text-gray-200 mb-4 font-fantasy">
-        Account
-      </h4>
-      <div className="space-y-3 text-sm text-gray-400 font-fantasy">
+    <div className="account-card p-6 rounded-lg shadow-md border border-gray-700 relative overflow-hidden">
+      <h4 className="text-xl font-semibold text-gray-100 mb-6 font-fantasy">Account</h4>
+      <div className="space-y-5 text-sm text-gray-400 font-fantasy">
         <div className="flex justify-between">
           <span className="font-medium text-gray-300">Email</span>
-          <span className="text-gray-400">tuanthanhxp1901@gmail.com</span>
+          <span className="truncate max-w-xs text-gray-400" title="tuanthanhxp1901@gmail.com">
+            tuanthanhxp1901@gmail.com
+          </span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="font-medium text-gray-300">2FA</span>
-          <span className="bg-gray-700 px-2 py-0.5 rounded-full text-xs text-gray-300">
+          <span className="inline-block bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-300 font-mono">
             Off
           </span>
         </div>
         <div className="flex justify-between">
           <span className="font-medium text-gray-300">Last Login</span>
-          <span className="text-gray-400 text-xs">
+          <time
+            className="text-gray-400 text-xs font-mono"
+            dateTime="2025-05-23T09:54:00"
+          >
             May 23, 2025 9:54 AM
-          </span>
+          </time>
         </div>
         <div className="flex justify-between">
           <span className="font-medium text-gray-300">Timezone</span>
-          <span className="text-gray-400 text-xs">Asia/Bangkok</span>
+          <span className="text-gray-400 text-xs font-mono">Asia/Bangkok</span>
         </div>
       </div>
-      <div className="absolute inset-0 neon-glow pointer-events-none" />
     </div>
   );
 };

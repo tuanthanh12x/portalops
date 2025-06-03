@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance from '../../api/axiosInstance';  // Đường dẫn tùy dự án
+import axiosInstance from '../../api/axiosInstance';
 import Navbar from '../../components/Navbar';
 
 const CreateInstancePage = () => {
@@ -8,26 +8,16 @@ const CreateInstancePage = () => {
   const [imageTab, setImageTab] = useState('my-images');
   const [image, setImage] = useState('');
   const [plan, setPlan] = useState('');
-  const [network, setNetwork] = useState('');  // Thêm state chọn network
-  const [options, setOptions] = useState({
-    ha: true,
-    floatingIp: false,
-    backups: true,
-  });
+  const [network, setNetwork] = useState('');
+  const [options, setOptions] = useState({ ha: true, floatingIp: false, backups: true });
   const [authMethod, setAuthMethod] = useState('ssh');
   const [sshKey, setSshKey] = useState('default-key');
 
-  // Dữ liệu option lấy từ API
   const [instanceOptions, setInstanceOptions] = useState({
     regions: [],
     plans: [],
-    images: {
-      distribution: [],
-      marketplace: [],
-      my_images: [],
-      iso: [],
-    },
-    networks: [],  // Thêm networks
+    images: { distribution: [], marketplace: [], my_images: [], iso: [] },
+    networks: [],
   });
 
   useEffect(() => {
@@ -35,7 +25,6 @@ const CreateInstancePage = () => {
       .then(res => {
         const data = res.data;
         setInstanceOptions(data);
-
         setRegion(data.regions[0] || '');
         if (data.images.my_images.length > 0) {
           setImageTab('my-images');
@@ -47,7 +36,7 @@ const CreateInstancePage = () => {
           setImage('');
         }
         setPlan(data.plans[0]?.id || '');
-        setNetwork(data.networks[0]?.id || '');  
+        setNetwork(data.networks[0]?.id || '');
       })
       .catch(err => {
         console.error('❌ Failed to fetch instance options:', err);
@@ -59,31 +48,26 @@ const CreateInstancePage = () => {
   };
 
   const handleCreate = async () => {
-  if (!image || !plan || !network || !sshKey) {
-    alert("❌ Please fill all required fields.");
-    return;
-  }
-
-  const payload = {
-    name: name || 'my-instance',
-    image_id: image,
-    flavor_id: plan,
-    network_id: network,
+    if (!image || !plan || !network || !sshKey) {
+      alert("❌ Please fill all required fields.");
+      return;
+    }
+    const payload = {
+      name: name || 'my-instance',
+      image_id: image,
+      flavor_id: plan,
+      network_id: network,
+    };
+    console.log("📤 Sending create-instance payload:", payload);
+    try {
+      const res = await axiosInstance.post('/openstack/compute/instances/', payload);
+      alert('✅ Instance created successfully!');
+      console.log(res.data);
+    } catch (err) {
+      console.error('❌ Failed to create instance:', err.response?.data || err.message);
+      alert(`❌ ${err.response?.data?.error || 'Failed to create instance. Check console.'}`);
+    }
   };
-
-  console.log("📤 Sending create-instance payload:", payload);
-
-  try {
-    const res = await axiosInstance.post('/openstack/compute/instances/', payload);
-    alert('✅ Instance created successfully!');
-    console.log(res.data);
-  } catch (err) {
-    console.error('❌ Failed to create instance:', err.response?.data || err.message);
-    alert(`❌ ${err.response?.data?.error || 'Failed to create instance. Check console.'}`);
-  }
-};
-
-
 
   const renderImagesByTab = () => {
     let imagesToShow = [];
@@ -94,11 +78,9 @@ const CreateInstancePage = () => {
       case 'iso': imagesToShow = instanceOptions.images.iso; break;
       default: imagesToShow = [];
     }
-
     if (imagesToShow.length === 0) {
       return <p className="text-gray-400">No images available in this category.</p>;
     }
-
     return imagesToShow.map(img => (
       <label key={img.id} className="flex items-center gap-2 cursor-pointer">
         <input
@@ -115,21 +97,17 @@ const CreateInstancePage = () => {
   };
 
   return (
-    <div className="bg-gray-900 text-gray-100 min-h-screen">
-      <div className="fixed top-4 right-4 z-[100] space-y-2" id="toast-container" data-turbo-permanent="" />
-
+    <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
       <Navbar credits={150} />
-
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-semibold text-white">Create New Instance</h1>
-
-        <div className="bg-gray-800 rounded-xl shadow p-6 space-y-6">
-          {/* Select Region */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">1. Select Region</h2>
-            <div className="flex gap-4">
+      <div className="max-w-5xl mx-auto p-8 space-y-8 animate-fade-in">
+        <h1 className="text-3xl font-extrabold text-blue-400 tracking-wide drop-shadow">🚀 Launch a New Cloud Instance</h1>
+        <div className="bg-black/40 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 border border-gray-700">
+          {/* Region Selection */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">1. Select Region</h2>
+            <div className="flex flex-wrap gap-4">
               {instanceOptions.regions.map(r => (
-                <label key={r} className="flex items-center gap-2 cursor-pointer">
+                <label key={r} className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
                   <input
                     type="radio"
                     name="region"
@@ -138,51 +116,49 @@ const CreateInstancePage = () => {
                     onChange={() => setRegion(r)}
                     className="accent-blue-500"
                   />
-                  <span className="capitalize">{r}</span>
+                  <span className="capitalize">🌐 {r}</span>
                 </label>
               ))}
             </div>
-          </div>
-
+          </section>
 
           {/* Instance Name */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">Instance Name</h2>
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">Instance Name</h2>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter instance name"
-              className="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:border-blue-500"
+              placeholder="e.g., nebula-x01"
+              className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
-          </div>
+          </section>
 
-
-          {/* Select Image */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">2. Select Image</h2>
-            <div className="flex gap-4 border-b border-gray-700 pb-2">
+          {/* Image Selection */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">2. Select Image</h2>
+            <div className="flex gap-2 border-b border-gray-700 pb-3 mb-3">
               {['distribution', 'marketplace', 'my-images', 'iso'].map(tab => (
                 <button
                   key={tab}
-                  className={`px-4 py-1 rounded ${imageTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  className={`px-4 py-2 rounded-full transition text-sm font-medium ${imageTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                   onClick={() => setImageTab(tab)}
                 >
-                  {tab.replace('-', ' ')}
+                  {tab.replace('-', ' ').toUpperCase()}
                 </button>
               ))}
             </div>
-            <div className="mt-4 flex flex-col gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
               {renderImagesByTab()}
             </div>
-          </div>
+          </section>
 
-          {/* Select Plan */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">3. Select Plan</h2>
+          {/* Plan Selection */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">3. Select Plan</h2>
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
               {instanceOptions.plans.map(planItem => (
-                <label key={planItem.id} className="flex items-center gap-2 cursor-pointer">
+                <label key={planItem.id} className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
                   <input
                     type="radio"
                     name="plan"
@@ -195,14 +171,14 @@ const CreateInstancePage = () => {
                 </label>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Select Network */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">4. Select Network</h2>
+          {/* Network Selection */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">4. Select Network</h2>
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
               {instanceOptions.networks.map(net => (
-                <label key={net.id} className="flex items-center gap-2 cursor-pointer">
+                <label key={net.id} className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
                   <input
                     type="radio"
                     name="network"
@@ -215,16 +191,16 @@ const CreateInstancePage = () => {
                 </label>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Additional Options */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">5. Additional Options</h2>
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">5. Additional Options</h2>
             {[{ key: 'ha', label: 'Enable High Availability' },
-            { key: 'floatingIp', label: 'Add Floating IP (+$1/month)' },
-            { key: 'backups', label: 'Enable Backups (+$2/month)' },
+              { key: 'floatingIp', label: 'Add Floating IP (+$1/month)' },
+              { key: 'backups', label: 'Enable Backups (+$2/month)' },
             ].map(opt => (
-              <label key={opt.key} className="flex items-center gap-2 block mt-1 cursor-pointer">
+              <label key={opt.key} className="flex items-center gap-2 mt-1 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={options[opt.key]}
@@ -234,14 +210,14 @@ const CreateInstancePage = () => {
                 <span>{opt.label}</span>
               </label>
             ))}
-          </div>
+          </section>
 
-          {/* Authentication */}
-          <div>
-            <h2 className="text-lg font-medium mb-2 text-white">6. Authentication</h2>
-            <div className="flex gap-4">
+          {/* Authentication Method */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">6. Authentication Method</h2>
+            <div className="flex gap-6">
               {['ssh', 'password'].map(method => (
-                <label key={method} className="flex items-center gap-2 cursor-pointer">
+                <label key={method} className="flex items-center gap-2 cursor-pointer hover:text-blue-400">
                   <input
                     type="radio"
                     name="authMethod"
@@ -258,20 +234,20 @@ const CreateInstancePage = () => {
               <select
                 value={sshKey}
                 onChange={(e) => setSshKey(e.target.value)}
-                className="mt-2 border border-gray-700 rounded px-3 py-2 w-full bg-gray-700 text-gray-100"
+                className="mt-3 border border-gray-700 rounded px-4 py-2 w-full bg-gray-800 text-gray-100"
               >
                 <option value="default-key">default-key</option>
                 <option value="admin-key">admin-key</option>
               </select>
             )}
-          </div>
+          </section>
 
-          {/* Footer */}
-          <div className="flex justify-between items-center pt-4">
-            <div className="text-gray-300">
-              Estimated Monthly Cost: <strong>$8/month</strong>
+          {/* Footer Actions */}
+          <div className="flex justify-between items-center pt-6 border-t border-gray-700">
+            <div className="text-gray-400">
+              🧮 Estimated Monthly Cost: <strong className="text-blue-400">$8/month</strong>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <button
                 className="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:border-gray-400 hover:text-white transition"
                 onClick={() => alert('Back button clicked')}
@@ -280,9 +256,9 @@ const CreateInstancePage = () => {
               </button>
               <button
                 onClick={handleCreate}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md"
               >
-                Create Instance
+                🚀 Create Instance
               </button>
             </div>
           </div>

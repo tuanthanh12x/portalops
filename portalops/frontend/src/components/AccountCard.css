@@ -1,0 +1,32 @@
+.account-card {
+  background-color: #1e1e2f; /* dark neutral background */
+  border-radius: 12px;
+  border: 1px solid #374151; /* Tailwind gray-700 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+}
+
+.account-card h4 {
+  font-family: 'Fantasy', cursive; /* maintain font-fantasy */
+  color: #e5e7eb; /* gray-200 */
+}
+
+.account-card span,
+.account-card time {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.account-card .truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Subtle hover effect */
+.account-card:hover {
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6); /* Indigo shadow */
+  border-color: #4f46e5;
+  transition: all 0.3s ease;
+}
