@@ -19,6 +19,7 @@ function AppRoutes() {
 
         <Route element={<RequireAuth />}>
           <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/create-instance" element={<CreateInstancePage />} />
           <Route path="/instances" element={<MyInstancesPage />} />
           <Route path="/images" element={<ImageListPage />} />

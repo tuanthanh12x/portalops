@@ -1,115 +1,120 @@
-// import React, { useEffect, useState } from 'react';
-// import Navbar from '/components/AdminNavbar';
-// import AccountCard from '/components/AccountCard';
-// import NotificationsCard from '../components/NotificationsCard';
-// import CreditsCard from '/components/CreditsCard';
-// import ResourceUsage from '/components/ResourceUsage';
-// import QuickActions from '/components/QuickActions';
-// import InstancesTable from '/components/InstancesTable';
-// import './AdminDashboard.css';
-// import axiosInstance from '/api/axiosInstance';
-// import getUserInfoFromToken from '../utils/getUserInfoFromToken';
-// import { useLogout } from '../features/auth/Logout';
+import React, { useEffect, useState } from 'react';
+import Navbar from '../../components/Navbar';
+import { useLogout } from '../../features/auth/Logout';
 
-// export default function AdminDashboard() {
-//   const logout = useLogout();
-//   const [userInfo, setUserInfo] = useState(null);
-//   const [instances, setInstances] = useState([]);
-//   const [limits, setLimits] = useState({
-//     cpu: { used: 0, limit: 1 },
-//     ram: { used: 0, limit: 1 },
-//     storage: { used: 0, limit: 1 },
-//   });
+export default function AdminDashboard() {
+  const logout = useLogout();
 
-//   useEffect(() => {
-//     const token = localStorage.getItem('accessToken');
-//     if (token) {
-//       const user = getUserInfoFromToken(token);
-//       setUserInfo(user);
-//     }
-//   }, []);
+  // Fake data
+  const [data, setData] = useState({
+    userCount: 324,
+    activeTenants: 127,
+    newSignups: 24,
+    pendingApprovals: 3,
+    revenue: 15420.75,
+    recentLogins: [
+      { user: 'alice', time: '2 min ago' },
+      { user: 'bob', time: '10 min ago' },
+      { user: 'charlie', time: '30 min ago' },
+    ],
+    serverHealth: {
+      status: 'healthy',
+      uptime: '124h 37m',
+      lastCheck: '2025-06-03T11:45:00Z',
+    },
+    systemStats: {
+      totalInstances: 340,
+      totalCPU: 540,
+      totalRAM: 1024,
+      totalStorage: 7860,
+    },
+    supportTickets: [
+      { id: '#2341', subject: 'Billing issue', status: 'Open' },
+      { id: '#2342', subject: 'Cannot deploy instance', status: 'Pending' },
+      { id: '#2343', subject: 'Request feature', status: 'Closed' },
+    ]
+  });
 
-//   useEffect(() => {
-//     const fetchInstances = async () => {
-//       try {
-//         const res = await axiosInstance.get('/overview/instances/');
-//         setInstances(res.data);
-//       } catch (error) {
-//         console.error("Failed to fetch instances", error);
-//       }
-//     };
-//     fetchInstances();
-//   }, []);
+  return (
+    <div className="dark bg-gray-900 min-h-screen">
+      <Navbar isAdmin />
+      <div className="container mx-auto px-4 py-10">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+            <p className="text-gray-400">System Overview & Control Panel</p>
+          </div>
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            onClick={logout}
+          >
+            Logout
+          </button>
+        </div>
 
-//   useEffect(() => {
-//     const fetchLimits = async () => {
-//       try {
-//         const res = await axiosInstance.get('/overview/limits/');
-//         setLimits(res.data);
-//       } catch (error) {
-//         console.error("Failed to fetch resource limits", error);
-//       }
-//     };
-//     fetchLimits();
-//   }, []);
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+          {[
+            { title: 'Users', value: data.userCount, icon: '👥' },
+            { title: 'Active Tenants', value: data.activeTenants, icon: '🏘️' },
+            { title: 'Revenue (USD)', value: `$${data.revenue.toLocaleString()}`, icon: '💰' },
+            { title: 'Pending Approvals', value: data.pendingApprovals, icon: '🕓' },
+          ].map((item, i) => (
+            <div key={i} className="bg-gray-800 p-5 rounded-xl shadow-md">
+              <div className="text-4xl">{item.icon}</div>
+              <h2 className="text-white text-xl font-semibold mt-2">{item.title}</h2>
+              <p className="text-gray-300 text-lg">{item.value}</p>
+            </div>
+          ))}
+        </div>
 
-//   return (
-//     <div className="dark">
-//       <div className="fixed top-4 right-4 z-[100] space-y-2" id="toast-container" data-turbo-permanent="" />
-//       <Navbar credits={150} />
-//       <div className="container mx-auto px-4 mt-10 md:mt-10">
-//         <div className="hidden md:block">
-//           <div className="flex justify-between items-center gap-3 mb-6">
-//             <div>
-//               <h1 className="text-3xl font-bold text-gray-300">
-//                 Greetings, <span className="text-gray-400">{userInfo?.username || 'User'}</span>
-//               </h1>
-//               <p className="text-gray-300">Dashboard</p>
-//             </div>
-//             <div className="flex justify-end items-center gap-1 md:gap-3">
-//               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
-//                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">
-//                   <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
-//                   <path fillRule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"></path>
-//                 </svg>
-//                 <span className="hidden md:block text-gray-300 group-hover:text-white transition">Account</span>
-//               </div>
+        {/* System Stats + Server Health */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-white mb-4">System Resources</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li>Total Instances: <span className="text-white">{data.systemStats.totalInstances}</span></li>
+              <li>Total CPU: <span className="text-white">{data.systemStats.totalCPU} cores</span></li>
+              <li>Total RAM: <span className="text-white">{data.systemStats.totalRAM} GB</span></li>
+              <li>Total Storage: <span className="text-white">{data.systemStats.totalStorage} GB</span></li>
+            </ul>
+          </div>
 
-//               <div className="flex items-center space-x-2 p-2 rounded-md cursor-pointer">
-//                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-200" viewBox="0 0 16 16">
-//                   <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3V2zm1 13h8V2H4v13z"></path>
-//                   <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"></path>
-//                 </svg>
-//                 <button
-//                   className="hidden md:inline-block whitespace-nowrap px-4 py-2 text-sm text-white bg-gray-800 rounded-md 
-//   hover:bg-red-600 hover:text-white transition-all duration-200 ease-in-out shadow-sm"
-//                   onClick={(e) => {
-//                     e.preventDefault();
-//                     logout();
-//                   }}
-//                 >
-//                   Logout
-//                 </button>
+          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-white mb-4">Server Health</h3>
+            <p>Status: <span className={`font-bold ${data.serverHealth.status === 'healthy' ? 'text-green-400' : 'text-red-400'}`}>{data.serverHealth.status}</span></p>
+            <p>Uptime: <span className="text-white">{data.serverHealth.uptime}</span></p>
+            <p>Last Check: <span className="text-white">{new Date(data.serverHealth.lastCheck).toLocaleString()}</span></p>
+          </div>
+        </div>
 
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-4">
-//           <AccountCard />
-//           <NotificationsCard />
-//           <CreditsCard />
-//         </div>
-//         <div className="flex flex-col gap-4 md:grid md:grid-cols-7">
-//           <div className="col-span-7 md:col-span-4">
-//             <ResourceUsage limits={limits} />
-//           </div>
-//           <div className="col-span-7 md:col-span-3">
-//             <QuickActions />
-//           </div>
-//         </div>
-//         <InstancesTable instances={instances} />
-//       </div>
-//     </div>
-//   );
-// }
+        {/* Recent Logins + Support Tickets */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-white mb-4">Recent Logins</h3>
+            <ul className="space-y-2 text-gray-300">
+              {data.recentLogins.map((login, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>{login.user}</span>
+                  <span className="text-gray-400">{login.time}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-gray-800 p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-white mb-4">Support Tickets</h3>
+            <ul className="space-y-2 text-gray-300">
+              {data.supportTickets.map((ticket, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>{ticket.subject} <span className="text-sm text-gray-500">({ticket.id})</span></span>
+                  <span className={`text-sm ${ticket.status === 'Open' ? 'text-yellow-300' : ticket.status === 'Pending' ? 'text-orange-400' : 'text-green-400'}`}>{ticket.status}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
