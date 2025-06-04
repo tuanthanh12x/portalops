@@ -27,7 +27,7 @@ function AppRoutes() {
           <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
           <Route path="/" element={<Home />} />
-          <Route path="/c-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
         </Route>

@@ -19,7 +19,7 @@ const FeatureCard = ({ title, description, delay }) => {
   return (
     <div
       ref={cardRef}
-      className={`p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50 opacity-0`}
+      className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50 opacity-0"
       style={{ animationDelay: `${delay}s` }}
     >
       <h3 className="text-2xl font-semibold text-green-300">{title}</h3>
@@ -30,7 +30,6 @@ const FeatureCard = ({ title, description, delay }) => {
 
 const Home = () => {
   useEffect(() => {
-    // Create particles
     const particlesContainer = document.createElement('div');
     particlesContainer.className = 'particles';
     const root = document.querySelector('.home-container');
@@ -83,83 +82,83 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500 animate-pulse">
-          GreenCloud VPS
+          GreenCloud Builder
         </h1>
         <p className="mt-4 text-lg md:text-2xl text-gray-200 max-w-2xl">
-          Unleash Your Potential with Lightning-Fast, Secure, and Scalable VPS Solutions
+          Build your own VPS from flexible resource bundles. Total control. Maximum performance.
         </p>
         <button className="mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold text-lg hover:from-green-400 hover:to-teal-400 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-green-500/50">
-          Get Your VPS Now
+          Explore Resource Packs
         </button>
       </section>
 
       {/* Features Section */}
       <section className="py-16 px-4 md:px-8">
         <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
-          Why Choose GreenCloud?
+          Why Build with GreenCloud?
         </h2>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <FeatureCard
-            title="Blazing Speed"
-            description="Experience unparalleled performance with our cutting-edge SSD-powered servers."
+            title="Flexible Resources"
+            description="Mix and match CPU, RAM, and storage to create your perfect VPS environment."
             delay={0}
           />
           <FeatureCard
-            title="99.9% Uptime"
-            description="Your services stay online with our robust infrastructure and 24/7 monitoring."
+            title="Self-Service Control"
+            description="Deploy and manage your own VPS anytime, without waiting or support tickets."
             delay={0.2}
           />
           <FeatureCard
-            title="Top-Tier Security"
-            description="Protect your data with advanced encryption and proactive threat detection."
+            title="Developer-Friendly"
+            description="API access and automation-ready infrastructure to streamline your workflow."
             delay={0.4}
           />
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Resource Packages Section */}
       <section className="py-16 px-4 md:px-8 bg-gradient-to-br from-green-900/50 to-teal-900/50">
         <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
-          Choose Your VPS Plan
+          Choose Your Resource Pack
         </h2>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Basic VPS</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$10/mo</p>
+            <h3 className="text-2xl font-semibold text-green-300">Starter Pack</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$8/mo</p>
             <ul className="mt-4 text-gray-300">
-              <li>1 CPU Core</li>
-              <li>2GB RAM</li>
-              <li>50GB SSD</li>
-              <li>1TB Bandwidth</li>
+              <li>1 vCPU</li>
+              <li>2 GB RAM</li>
+              <li>40 GB SSD</li>
+              <li>1 TB Bandwidth</li>
             </ul>
             <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Select Plan
+              Build with Starter
             </button>
           </div>
           <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Pro VPS</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$20/mo</p>
+            <h3 className="text-2xl font-semibold text-green-300">Pro Builder</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$18/mo</p>
             <ul className="mt-4 text-gray-300">
-              <li>2 CPU Cores</li>
-              <li>4GB RAM</li>
-              <li>100GB SSD</li>
-              <li>2TB Bandwidth</li>
+              <li>2 vCPU</li>
+              <li>4 GB RAM</li>
+              <li>80 GB SSD</li>
+              <li>2 TB Bandwidth</li>
             </ul>
             <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Select Plan
+              Build with Pro
             </button>
           </div>
           <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Enterprise VPS</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$50/mo</p>
+            <h3 className="text-2xl font-semibold text-green-300">Enterprise Kit</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$45/mo</p>
             <ul className="mt-4 text-gray-300">
-              <li>4 CPU Cores</li>
-              <li>8GB RAM</li>
-              <li>200GB SSD</li>
-              <li>5TB Bandwidth</li>
+              <li>4 vCPU</li>
+              <li>8 GB RAM</li>
+              <li>160 GB SSD</li>
+              <li>5 TB Bandwidth</li>
             </ul>
             <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Select Plan
+              Build with Enterprise
             </button>
           </div>
         </div>

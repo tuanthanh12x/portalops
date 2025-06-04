@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css?family=Arvo&display=swap');
+
+.primary-navigation {
+  margin: 0 auto;
+  padding: 20px;
+  font-size: 16px;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+  font-family: 'Arvo', serif;
+  background: #0a192a;
+  color: #b9b9b9;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hamburger {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li {
+  list-style: none;
+  border-left: 2px solid #3ca0e7;
+  display: inline-block;
+  padding: 0 30px;
+  position: relative;
+}
+
+.nav-menu li a {
+  text-decoration: none;
+}
+
+.nav-menu li a:hover {
+  color: #3ca0e7;
+}
+
+.nav-menu li ul {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  background: white;
+  display: none;
+  z-index: 10;
+}
+
+.nav-menu li:hover > ul {
+  visibility: visible;
+  opacity: 1;
+  display: block;
+  min-width: 200px;
+  text-align: left;
+  padding-top: 10px;
+  box-shadow: 0px 3px 5px -1px #ccc;
+}
+
+.nav-menu li ul li {
+  display: block;
+  padding: 10px 20px;
+}
+
+.nav-menu li ul li a:hover {
+  padding-left: 10px;
+  border-left: 2px solid #3ca0e7;
+  transition: all 0.3s ease;
+}
+
+.logout-button {
+  margin-left: 20px;
+  background: none;
+  border: none;
+  color: #3ca0e7;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* ========== Mobile Styles ========== */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .nav-menu {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .nav-menu.open {
+    display: flex;
+  }
+
+  .nav-menu li {
+    display: block;
+    border-left: none;
+    padding: 10px 0;
+  }
+
+  .nav-menu li ul {
+    position: relative;
+    display: none;
+    visibility: visible;
+    opacity: 1;
+    box-shadow: none;
+  }
+
+  .nav-menu li:hover ul {
+    display: block;
+  }
+}
