@@ -7,7 +7,7 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // Save token with 1 hour expiry (3600000 ms)
+  // Save token with expiry
   const setTokenWithExpiry = (key, token, ttl = 3600000) => {
     const now = new Date();
     const item = {
@@ -22,7 +22,6 @@ function LoginPage() {
     setError('');
 
     try {
-      // Call login API directly; backend handles project retrieval
       const response = await axiosInstance.post('/auth/login/', {
         username,
         password,
@@ -33,10 +32,13 @@ function LoginPage() {
       setTokenWithExpiry('accessToken', access);
       setTokenWithExpiry('refreshToken', refresh);
 
-      // Redirect after successful login
-      window.location.href = '/';
+      window.location.href = '/'; // Redirect to home/dashboard
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      if (err.response?.status === 401) {
+        setError('Login failed. Invalid username or password.');
+      } else {
+        setError('An error occurred during login. Please try again.');
+      }
     }
   };
 

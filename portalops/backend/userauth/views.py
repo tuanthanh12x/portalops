@@ -1,16 +1,11 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
+from django.utils.timezone import now
+from openstack import connection
 import requests
 from django.conf import settings
-from django.utils.timezone import now
-from openstack_portal.services.keystone import login_with_keystone
-from rest_framework.response import Response
-from utils.redis_client import redis_client
-
-from openstack import exceptions, connection
-
-from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from utils.redis_client import redis_client
 
 class LoginView(APIView):
     def post(self, request):
@@ -32,7 +27,6 @@ class LoginView(APIView):
             )
             conn.authorize()
 
-
             token = conn.session.get_token()
             keystone_url = settings.OPENSTACK_AUTH["auth_url"].rstrip("/")
             projects_url = f"{keystone_url}/auth/projects"
@@ -42,7 +36,7 @@ class LoginView(APIView):
             resp.raise_for_status()
             projects = resp.json().get("projects", [])
 
-            project_id = projects[0]["id"]
+            project_id = projects[0]["id"]  # Lấy project_id đầu tiên
 
             # Step 4: Authenticate scoped to that project
             conn_project = connection.Connection(
@@ -64,6 +58,8 @@ class LoginView(APIView):
             user.save(update_fields=['last_login'])
 
             refresh = RefreshToken.for_user(user)
+
+            # Gắn dữ liệu tùy chỉnh vào payload token
             refresh["username"] = username
             refresh["project_id"] = project_id
             refresh["keystone_token"] = keystone_token
