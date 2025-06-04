@@ -32,7 +32,7 @@ class LoginView(APIView):
             )
             conn.authorize()
 
-            # Step 2: Get projects of user
+
             token = conn.session.get_token()
             keystone_url = settings.OPENSTACK_AUTH["auth_url"].rstrip("/")
             projects_url = f"{keystone_url}/auth/projects"
@@ -41,10 +41,6 @@ class LoginView(APIView):
             resp = requests.get(projects_url, headers=headers)
             resp.raise_for_status()
             projects = resp.json().get("projects", [])
-
-            # Step 3: Check if user has exactly one project
-            if len(projects) != 1:
-                return Response({"detail": "User must have exactly one project."}, status=400)
 
             project_id = projects[0]["id"]
 
