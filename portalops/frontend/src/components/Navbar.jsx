@@ -210,7 +210,7 @@ const Navbar = () => {
 
           <li>
             <a
-              href="/network"
+              href="/"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Network
@@ -218,7 +218,7 @@ const Navbar = () => {
           </li>
           <li>
             <a
-              href="/billing"
+              href="/"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Billing
@@ -226,7 +226,7 @@ const Navbar = () => {
           </li>
           <li>
             <a
-              href="/support"
+              href="/"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Support
@@ -377,21 +377,21 @@ const Navbar = () => {
           </div>
 
           <a
-            href="/network"
+            href="/"
             className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Network
           </a>
           <a
-            href="/billing"
+            href="/"
             className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
             Billing
           </a>
           <a
-            href="/support"
+            href="/"
             className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
