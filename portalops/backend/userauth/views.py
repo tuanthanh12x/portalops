@@ -7,6 +7,10 @@ from openstack import connection
 import requests
 from django.conf import settings
 
+from utils.redis_client import redis_client
+
+
+
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
@@ -50,6 +54,9 @@ class LoginView(APIView):
             )
             conn_project.authorize()
             keystone_token = conn_project.session.get_token()
+
+            redis_key = f"keystone_token:{username}:{project_id}"
+            redis_client.set(redis_key, keystone_token, ex=3600)
 
             # Step 5: Generate JWT token & return
             User = get_user_model()
