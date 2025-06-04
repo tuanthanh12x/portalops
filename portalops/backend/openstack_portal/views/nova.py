@@ -54,10 +54,6 @@ class InstanceOptionsView(APIView):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
-from openstack import connection
-from keystoneauth1 import session
-from keystoneauth1.identity import v3
 import json
 
 def vl_connect_with_token(token, project_id):
