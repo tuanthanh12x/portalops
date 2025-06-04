@@ -1,129 +1,171 @@
-import React, { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
-import AccountCard from '../components/AccountCard';
-import NotificationsCard from '../components/NotificationsCard';
-import CreditsCard from '../components/CreditsCard';
-import ResourceUsage from '../components/ResourceUsage';
-import QuickActions from '../components/QuickActions';
-import InstancesTable from '../components/InstancesTable';
-import './Home.css';
-import axiosInstance from '../api/axiosInstance';
-import getUserInfoFromToken from '../utils/getUserInfoFromToken';
-import { useLogout } from '../features/auth/Logout';
+import React, { useEffect, useRef } from 'react';
 
-export default function Home() {
-  const logout = useLogout();
-  const [userInfo, setUserInfo] = useState(null);
-  const [instances, setInstances] = useState([]);
-  const [limits, setLimits] = useState({
-    cpu: { used: 0, limit: 1 },
-    ram: { used: 0, limit: 1 },
-    storage: { used: 0, limit: 1 },
-  });
+const FeatureCard = ({ title, description, delay }) => {
+  const cardRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const user = getUserInfoFromToken(token);
-      setUserInfo(user);
-    }
-  }, []);
-
-  useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    const fetchInstances = async () => {
-      try {
-        const res = await axiosInstance.get('/overview/instances/');
-        if (res.data && res.data.length > 0) {
-          setInstances(res.data);
-        } else if (retryCount < maxRetries) {
-          retryCount++;
-          console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
-          setTimeout(fetchInstances, 2000); // retry after 2 seconds
-        } else {
-          console.warn("Max retries reached, no data available.");
-          setInstances([]); // set empty to avoid loading forever
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-slide-in');
         }
-      } catch (error) {
-        console.error("Failed to fetch instances", error);
-      }
-    };
-
-    fetchInstances();
-  }, []);
-
-
-  useEffect(() => {
-    const fetchLimits = async () => {
-      try {
-        const res = await axiosInstance.get('/overview/limits/');
-        setLimits(res.data);
-      } catch (error) {
-        console.error("Failed to fetch resource limits", error);
-      }
-    };
-    fetchLimits();
+      },
+      { threshold: 0.2 }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
   }, []);
 
   return (
-    <div className="dark">
-      <div className="fixed top-4 right-4 z-[100] space-y-2" id="toast-container" data-turbo-permanent="" />
-      <Navbar credits={150} />
-      <div className="container mx-auto px-4 mt-10 md:mt-10">
-        <div className="hidden md:block">
-          <div className="flex justify-between items-center gap-3 mb-1">
-            <div className="p-6 rounded-md shadow-md">
-              <h1 className="text-3xl font-semibold text-gray-100">
-                <span className="text-blue-400 font-bold text-3xl">{userInfo?.username || 'User'}</span>, dashboard ready.
-              </h1>
-            </div>
-
-            <div className="flex justify-end items-center gap-1 md:gap-3">
-              <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">
-                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
-                  <path fillRule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"></path>
-                </svg>
-                <span className="hidden md:block text-gray-300 group-hover:text-white transition">Account</span>
-              </div>
-
-              <div className="flex items-center space-x-2 p-2 rounded-md cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-200" viewBox="0 0 16 16">
-                  <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3V2zm1 13h8V2H4v13z"></path>
-                  <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"></path>
-                </svg>
-                <button
-                  className="hidden md:inline-block whitespace-nowrap px-4 py-2 text-sm text-white bg-gray-800 rounded-md 
-  hover:bg-red-600 hover:text-white transition-all duration-200 ease-in-out shadow-sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    logout();
-                  }}
-                >
-                  Logout
-                </button>
-
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-4">
-          <AccountCard />
-          <NotificationsCard />
-          <CreditsCard />
-        </div>
-        <div className="flex flex-col gap-4 md:grid md:grid-cols-7">
-          <div className="col-span-7 md:col-span-4">
-            <ResourceUsage limits={limits} />
-          </div>
-          <div className="col-span-7 md:col-span-3">
-            <QuickActions />
-          </div>
-        </div>
-        <InstancesTable instances={instances} />
-      </div>
+    <div
+      ref={cardRef}
+      className={`p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50 opacity-0`}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      <h3 className="text-2xl font-semibold text-green-300">{title}</h3>
+      <p className="mt-4 text-gray-300">{description}</p>
     </div>
   );
-}
+};
+
+const Home = () => {
+  useEffect(() => {
+    // Create particles
+    const particlesContainer = document.createElement('div');
+    particlesContainer.className = 'particles';
+    const root = document.querySelector('.home-container');
+    if (root) root.prepend(particlesContainer);
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.width = `${Math.random() * 5 + 2}px`;
+      particle.style.height = particle.style.width;
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
+      particle.style.animationDelay = `${Math.random() * 5}s`;
+      particlesContainer.appendChild(particle);
+    }
+    return () => particlesContainer.remove();
+  }, []);
+
+  return (
+    <div className="home-container min-h-screen bg-gradient-to-br from-green-900 via-teal-800 to-blue-900 text-white">
+      <style>{`
+        .particles {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          z-index: 0;
+        }
+        .particle {
+          position: absolute;
+          background: rgba(0, 255, 200, 0.5);
+          border-radius: 50%;
+          animation: float 10s infinite;
+        }
+        @keyframes float {
+          0% { transform: translateY(0); opacity: 0.5; }
+          50% { opacity: 1; }
+          100% { transform: translateY(-100vh); opacity: 0.5; }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4">
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500 animate-pulse">
+          GreenCloud VPS
+        </h1>
+        <p className="mt-4 text-lg md:text-2xl text-gray-200 max-w-2xl">
+          Unleash Your Potential with Lightning-Fast, Secure, and Scalable VPS Solutions
+        </p>
+        <button className="mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold text-lg hover:from-green-400 hover:to-teal-400 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-green-500/50">
+          Get Your VPS Now
+        </button>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 px-4 md:px-8">
+        <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
+          Why Choose GreenCloud?
+        </h2>
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <FeatureCard
+            title="Blazing Speed"
+            description="Experience unparalleled performance with our cutting-edge SSD-powered servers."
+            delay={0}
+          />
+          <FeatureCard
+            title="99.9% Uptime"
+            description="Your services stay online with our robust infrastructure and 24/7 monitoring."
+            delay={0.2}
+          />
+          <FeatureCard
+            title="Top-Tier Security"
+            description="Protect your data with advanced encryption and proactive threat detection."
+            delay={0.4}
+          />
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-16 px-4 md:px-8 bg-gradient-to-br from-green-900/50 to-teal-900/50">
+        <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
+          Choose Your VPS Plan
+        </h2>
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
+            <h3 className="text-2xl font-semibold text-green-300">Basic VPS</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$10/mo</p>
+            <ul className="mt-4 text-gray-300">
+              <li>1 CPU Core</li>
+              <li>2GB RAM</li>
+              <li>50GB SSD</li>
+              <li>1TB Bandwidth</li>
+            </ul>
+            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
+              Select Plan
+            </button>
+          </div>
+          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
+            <h3 className="text-2xl font-semibold text-green-300">Pro VPS</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$20/mo</p>
+            <ul className="mt-4 text-gray-300">
+              <li>2 CPU Cores</li>
+              <li>4GB RAM</li>
+              <li>100GB SSD</li>
+              <li>2TB Bandwidth</li>
+            </ul>
+            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
+              Select Plan
+            </button>
+          </div>
+          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
+            <h3 className="text-2xl font-semibold text-green-300">Enterprise VPS</h3>
+            <p className="mt-2 text-3xl font-bold text-white">$50/mo</p>
+            <ul className="mt-4 text-gray-300">
+              <li>4 CPU Cores</li>
+              <li>8GB RAM</li>
+              <li>200GB SSD</li>
+              <li>5TB Bandwidth</li>
+            </ul>
+            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
+              Select Plan
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;

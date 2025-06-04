@@ -3,7 +3,7 @@ import LoginPage from "../pages/LoginPage";
 import Home from "../pages/Home";
 import CreateInstancePage from "../pages/client/CreateInstance";
 import CreateVolumePage from "../pages/client/CreateVolume";
-import RequireAuth from "../components/RequireAuth";
+import RequireAuth from "../components/client/RequireAuth";
 import CreateImageForm from "../pages/client/CreateImage";
 import CreateKeypairForm from "../pages/client/CreateKeyPair";
 import AdminDashboard from "../pages/admin/AdminDashBoard";
@@ -11,6 +11,7 @@ import MyInstancesPage from "../pages/client/InstancesPage";
 import ImageListPage from "../pages/client/ImageListPage";
 import VolumeListPage from "../pages/client/VolumeListPage";
 import KeypairListPage from "../pages/client/KeypairListPage";
+import ClientDashBoard from "../pages/client/ClientDashBoard";
 function AppRoutes() {
   return (
     <Router>
@@ -18,8 +19,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<RequireAuth />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/dashboard" element={<ClientDashBoard />} />
           <Route path="/create-instance" element={<CreateInstancePage />} />
           <Route path="/instances" element={<MyInstancesPage />} />
           <Route path="/images" element={<ImageListPage />} />
@@ -27,7 +27,7 @@ function AppRoutes() {
           <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
           <Route path="/" element={<Home />} />
-          {/* <Route path="/admin-dashboard" element={<AdminDashboard />} /> */}
+          <Route path="/c-dashboard" element={<AdminDashboard />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
         </Route>

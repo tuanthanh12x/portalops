@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/client/Navbar";
 
 const ImageListPage = () => {
   const [images, setImages] = useState([]);

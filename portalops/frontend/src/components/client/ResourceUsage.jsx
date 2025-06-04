@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { formatRAM, formatStorage } from '../utils/formatUtils';
+import { formatRAM, formatStorage } from '../../utils/formatUtils';
 import './ResourceUsage.css';
 
 function useAnimatedProgress(targetPercent, duration = 1500) {

@@ -85,7 +85,7 @@ const Navbar = () => {
         <ul className="hidden md:flex md:items-center md:space-x-10 text-lg">
           <li>
             <a
-              href="/"
+              href="/dashboard"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Dashboard
@@ -245,7 +245,7 @@ const Navbar = () => {
       >
         <nav className="flex flex-col mt-20 px-6 space-y-6 text-lg select-none">
           <a
-            href="/"
+            href="/dashboard"
             className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >

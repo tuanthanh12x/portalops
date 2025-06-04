@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLogout } from '../features/auth/Logout';
+import { useLogout } from '../../features/auth/Logout';
 import './Navbar.css';
 
 const Navbar = () => {

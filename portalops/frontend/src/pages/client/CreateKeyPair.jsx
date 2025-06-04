@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axiosInstance from '../../api/axiosInstance';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/client/Navbar';
 
 const CreateKeypairForm = ({ onCreate }) => {
   const [name, setName] = useState('');
