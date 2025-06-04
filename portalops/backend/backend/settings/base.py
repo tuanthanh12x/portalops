@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'tests',
     'userauth',
-
+    'users',
     'openstack_portal',
 ]
 

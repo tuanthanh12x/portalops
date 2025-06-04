@@ -36,7 +36,7 @@ const KeypairListPage = () => {
     <section className="min-h-screen text-white">
       <Navbar credits={150} />
 
-      <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-1 mt-20">
+      <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-1 mt-8">
         <h2 className="text-4xl font-bold tracking-tight text-green-400 drop-shadow-md font-fantasy">
           🔑 My Keypairs
         </h2>

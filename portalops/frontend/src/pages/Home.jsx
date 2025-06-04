@@ -30,29 +30,29 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-  let retryCount = 0;
-  const maxRetries = 3;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-  const fetchInstances = async () => {
-    try {
-      const res = await axiosInstance.get('/overview/instances/');
-      if (res.data && res.data.length > 0) {
-        setInstances(res.data);
-      } else if (retryCount < maxRetries) {
-        retryCount++;
-        console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
-        setTimeout(fetchInstances, 2000); // retry after 2 seconds
-      } else {
-        console.warn("Max retries reached, no data available.");
-        setInstances([]); // set empty to avoid loading forever
+    const fetchInstances = async () => {
+      try {
+        const res = await axiosInstance.get('/overview/instances/');
+        if (res.data && res.data.length > 0) {
+          setInstances(res.data);
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
+          setTimeout(fetchInstances, 2000); // retry after 2 seconds
+        } else {
+          console.warn("Max retries reached, no data available.");
+          setInstances([]); // set empty to avoid loading forever
+        }
+      } catch (error) {
+        console.error("Failed to fetch instances", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch instances", error);
-    }
-  };
+    };
 
-  fetchInstances();
-}, []);
+    fetchInstances();
+  }, []);
 
 
   useEffect(() => {
@@ -74,12 +74,12 @@ export default function Home() {
       <div className="container mx-auto px-4 mt-10 md:mt-10">
         <div className="hidden md:block">
           <div className="flex justify-between items-center gap-3 mb-1">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-300">
-                 <span className="text-gray-400">{userInfo?.username || 'User'}</span> ,dashboard ready.
+            <div className="p-6 rounded-md shadow-md">
+              <h1 className="text-3xl font-semibold text-gray-100">
+                <span className="text-blue-400 font-bold text-3xl">{userInfo?.username || 'User'}</span>, dashboard ready.
               </h1>
-
             </div>
+
             <div className="flex justify-end items-center gap-1 md:gap-3">
               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">

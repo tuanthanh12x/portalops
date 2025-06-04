@@ -24,7 +24,7 @@ const VolumeListPage = () => {
     <section className="min-h-screen text-white">
       <Navbar credits={150} />
 
-      <header className="container mx-auto px-4 py-6 max-w-7xl flex justify-between items-center mb-1 mt-20 px-4 py-6">
+      <header className="container mx-auto px-4 py-6 max-w-7xl flex justify-between items-center mb-1 mt-8 px-4 py-6">
         <h2 className="text-4xl font-bold tracking-tight text-green-400 drop-shadow-md font-fantasy">
           💾 Volumes
         </h2>

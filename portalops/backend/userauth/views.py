@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -56,7 +57,8 @@ class LoginWithProjectView(APIView):
             # Create or get local user
             User = get_user_model()
             user, _ = User.objects.get_or_create(username=username)
-
+            user.last_login = now()
+            user.save(update_fields=['last_login'])
             # Generate JWT
             refresh = RefreshToken.for_user(user)
             refresh["username"] = username
