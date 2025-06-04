@@ -76,7 +76,7 @@ export default function Home() {
           <div className="flex justify-between items-center gap-3 mb-1">
             <div>
               <h1 className="text-3xl font-bold text-gray-300">
-                Greetings, <span className="text-gray-400">{userInfo?.username || 'User'}</span>
+                 <span className="text-gray-400">{userInfo?.username || 'User'}</span> ,dashboard ready.
               </h1>
 
             </div>
