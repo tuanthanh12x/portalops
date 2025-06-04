@@ -56,7 +56,7 @@ const InstancesTable = ({ instances }) => {
 
   return (
     <section className=" mx-auto px-4 py-10">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-4">
         <h2 className="text-4xl font-bold tracking-tight text-indigo-400 drop-shadow-md">
           🖥️ My Instances
         </h2>
