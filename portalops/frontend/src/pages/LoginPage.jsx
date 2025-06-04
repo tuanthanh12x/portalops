@@ -22,32 +22,18 @@ function LoginPage() {
     setError('');
 
     try {
-      // Step 1: Get project automatically
-      const projectResponse = await axiosInstance.post('/auth/projects/', {
+      // Call login API directly; backend handles project retrieval
+      const response = await axiosInstance.post('/auth/login/', {
         username,
         password,
       });
 
-      const projects = projectResponse.data.projects;
+      const { access, refresh } = response.data;
 
-      if (projects.length !== 1) {
-        setError('User must have exactly one project.');
-        return;
-      }
-
-      const project_id = projects[0].id;
-
-      // Step 2: Login with the project
-      const loginResponse = await axiosInstance.post('/auth/login/', {
-        username,
-        password,
-        project_id,
-      });
-
-      const { access, refresh } = loginResponse.data;
       setTokenWithExpiry('accessToken', access);
       setTokenWithExpiry('refreshToken', refresh);
 
+      // Redirect after successful login
       window.location.href = '/';
     } catch (err) {
       setError('Login failed. Please check your credentials.');
