@@ -85,10 +85,10 @@ const Navbar = () => {
         <ul className="hidden md:flex md:items-center md:space-x-10 text-lg">
           <li>
             <a
-              href="/dashboard"
+              href="/admin-dashboard"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
-              Dashboard
+              Overview
             </a>
           </li>
 
@@ -100,7 +100,7 @@ const Navbar = () => {
               aria-haspopup="true"
               aria-expanded={computeDropdownOpen}
             >
-              <span>Compute</span>
+              <span>Users</span>
               <svg
                 className={`h-4 w-4 transform transition-transform duration-300 ${
                   computeDropdownOpen ? 'rotate-180' : ''
@@ -158,7 +158,7 @@ const Navbar = () => {
               aria-haspopup="true"
               aria-expanded={storageDropdownOpen}
             >
-              <span>Storage</span>
+              <span>Resource</span>
               <svg
                 className={`h-4 w-4 transform transition-transform duration-300 ${
                   storageDropdownOpen ? 'rotate-180' : ''
@@ -213,7 +213,7 @@ const Navbar = () => {
               href="/"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
-              Network
+              Billing
             </a>
           </li>
           <li>
@@ -221,7 +221,7 @@ const Navbar = () => {
               href="/"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
-              Billing
+              System
             </a>
           </li>
           <li>
@@ -245,11 +245,11 @@ const Navbar = () => {
       >
         <nav className="flex flex-col mt-20 px-6 space-y-6 text-lg select-none">
           <a
-            href="/dashboard"
+            href="/admin-dashboard"
             className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors"
             onClick={() => setMenuOpen(false)}
           >
-            Dashboard
+            Overview
           </a>
 
           <div>
