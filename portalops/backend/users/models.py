@@ -1,9 +1,9 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+from django.utils import timezone as django_timezone
+import pytz
+
+TIMEZONE_CHOICES = [(tz, tz) for tz in pytz.common_timezones]
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
@@ -20,7 +20,14 @@ class UserProfile(models.Model):
     credits = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     is_staff = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(default=timezone.now)
+    timezone = models.CharField(
+        max_length=64,
+        choices=TIMEZONE_CHOICES,
+        default='UTC',
+        help_text="Preferred time zone"
+    )
+
+    created_at = models.DateTimeField(default=django_timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def get_openstack_credentials(self):

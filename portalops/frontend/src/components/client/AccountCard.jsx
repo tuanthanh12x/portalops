@@ -17,19 +17,6 @@ const AccountCard = () => {
     fetchAccount();
   }, []);
 
-  if (!account) return <div className="text-gray-400">Loading...</div>;
-
-  const {
-    email,
-    username,
-    company,
-    credits,
-    two_factor_enabled,
-    last_login,
-    timezone,
-    phone_number,
-  } = account;
-
   return (
     <div className="relative bg-black/30 backdrop-blur-lg border border-gray-700 rounded-2xl p-6 shadow-xl overflow-hidden text-sm text-gray-300 font-sans">
       <h4 className="text-2xl font-bold text-indigo-400 mb-6 tracking-wide drop-shadow-md font-fantasy">
@@ -37,19 +24,35 @@ const AccountCard = () => {
       </h4>
 
       <div className="space-y-5">
-        <Info label="Email" value={email || "—"} />
+        <Info label="Email" value={account?.email || "Loading..."} />
         <Info
           label="2FA"
           value={
-            <span className={`px-3 py-1 rounded-full text-xs font-mono border 
-              ${two_factor_enabled ? "bg-green-900 text-green-400 border-green-600" 
-                                   : "bg-yellow-900 text-yellow-400 border-yellow-600"}`}>
-              {two_factor_enabled ? "On" : "Off"}
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-mono border 
+              ${
+                account?.two_factor_enabled
+                  ? "bg-green-900 text-green-400 border-green-600"
+                  : "bg-yellow-900 text-yellow-400 border-yellow-600"
+              }`}
+            >
+              {account
+                ? account.two_factor_enabled
+                  ? "On"
+                  : "Off"
+                : "Loading..."}
             </span>
           }
         />
-        <Info label="Last Login" value={new Date(last_login).toLocaleString("en-US")} />
-        <Info label="Timezone" value={timezone || "UTC"} />
+        <Info
+          label="Last Login"
+          value={
+            account
+              ? new Date(account.last_login).toLocaleString("en-US")
+              : "Loading..."
+          }
+        />
+        <Info label="Timezone" value={account?.timezone || "UTC"} />
       </div>
     </div>
   );
