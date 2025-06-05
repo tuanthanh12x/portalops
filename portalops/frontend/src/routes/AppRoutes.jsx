@@ -12,12 +12,16 @@ import ImageListPage from "../pages/client/ImageListPage";
 import VolumeListPage from "../pages/client/VolumeListPage";
 import KeypairListPage from "../pages/client/KeypairListPage";
 import ClientDashBoard from "../pages/client/ClientDashBoard";
+
 function AppRoutes() {
   return (
     <Router>
       <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
 
+        {/* Protected routes */}
         <Route element={<RequireAuth />}>
           <Route path="/dashboard" element={<ClientDashBoard />} />
           <Route path="/create-instance" element={<CreateInstancePage />} />
@@ -26,14 +30,14 @@ function AppRoutes() {
           <Route path="/volumes" element={<VolumeListPage />} />
           <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
-          <Route path="/" element={<Home />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" />} />F
-      </Routes>F
+        {/* Redirect unknown routes to Home */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </Router>
   );
 }

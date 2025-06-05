@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FeatureCard = ({ title, description, delay }) => {
   const cardRef = useRef(null);
@@ -29,6 +30,27 @@ const FeatureCard = ({ title, description, delay }) => {
 };
 
 const Home = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+  const isTokenValid = () => {
+    const itemStr = localStorage.getItem("accessToken");
+    if (!itemStr) return false;
+
+    try {
+      const item = JSON.parse(itemStr);
+      const now = new Date();
+      return now.getTime() < item.expiry;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  setIsLoggedIn(isTokenValid());
+}, []);
+
+
   useEffect(() => {
     const particlesContainer = document.createElement('div');
     particlesContainer.className = 'particles';
@@ -48,7 +70,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="home-container min-h-screen bg-gradient-to-br from-green-900 via-teal-800 to-blue-900 text-white">
+    <div className="home-container min-h-screen bg-gradient-to-br from-green-900 via-teal-800 to-blue-900 text-white relative">
       <style>{`
         .particles {
           position: absolute;
@@ -79,8 +101,36 @@ const Home = () => {
         }
       `}</style>
 
+      {/* Navbar */}
+      <header className="fixed top-0 left-0 w-full z-50 bg-gradient-to-r from-green-900 via-teal-900 to-blue-900 bg-opacity-80 backdrop-blur-md shadow-md">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <span className="text-white font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-400">
+                GreenCloud
+              </span>
+            </div>
+            <div className="hidden md:flex space-x-6">
+              <a href="#features" className="text-gray-300 hover:text-white transition duration-300">Features</a>
+              <a href="#pricing" className="text-gray-300 hover:text-white transition duration-300">Pricing</a>
+              <a href="#contact" className="text-gray-300 hover:text-white transition duration-300">Contact</a>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="text-gray-300 hover:text-white transition duration-300"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <a href="/login" className="text-gray-300 hover:text-white transition duration-300">Login</a>
+              )}
+            </div>
+          </div>
+        </nav>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-24">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500 animate-pulse">
           GreenCloud Builder
         </h1>
@@ -93,7 +143,7 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 md:px-8">
+      <section id="features" className="py-16 px-4 md:px-8">
         <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
           Why Build with GreenCloud?
         </h2>
@@ -117,51 +167,46 @@ const Home = () => {
       </section>
 
       {/* Resource Packages Section */}
-      <section className="py-16 px-4 md:px-8 bg-gradient-to-br from-green-900/50 to-teal-900/50">
+      <section id="pricing" className="py-16 px-4 md:px-8 bg-gradient-to-br from-green-900/50 to-teal-900/50">
         <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
           Choose Your Resource Pack
         </h2>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Starter Pack</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$8/mo</p>
-            <ul className="mt-4 text-gray-300">
-              <li>1 vCPU</li>
-              <li>2 GB RAM</li>
-              <li>40 GB SSD</li>
-              <li>1 TB Bandwidth</li>
-            </ul>
-            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Build with Starter
-            </button>
-          </div>
-          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Pro Builder</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$18/mo</p>
-            <ul className="mt-4 text-gray-300">
-              <li>2 vCPU</li>
-              <li>4 GB RAM</li>
-              <li>80 GB SSD</li>
-              <li>2 TB Bandwidth</li>
-            </ul>
-            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Build with Pro
-            </button>
-          </div>
-          <div className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
-            <h3 className="text-2xl font-semibold text-green-300">Enterprise Kit</h3>
-            <p className="mt-2 text-3xl font-bold text-white">$45/mo</p>
-            <ul className="mt-4 text-gray-300">
-              <li>4 vCPU</li>
-              <li>8 GB RAM</li>
-              <li>160 GB SSD</li>
-              <li>5 TB Bandwidth</li>
-            </ul>
-            <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
-              Build with Enterprise
-            </button>
-          </div>
+          {[
+            {
+              name: 'Starter Pack',
+              price: '$8/mo',
+              specs: ['1 vCPU', '2 GB RAM', '40 GB SSD', '1 TB Bandwidth']
+            },
+            {
+              name: 'Pro Builder',
+              price: '$18/mo',
+              specs: ['2 vCPU', '4 GB RAM', '80 GB SSD', '2 TB Bandwidth']
+            },
+            {
+              name: 'Enterprise Kit',
+              price: '$45/mo',
+              specs: ['4 vCPU', '8 GB RAM', '160 GB SSD', '5 TB Bandwidth']
+            }
+          ].map((pack, index) => (
+            <div key={index} className="p-6 rounded-xl bg-gradient-to-br from-green-800/50 to-teal-800/50 backdrop-blur-md hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/50">
+              <h3 className="text-2xl font-semibold text-green-300">{pack.name}</h3>
+              <p className="mt-2 text-3xl font-bold text-white">{pack.price}</p>
+              <ul className="mt-4 text-gray-300 space-y-1">
+                {pack.specs.map((spec, i) => <li key={i}>{spec}</li>)}
+              </ul>
+              <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
+                Build with {pack.name.split(' ')[0]}
+              </button>
+            </div>
+          ))}
         </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="py-16 text-center text-gray-300">
+        <h2 className="text-3xl font-bold mb-4 text-white">Get in Touch</h2>
+        <p>Email us at <a href="mailto:support@greencloud.com" className="underline text-teal-300">support@greencloud.com</a></p>
       </section>
     </div>
   );
