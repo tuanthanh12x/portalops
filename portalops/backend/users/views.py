@@ -1,4 +1,4 @@
-from time import localtime
+from django.utils.timezone import localtime
 
 from django.shortcuts import render
 from django.utils.timezone import is_naive, make_aware
