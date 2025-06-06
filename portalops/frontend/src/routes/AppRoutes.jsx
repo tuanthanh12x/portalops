@@ -12,6 +12,8 @@ import ImageListPage from "../pages/client/ImageListPage";
 import VolumeListPage from "../pages/client/VolumeListPage";
 import KeypairListPage from "../pages/client/KeypairListPage";
 import ClientDashBoard from "../pages/client/ClientDashBoard";
+import UserManagementPage from "../pages/admin/UserManagePage";
+import VPSDetailPage from "../pages/client/VpsDetail";
 
 function AppRoutes() {
   return (
@@ -27,10 +29,13 @@ function AppRoutes() {
           <Route path="/create-instance" element={<CreateInstancePage />} />
           <Route path="/instances" element={<MyInstancesPage />} />
           <Route path="/images" element={<ImageListPage />} />
+          <Route path="/vps-detail" element={<VPSDetailPage />} />
+
           <Route path="/volumes" element={<VolumeListPage />} />
           <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/users-manager" element={<UserManagementPage />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
         </Route>

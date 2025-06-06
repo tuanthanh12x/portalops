@@ -102,9 +102,8 @@ const Navbar = () => {
             >
               <span>Users</span>
               <svg
-                className={`h-4 w-4 transform transition-transform duration-300 ${
-                  computeDropdownOpen ? 'rotate-180' : ''
-                }`}
+                className={`h-4 w-4 transform transition-transform duration-300 ${computeDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -119,6 +118,18 @@ const Navbar = () => {
                 role="menu"
                 aria-label="Compute submenu"
               >
+                <li>
+                  <a
+                    href="/users-manager"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
+                  >
+                    Users
+                  </a>
+                </li>
+
+
+
                 <li>
                   <a
                     href="/instances"
@@ -160,9 +171,8 @@ const Navbar = () => {
             >
               <span>Resource</span>
               <svg
-                className={`h-4 w-4 transform transition-transform duration-300 ${
-                  storageDropdownOpen ? 'rotate-180' : ''
-                }`}
+                className={`h-4 w-4 transform transition-transform duration-300 ${storageDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -238,9 +248,8 @@ const Navbar = () => {
       {/* Mobile Menu */}
       <div
         id="mobile-menu"
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 shadow-xl transform ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 ease-in-out z-40`}
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 shadow-xl transform ${menuOpen ? 'translate-x-0' : '-translate-x-full'
+          } transition-transform duration-300 ease-in-out z-40`}
         aria-hidden={!menuOpen}
       >
         <nav className="flex flex-col mt-20 px-6 space-y-6 text-lg select-none">
@@ -262,9 +271,8 @@ const Navbar = () => {
             >
               <span>Compute</span>
               <svg
-                className={`w-5 h-5 transform transition-transform duration-300 ${
-                  computeDropdownOpen ? 'rotate-180' : ''
-                }`}
+                className={`w-5 h-5 transform transition-transform duration-300 ${computeDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -324,9 +332,8 @@ const Navbar = () => {
             >
               <span>Storage</span>
               <svg
-                className={`w-5 h-5 transform transition-transform duration-300 ${
-                  storageDropdownOpen ? 'rotate-180' : ''
-                }`}
+                className={`w-5 h-5 transform transition-transform duration-300 ${storageDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
