@@ -67,35 +67,34 @@ const ImageListPage = () => {
               </tr>
             ) : (
               images.map((image) => (
-                <tr
-                  key={image.id}
-                  className="hover:bg-gray-900/30 transition"
-                >
-                  <td className="px-6 py-4 font-medium">{image.name}</td>
-                  <td className="px-6 py-4">{image.os_type || "-"}</td>
-                                    <td className="px-6 py-4">{image.image_type || "-"}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-bold rounded-full ${
-                        image.status === "active"
-                          ? "bg-green-800 text-green-300"
-                          : "bg-yellow-800 text-yellow-300"
-                      }`}
-                    >
-                      {image.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{(image.size / (1024 ** 3)).toFixed(2)}</td>
-                  <td className="px-6 py-4">{image.visibility || "-"}</td>
-                  <td
-                    className="px-6 py-4"
-                    title={new Date(image.created_at).toLocaleString()}
-                  >
-                    {new Date(image.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-xs break-words">{image.id}</td>
-                </tr>
-              ))
+  <tr key={image.id} className="hover:bg-gray-900/30 transition">
+    <td className="px-6 py-4 font-medium">{image.name}</td>
+    <td className="px-6 py-4">{image.os_type || "-"}</td>
+    <td className="px-6 py-4">
+      {image.image_type === "snapshot" ? "backup" : image.image_type || "-"}
+    </td>
+    <td className="px-6 py-4">
+      <span
+        className={`inline-block px-2 py-1 text-xs font-bold rounded-full ${
+          image.status === "active"
+            ? "bg-green-800 text-green-300"
+            : "bg-yellow-800 text-yellow-300"
+        }`}
+      >
+        {image.status}
+      </span>
+    </td>
+    <td className="px-6 py-4">{(image.size / (1024 ** 3)).toFixed(2)}</td>
+    <td className="px-6 py-4">{image.visibility || "-"}</td>
+    <td
+      className="px-6 py-4"
+      title={new Date(image.created_at).toLocaleString()}
+    >
+      {new Date(image.created_at).toLocaleDateString()}
+    </td>
+    <td className="px-6 py-4 text-xs break-words">{image.id}</td>
+  </tr>
+))
             )}
           </tbody>
         </table>

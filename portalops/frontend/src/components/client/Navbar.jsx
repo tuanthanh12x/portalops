@@ -146,6 +146,16 @@ const Navbar = () => {
                     Keypairs
                   </a>
                 </li>
+
+                <li>
+                  <a
+                    href="/keypairs"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
+                  >
+                    Backup
+                  </a>
+                </li>
               </ul>
             )}
           </li>
@@ -192,7 +202,7 @@ const Navbar = () => {
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
-                    Snapshots
+                    Backups
                   </a>
                 </li>
                 <li>
@@ -359,7 +369,7 @@ const Navbar = () => {
                     onClick={() => setMenuOpen(false)}
                     role="menuitem"
                   >
-                    Snapshots
+                    Backups
                   </a>
                 </li>
                 <li>

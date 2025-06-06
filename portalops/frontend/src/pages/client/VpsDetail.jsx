@@ -108,13 +108,29 @@ const VPSDetailPage = () => {
       console.error("Backup failed:", error);
       alert(
         error.response?.data?.error ||
-          error.message ||
-          "Backup operation failed."
+        error.message ||
+        "Backup operation failed."
       );
     } finally {
       setSnapshotModalOpen(false);
     }
   };
+
+
+  const handleDeleteSnapshot = async (snapshotId) => {
+  if (!window.confirm("Are you sure you want to delete this snapshot?")) return;
+
+  try {
+    await axiosInstance.delete(`/openstack/compute/snapshots/${snapshotId}/`);
+    alert("Snapshot deleted successfully.");
+    const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+    setVps(updated.data);
+  } catch (error) {
+    console.error("Failed to delete snapshot:", error);
+    alert(error.response?.data?.error || "Failed to delete snapshot.");
+  }
+};
+
 
   const handleDestroy = () => {
     if (
@@ -193,8 +209,8 @@ const VPSDetailPage = () => {
         {/* VPS Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <InfoCard icon={<Cpu />} label="CPU" value={`${vps.cpu} cores`} />
-          <InfoCard icon={<Server />} label="RAM" value={`${vps.ram} GB`} />
-          <InfoCard icon={<HardDrive />} label="Disk" value={`${vps.disk} GB`} />
+          <InfoCard icon={<Server />} label="RAM" value={`${vps.ram} `} />
+          <InfoCard icon={<HardDrive />} label="Disk" value={`${vps.disk} `} />
           <InfoCard icon={<Globe />} label="IP Address" value={vps.ip} />
           <InfoCard label="Operating System" value={vps.os} />
           <InfoCard label="Region" value={vps.datacenter || "Unknown"} />
@@ -219,7 +235,6 @@ const VPSDetailPage = () => {
           />
         </Section>
 
-        {/* Snapshots */}
         <Section title="Snapshots">
           {vps.snapshots.length === 0 ? (
             <p className="text-gray-400">No snapshots available.</p>
@@ -229,13 +244,25 @@ const VPSDetailPage = () => {
                 key={snap.id || snap.name}
                 className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md mb-2"
               >
-                <span>{snap.name}</span>
-                <span className="text-sm text-gray-400">
-                  {snap.size || "Unknown size"}
-                </span>
+                <div>
+                  <div className="text-sm font-semibold">{snap.name}</div>
+                  <div className="text-xs text-gray-400">
+                    {snap.size || "Unknown size"} •{" "}
+                    {snap.created_at
+                      ? new Date(snap.created_at).toLocaleString()
+                      : "Unknown date"}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteSnapshot(snap.id)}
+                  className="text-red-500 hover:text-red-400 text-xs"
+                >
+                  Delete
+                </button>
               </div>
             ))
           )}
+
           <button
             onClick={handleBackup}
             className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
@@ -243,6 +270,7 @@ const VPSDetailPage = () => {
             + Create Backup
           </button>
         </Section>
+
 
         {/* Volumes */}
         <Section title="Volumes">
@@ -352,9 +380,8 @@ const ActionButton = ({ icon, label, onClick, color, disabled }) => {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-white ${
-        colors[color] || colors.gray
-      } disabled:opacity-50 disabled:cursor-not-allowed`}
+      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-white ${colors[color] || colors.gray
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       {icon}
       {label}

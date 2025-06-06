@@ -470,17 +470,19 @@ class VPSDetailView(APIView):
                     "status": vol.status
                 })
 
-            # Snapshots
-            snapshots = [
-                {
-                    "id": snap.id,
-                    "name": snap.name or snap.id,
-                    "size": f"{snap.size} GB"
-                }
-                for snap in conn.block_storage.snapshots(details=True)
-                if snap.status == "available" and snap.volume_id in [v["id"] for v in volumes]
-            ]
 
+            glance_snapshots = [
+                {
+                    "id": img.id,
+                    "name": img.name or img.id,
+                    "size": f"{img.size / (1024 ** 3):.2f} GB",  # size in GB
+                    "created_at": img.created_at
+                }
+                for img in conn.image.images()
+                if img.visibility == "private"
+                   and img.get("image_type") == "snapshot"
+                   and img.get("instance_uuid") == instance.id
+            ]
 
             if isinstance(instance.created_at, datetime):
                 created_at = instance.created_at.isoformat()
@@ -504,7 +506,7 @@ class VPSDetailView(APIView):
                     "disk_usage": 40
                 },
 
-                "snapshots": snapshots,
+                "snapshots": glance_snapshots,
                 "volumes": volumes,
                 "network": {
                     "floating_ip": floating_ip,
