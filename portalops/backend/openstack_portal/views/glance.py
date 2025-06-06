@@ -1,11 +1,8 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from overview.tasks import redis_client
-from utils.conn import connect_with_token
-
-
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from utils.conn import connect_with_token  # Thay bằng đường dẫn thực tế
+from utils.redis_client import redis_client  # Thay bằng thực thể Redis bạn đang dùng
 
 class ListImagesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -22,13 +19,17 @@ class ListImagesView(APIView):
         if not token:
             return Response({"error": "Token expired or missing"}, status=401)
 
+        if isinstance(token, bytes):
+            token = token.decode()
+
         try:
             conn = connect_with_token(token, project_id)
             images = conn.image.images()
 
             result = []
             for image in images:
-                props = image.get("properties", {}) or {}
+                props = getattr(image, "properties", {}) or {}
+                image_type = props.get("image_type", "image")  # Lấy kiểu ảnh hoặc mặc định "image"
                 result.append({
                     "id": image.id,
                     "name": image.name,
@@ -38,6 +39,7 @@ class ListImagesView(APIView):
                     "visibility": image.visibility,
                     "disk_format": image.disk_format,
                     "os_type": props.get("os_type", "-"),
+                    "image_type": image_type,  # Trường mới thêm
                 })
 
             return Response(result)

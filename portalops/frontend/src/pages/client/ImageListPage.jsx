@@ -43,7 +43,7 @@ const ImageListPage = () => {
         <table className="min-w-full divide-y divide-gray-700 text-sm">
           <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
             <tr>
-              {["Name", "OS Type", "Status", "Size (GB)", "Visibility", "Created", "ID"].map(
+              {["Name", "OS Type","Type", "Status", "Size (GB)", "Visibility", "Created", "ID"].map(
                 (header) => (
                   <th key={header} className="px-6 py-4 text-left font-semibold">
                     {header}
@@ -73,6 +73,7 @@ const ImageListPage = () => {
                 >
                   <td className="px-6 py-4 font-medium">{image.name}</td>
                   <td className="px-6 py-4">{image.os_type || "-"}</td>
+                                    <td className="px-6 py-4">{image.image_type || "-"}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-block px-2 py-1 text-xs font-bold rounded-full ${
