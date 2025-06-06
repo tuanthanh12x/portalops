@@ -3,12 +3,19 @@ import { useParams } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/client/Navbar";
 import {
-  Power, RefreshCw, Trash2, Terminal, Save,
-  Cpu, HardDrive, Server, Globe
+  Power,
+  RefreshCw,
+  Trash2,
+  Terminal,
+  Save,
+  Cpu,
+  HardDrive,
+  Server,
+  Globe,
 } from "lucide-react";
 
 const VPSDetailPage = () => {
-  const { id } = useParams(); // get VPS id from route param
+  const { id } = useParams();
   const [vps, setVps] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +36,35 @@ const VPSDetailPage = () => {
     fetchVps();
   }, [id]);
 
+  const handlePowerOn = () => performInstanceAction(id, "start");
+
+const handlePowerOff = () => performInstanceAction(id, "stop");
+
+const handleReboot = () => performInstanceAction(id, "reboot");
+
+const handleResize = () => {
+  const newFlavorId = prompt("Enter new flavor ID for resize:");
+  if (newFlavorId) {
+    performInstanceAction(id, "resize", { flavor_id: newFlavorId });
+  }
+};
+
+const handleConsole = () => {
+  alert("Console not yet implemented."); // Tuỳ bạn xử lý thêm
+};
+
+const handleBackup = () => {
+  alert("Backup feature coming soon.");
+};
+
+
+const handleDestroy = () => {
+  if (window.confirm("Are you sure you want to destroy this VPS? This action is irreversible.")) {
+    performInstanceAction(id, "delete");
+  }
+};
+
+
   if (loading) {
     return (
       <div className="text-center py-10 text-gray-400 bg-gray-900 min-h-screen">
@@ -45,11 +81,24 @@ const VPSDetailPage = () => {
     );
   }
 
+  const performInstanceAction = async (instanceId, action, payload = {}) => {
+  try {
+    const res = await axiosInstance.post(`/openstack/compute/instances/${instanceId}/action/`, {
+      action,
+      ...payload,
+    });
+    alert(res.data.message || "Action executed successfully");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "Failed to execute action");
+  }
+};
+
+
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-200 overflow-x-hidden">
       <Navbar credits={150} />
       <div className="p-8 max-w-7xl mx-auto space-y-10">
-
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
           <div>
@@ -60,11 +109,36 @@ const VPSDetailPage = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <ActionButton color="green" icon={<Power size={16} />} label="Power On" />
-            <ActionButton color="yellow" icon={<RefreshCw size={16} />} label="Reboot" />
-            <ActionButton color="blue" icon={<Terminal size={16} />} label="Console" />
-            <ActionButton color="gray" icon={<Save size={16} />} label="Backup" />
-            <ActionButton color="red" icon={<Trash2 size={16} />} label="Destroy" />
+            <ActionButton
+              color="green"
+              icon={<Power size={16} />}
+              label="Power On"
+              onClick={handlePowerOn}
+            />
+            <ActionButton
+              color="yellow"
+              icon={<RefreshCw size={16} />}
+              label="Reboot"
+              onClick={handleReboot}
+            />
+            <ActionButton
+              color="blue"
+              icon={<Terminal size={16} />}
+              label="Console"
+              onClick={handleConsole}
+            />
+            <ActionButton
+              color="gray"
+              icon={<Save size={16} />}
+              label="Backup"
+              onClick={handleBackup}
+            />
+            <ActionButton
+              color="red"
+              icon={<Trash2 size={16} />}
+              label="Destroy"
+              onClick={handleDestroy}
+            />
           </div>
         </div>
 
@@ -80,9 +154,21 @@ const VPSDetailPage = () => {
 
         {/* Monitoring */}
         <Section title="Monitoring">
-          <UsageBar label="CPU Usage" percent={vps.monitoring?.cpu_usage || 0} color="bg-blue-500" />
-          <UsageBar label="RAM Usage" percent={vps.monitoring?.ram_usage || 0} color="bg-green-500" />
-          <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
+          <UsageBar
+            label="CPU Usage"
+            percent={vps.monitoring?.cpu_usage || 0}
+            color="bg-blue-500"
+          />
+          <UsageBar
+            label="RAM Usage"
+            percent={vps.monitoring?.ram_usage || 0}
+            color="bg-green-500"
+          />
+          <UsageBar
+            label="Disk Usage"
+            percent={vps.monitoring?.disk_usage || 0}
+            color="bg-yellow-500"
+          />
         </Section>
 
         {/* Snapshots */}
@@ -91,13 +177,21 @@ const VPSDetailPage = () => {
             <p className="text-gray-400">No snapshots available.</p>
           ) : (
             vps.snapshots.map((snap) => (
-              <div key={snap.id || snap.name} className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md mb-2">
+              <div
+                key={snap.id || snap.name}
+                className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md mb-2"
+              >
                 <span>{snap.name}</span>
-                <span className="text-sm text-gray-400">{snap.size || "Unknown size"}</span>
+                <span className="text-sm text-gray-400">
+                  {snap.size || "Unknown size"}
+                </span>
               </div>
             ))
           )}
-          <button className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+          <button
+            onClick={handleBackup}
+            className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
+          >
             + Create Backup
           </button>
         </Section>
@@ -123,13 +217,24 @@ const VPSDetailPage = () => {
         {/* Network Info */}
         <Section title="Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <NetworkCard label="Floating IP" value={vps.network?.floating_ip || "None"} />
-            <NetworkCard label="Private IP" value={vps.network?.private_ip || "None"} />
-            <NetworkCard label="MAC Address" value={vps.network?.mac_address || "Unknown"} />
-            <NetworkCard label="Subnet" value={vps.network?.subnet || "Unknown"} />
+            <NetworkCard
+              label="Floating IP"
+              value={vps.network?.floating_ip || "None"}
+            />
+            <NetworkCard
+              label="Private IP"
+              value={vps.network?.private_ip || "None"}
+            />
+            <NetworkCard
+              label="MAC Address"
+              value={vps.network?.mac_address || "Unknown"}
+            />
+            <NetworkCard
+              label="Subnet"
+              value={vps.network?.subnet || "Unknown"}
+            />
           </div>
         </Section>
-
       </div>
     </div>
   );
@@ -147,7 +252,7 @@ const InfoCard = ({ icon, label, value }) => (
   </div>
 );
 
-const ActionButton = ({ color, icon, label }) => {
+const ActionButton = ({ color, icon, label, onClick }) => {
   const colorClasses = {
     green: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
     yellow: "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-400",
@@ -158,6 +263,7 @@ const ActionButton = ({ color, icon, label }) => {
 
   return (
     <button
+      onClick={onClick}
       className={`${colorClasses[color]} text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium shadow-lg transition focus:outline-none focus:ring-2`}
     >
       {icon} {label}

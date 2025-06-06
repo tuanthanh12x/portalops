@@ -331,6 +331,8 @@ class InstanceActionAPI(APIView):
                 if not new_flavor_id:
                     return Response({"error": "Missing flavor_id for resize"}, status=400)
                 conn.compute.resize_server(server, flavor=new_flavor_id)
+            elif action == "delete":
+                conn.compute.delete_server(server, ignore_missing=True)
             else:
                 return Response({"error": f"Unsupported action: {action}"}, status=400)
 
@@ -338,6 +340,7 @@ class InstanceActionAPI(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
 
 
 
