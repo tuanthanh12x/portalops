@@ -32,24 +32,37 @@ class VolumeAPI(APIView):
             volumes = conn.block_storage.volumes(details=True)
 
             result = []
-
             for vol in volumes:
-                source_type = "Empty"
-                if getattr(vol, "snapshot_id", None):
-                    source_type = "Snapshot"
-                elif getattr(vol, "volume_image_metadata", None):
-                    source_type = "Image"
-                elif getattr(vol, "source_volid", None):
-                    source_type = "Volume"
+                detailed_vol = conn.block_storage.get_volume(vol.id)
+
+                snapshot_id = getattr(detailed_vol, "snapshot_id", None)
+                image_meta = getattr(detailed_vol, "volume_image_metadata", None)
+                source_volid = getattr(detailed_vol, "source_volid", None)
+
+                if snapshot_id:
+                    source_type = "snapshot"
+                    source_id = snapshot_id
+                elif image_meta:
+                    source_type = "image"
+                    source_id = detailed_vol.volume_image_metadata.get(
+                        'image_id') if detailed_vol.volume_image_metadata else None
+                elif source_volid:
+                    source_type = "volume"
+                    source_id = source_volid
+                else:
+                    source_type = "manual"
+                    source_id = None
+
                 result.append({
-                    "id": vol.id,
-                    "name": vol.name,
-                    "type": vol.volume_type,
+                    "id": detailed_vol.id,
+                    "name": detailed_vol.name,
+                    "type": detailed_vol.volume_type,
                     "source_type": source_type,
-                    "size": vol.size,
-                    "status": vol.status,
-                    "created_at": vol.created_at,
-                    "description": vol.description or "",
+                    "source_id": source_id,
+                    "size": detailed_vol.size,
+                    "status": detailed_vol.status,
+                    "created_at": detailed_vol.created_at,
+                    "description": detailed_vol.description or "",
                 })
 
             return Response(result)

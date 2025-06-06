@@ -44,6 +44,7 @@ const VolumeListPage = () => {
               <th className="px-6 py-4 text-left">Name</th>
               <th className="px-6 py-4 text-left">Size (GB)</th>
               <th className="px-6 py-4 text-left">Type</th>
+                            <th className="px-6 py-4 text-left">Source Type</th>
               <th className="px-6 py-4 text-left">Status</th>
               <th className="px-6 py-4 text-left">Description</th>
               <th className="px-6 py-4 text-left">Created</th>
