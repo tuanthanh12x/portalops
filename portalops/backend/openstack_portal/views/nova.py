@@ -492,7 +492,7 @@ class VPSDetailView(APIView):
                 "disk": f"{flavor.disk} GB",
                 "os": image.name if image else "Custom Image",
                 "datacenter": instance.availability_zone,
-                "created_at": instance.created_at.isoformat(),
+                "created_at": created_at,
 
                 "monitoring": {
                     "cpu_usage": 55,  # Placeholder
