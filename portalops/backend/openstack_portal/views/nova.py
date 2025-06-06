@@ -470,18 +470,16 @@ class VPSDetailView(APIView):
                     "status": vol.status
                 })
 
-
             glance_snapshots = [
                 {
                     "id": img.id,
                     "name": img.name or img.id,
-                    "size": f"{img.size / (1024 ** 3):.2f} GB",  # size in GB
+                    "size": f"{img.size / (1024 ** 3):.2f} GB",
                     "created_at": img.created_at
                 }
                 for img in conn.image.images()
                 if img.visibility == "private"
                    and img.get("image_type") == "snapshot"
-                   and img.get("instance_uuid") == instance.id
             ]
 
             if isinstance(instance.created_at, datetime):

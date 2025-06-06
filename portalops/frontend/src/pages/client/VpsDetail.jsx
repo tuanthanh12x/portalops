@@ -324,49 +324,54 @@ const SnapshotModal = ({ onClose, onCreate }) => {
     onCreate(name.trim());
   };
 
-  return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-      aria-modal="true"
-      role="dialog"
-    >
-      <div className="bg-gray-800 rounded-md p-6 w-96 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-400">
-          Create Snapshot Backup
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-gray-300">
-            Snapshot Name
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              autoFocus
-              required
-              maxLength={64}
-            />
-          </label>
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 text-white font-semibold"
-            >
-              Create
-            </button>
-          </div>
-        </form>
-      </div>
+
+return (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+    aria-modal="true"
+    role="dialog"
+  >
+    <div className="bg-gray-800 rounded-md p-6 w-96 shadow-lg">
+      <h2 className="text-xl font-semibold mb-4 text-indigo-400">
+        Create Snapshot Backup
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block text-gray-300">
+          Snapshot Name
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. backup-2025-06-06"
+            className="mt-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            autoFocus
+            required
+            maxLength={64}
+          />
+        </label>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 text-white font-semibold"
+          >
+            Create
+          </button>
+        </div>
+      </form>
     </div>
-  );
+  </div>
+);
+
+
 };
+
 
 const ActionButton = ({ icon, label, onClick, color, disabled }) => {
   const colors = {
