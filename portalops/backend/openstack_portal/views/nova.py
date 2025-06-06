@@ -488,7 +488,7 @@ class VPSDetailView(APIView):
                 "status": instance.status,
                 "ip": floating_ip or private_ip,
                 "cpu": f"{flavor.vcpus} vCPU",
-                "ram": f"{int(flavor.ram / 1024)} GB",
+                "ram": f"{flavor.ram / 1024:.1f} GB",
                 "disk": f"{flavor.disk} GB",
                 "os": image.name if image else "Custom Image",
                 "datacenter": instance.availability_zone,

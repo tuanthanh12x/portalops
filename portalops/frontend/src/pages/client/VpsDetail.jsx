@@ -1,34 +1,49 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/client/Navbar";
 import {
   Power, RefreshCw, Trash2, Terminal, Save,
-  Cpu, HardDrive, Server, Globe, Network, Disc, MemoryStick
+  Cpu, HardDrive, Server, Globe
 } from "lucide-react";
 
 const VPSDetailPage = () => {
+  const { id } = useParams(); // get VPS id from route param
   const [vps, setVps] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setVps({
-      id: "1",
-      name: "web-server-01",
-      status: "ACTIVE",
-      ip: "103.11.12.34",
-      cpu: "2 vCPU",
-      ram: "4 GB",
-      disk: "40 GB",
-      os: "Ubuntu 22.04 LTS",
-      datacenter: "Singapore",
-      created_at: "2025-05-01",
-    });
-  }, []);
+    const fetchVps = async () => {
+      try {
+        const res = await axiosInstance.get(`/openstack/vps/${id}/`);
+        setVps(res.data);
+      } catch (err) {
+        console.error("Failed to load VPS details:", err);
+        setError("Unable to load VPS details.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!vps)
+    fetchVps();
+  }, [id]);
+
+  if (loading) {
     return (
       <div className="text-center py-10 text-gray-400 bg-gray-900 min-h-screen">
         Loading VPS details...
       </div>
     );
+  }
+
+  if (error || !vps) {
+    return (
+      <div className="text-center py-10 text-red-400 bg-gray-900 min-h-screen">
+        {error || "VPS not found."}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-200 overflow-x-hidden">
@@ -40,7 +55,8 @@ const VPSDetailPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-indigo-400">{vps.name}</h1>
             <p className="text-sm text-gray-400">
-              Created on {vps.created_at} • <span className="text-green-400 font-semibold">{vps.status}</span>
+              Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
+              <span className="text-green-400 font-semibold">{vps.status}</span>
             </p>
           </div>
           <div className="flex gap-3">
@@ -59,50 +75,61 @@ const VPSDetailPage = () => {
           <InfoCard icon={<HardDrive />} label="Disk" value={vps.disk} />
           <InfoCard icon={<Globe />} label="IP Address" value={vps.ip} />
           <InfoCard label="Operating System" value={vps.os} />
-          <InfoCard label="Region" value={vps.datacenter} />
+          <InfoCard label="Region" value={vps.datacenter || "Unknown"} />
         </div>
 
         {/* Monitoring */}
         <Section title="Monitoring">
-          <UsageBar label="CPU Usage" percent={55} color="bg-blue-500" />
-          <UsageBar label="RAM Usage" percent={72} color="bg-green-500" />
-          <UsageBar label="Disk Usage" percent={40} color="bg-yellow-500" />
+          <UsageBar label="CPU Usage" percent={vps.monitoring?.cpu_usage || 0} color="bg-blue-500" />
+          <UsageBar label="RAM Usage" percent={vps.monitoring?.ram_usage || 0} color="bg-green-500" />
+          <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
         </Section>
 
         {/* Snapshots */}
         <Section title="Snapshots">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md">
-              <span>snapshot-2025-05-25</span>
-              <span className="text-sm text-gray-400">2.1 GB</span>
-            </div>
-            <div className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md">
-              <span>before-update</span>
-              <span className="text-sm text-gray-400">1.7 GB</span>
-            </div>
-            <button className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
-              + Create Backup
-            </button>
-          </div>
+          {vps.snapshots.length === 0 ? (
+            <p className="text-gray-400">No snapshots available.</p>
+          ) : (
+            vps.snapshots.map((snap) => (
+              <div key={snap.id || snap.name} className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-md mb-2">
+                <span>{snap.name}</span>
+                <span className="text-sm text-gray-400">{snap.size || "Unknown size"}</span>
+              </div>
+            ))
+          )}
+          <button className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
+            + Create Backup
+          </button>
         </Section>
 
         {/* Volumes */}
         <Section title="Volumes">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <VolumeCard name="volume-01" size="40 GB" status="attached" />
-            <VolumeCard name="backup-disk" size="100 GB" status="available" />
-          </div>
+          {vps.volumes.length === 0 ? (
+            <p className="text-gray-400">No volumes attached.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vps.volumes.map((vol) => (
+                <VolumeCard
+                  key={vol.id || vol.name}
+                  name={vol.name}
+                  size={vol.size}
+                  status={vol.status}
+                />
+              ))}
+            </div>
+          )}
         </Section>
 
         {/* Network Info */}
         <Section title="Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <NetworkCard label="Floating IP" value="103.11.12.34" />
-            <NetworkCard label="Private IP" value="192.168.1.10" />
-            <NetworkCard label="MAC Address" value="fa:16:3e:12:ab:cd" />
-            <NetworkCard label="Subnet" value="192.168.1.0/24" />
+            <NetworkCard label="Floating IP" value={vps.network?.floating_ip || "None"} />
+            <NetworkCard label="Private IP" value={vps.network?.private_ip || "None"} />
+            <NetworkCard label="MAC Address" value={vps.network?.mac_address || "Unknown"} />
+            <NetworkCard label="Subnet" value={vps.network?.subnet || "Unknown"} />
           </div>
         </Section>
+
       </div>
     </div>
   );
@@ -163,7 +190,13 @@ const VolumeCard = ({ name, size, status }) => (
       <div className="text-sm font-semibold text-gray-200">{name}</div>
       <div className="text-xs text-gray-400">{size}</div>
     </div>
-    <span className={`text-xs font-bold px-2 py-1 rounded-full ${status === "attached" ? "bg-green-700 text-green-200" : "bg-yellow-700 text-yellow-200"}`}>
+    <span
+      className={`text-xs font-bold px-2 py-1 rounded-full ${
+        status === "attached"
+          ? "bg-green-700 text-green-200"
+          : "bg-yellow-700 text-yellow-200"
+      }`}
+    >
       {status}
     </span>
   </div>

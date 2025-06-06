@@ -55,7 +55,7 @@ const InstancesTable = ({ instances }) => {
   };
 
   return (
-    <section className=" mx-auto px-4 py-10">
+    <section className="mx-auto px-4 py-10">
       <header className="flex items-center justify-between mb-4">
         <h2 className="text-4xl font-bold tracking-tight text-indigo-400 drop-shadow-md">
           🖥️ My Instances
@@ -92,7 +92,14 @@ const InstancesTable = ({ instances }) => {
 
                 return (
                   <tr key={instance.id} className="hover:bg-gray-900/30 transition">
-                    <td className="px-6 py-4 font-medium">{instance.name}</td>
+                    <td className="px-6 py-4 font-medium">
+                      <Link
+                        to={`/client/vps/${instance.id}`}
+                        className="text-indigo-400 hover:underline"
+                      >
+                        {instance.name}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-block px-2 py-1 text-xs font-bold rounded-full ${
@@ -107,7 +114,10 @@ const InstancesTable = ({ instances }) => {
                     <td className="px-6 py-4">{instance.ip || "-"}</td>
                     <td className="px-6 py-4">{instance.plan || "-"}</td>
                     <td className="px-6 py-4">{instance.region || "-"}</td>
-                    <td className="px-6 py-4" title={new Date(instance.created).toLocaleString()}>
+                    <td
+                      className="px-6 py-4"
+                      title={new Date(instance.created).toLocaleString()}
+                    >
                       {new Date(instance.created).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 flex space-x-2">

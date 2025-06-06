@@ -29,7 +29,7 @@ function AppRoutes() {
           <Route path="/create-instance" element={<CreateInstancePage />} />
           <Route path="/instances" element={<MyInstancesPage />} />
           <Route path="/images" element={<ImageListPage />} />
-          <Route path="/vps-detail" element={<VPSDetailPage />} />
+          <Route path="/client/vps/:id" element={<VPSDetailPage />} />
 
           <Route path="/volumes" element={<VolumeListPage />} />
           <Route path="/keypairs" element={<KeypairListPage />} />
