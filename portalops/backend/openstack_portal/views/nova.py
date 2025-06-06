@@ -435,7 +435,12 @@ class VPSDetailView(APIView):
 
             # Get instance info
             instance = conn.compute.get_server(instance_id)
-            flavor = conn.compute.get_flavor(instance.flavor["id"])
+            flavor_id_or_name = instance.flavor.get("id")
+            flavor = conn.compute.find_flavor(flavor_id_or_name)
+
+            if not flavor:
+                return Response({"error": f"Flavor '{flavor_id_or_name}' not found"}, status=404)
+
             image = conn.compute.get_image(instance.image["id"]) if instance.image else None
             addresses = instance.addresses or {}
 
