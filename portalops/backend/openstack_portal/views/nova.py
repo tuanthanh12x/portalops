@@ -405,3 +405,102 @@ class KeypairView(APIView):
                 return Response(response.json(), status=response.status_code)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+class VPSDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, instance_id):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        if not project_id:
+            return Response({"error": "Missing project_id in token"}, status=400)
+
+        token_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(token_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+        if isinstance(token, bytes):
+            token = token.decode()
+
+        try:
+            conn = vl_connect_with_token(token, project_id)
+
+            # Get instance info
+            instance = conn.compute.get_server(instance_id)
+            flavor = conn.compute.get_flavor(instance.flavor["id"])
+            image = conn.compute.get_image(instance.image["id"]) if instance.image else None
+            addresses = instance.addresses or {}
+
+            # Network info
+            private_ip, floating_ip, mac_address, subnet = "", "", "", ""
+            for net in addresses.values():
+                for addr in net:
+                    if addr.get("OS-EXT-IPS:type") == "floating":
+                        floating_ip = addr["addr"]
+                    elif addr.get("OS-EXT-IPS:type") == "fixed":
+                        private_ip = addr["addr"]
+                        mac_address = addr.get("OS-EXT-IPS-MAC:mac_addr", "")
+                        subnet = addr.get("subnet", "")
+
+            # Attached volumes
+            volumes = []
+            for attachment in instance.attached_volumes:
+                vol = conn.block_storage.get_volume(attachment["id"])
+                volumes.append({
+                    "id": vol.id,
+                    "name": vol.name,
+                    "size": f"{vol.size} GB",
+                    "status": vol.status
+                })
+
+            # Snapshots
+            snapshots = [
+                {
+                    "id": snap.id,
+                    "name": snap.name or snap.id,
+                    "size": f"{snap.size} GB"
+                }
+                for snap in conn.block_storage.snapshots(details=True)
+                if snap.status == "available" and snap.volume_id in [v["id"] for v in volumes]
+            ]
+
+            data = {
+                "id": instance.id,
+                "name": instance.name,
+                "status": instance.status,
+                "ip": floating_ip or private_ip,
+                "cpu": f"{flavor.vcpus} vCPU",
+                "ram": f"{int(flavor.ram / 1024)} GB",
+                "disk": f"{flavor.disk} GB",
+                "os": image.name if image else "Custom Image",
+                "datacenter": instance.availability_zone,
+                "created_at": instance.created_at.isoformat(),
+
+                "monitoring": {
+                    "cpu_usage": 55,  # Placeholder
+                    "ram_usage": 72,
+                    "disk_usage": 40
+                },
+
+                "snapshots": snapshots,
+                "volumes": volumes,
+                "network": {
+                    "floating_ip": floating_ip,
+                    "private_ip": private_ip,
+                    "mac_address": mac_address,
+                    "subnet": subnet or "192.168.1.0/24"  # fallback
+                }
+            }
+
+            return Response(data)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

@@ -3,10 +3,11 @@ from django.urls import path
 from .views.cinder import VolumeAPI
 from .views.glance import ListImagesView
 from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, InstanceActionAPI, \
-    VolumeOptionsView,  KeypairView
+    VolumeOptionsView, KeypairView, VPSDetailView
 
 urlpatterns = [
     path('instance-option/', InstanceOptionsView.as_view(), name='instance-option'),
+    path('vps-detail/', VPSDetailView.as_view(), name='vps-detail'),
     path('volume-option/', VolumeOptionsView.as_view(), name='volume-option'),
     path('compute/instances/', CreateInstanceAPI.as_view(), name='create-instance'),
     path('storage/volumes/', VolumeAPI.as_view(), name='volume_api'),

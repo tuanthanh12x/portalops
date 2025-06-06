@@ -47,7 +47,7 @@ const VPSDetailPage = () => {
             <ActionButton color="green" icon={<Power size={16} />} label="Power On" />
             <ActionButton color="yellow" icon={<RefreshCw size={16} />} label="Reboot" />
             <ActionButton color="blue" icon={<Terminal size={16} />} label="Console" />
-            <ActionButton color="gray" icon={<Save size={16} />} label="Snapshot" />
+            <ActionButton color="gray" icon={<Save size={16} />} label="Backup" />
             <ActionButton color="red" icon={<Trash2 size={16} />} label="Destroy" />
           </div>
         </div>
@@ -81,7 +81,7 @@ const VPSDetailPage = () => {
               <span className="text-sm text-gray-400">1.7 GB</span>
             </div>
             <button className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
-              + Create Snapshot
+              + Create Backup
             </button>
           </div>
         </Section>
