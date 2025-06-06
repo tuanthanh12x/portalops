@@ -7,7 +7,8 @@ from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, 
 
 urlpatterns = [
     path('instance-option/', InstanceOptionsView.as_view(), name='instance-option'),
-    path('vps-detail/', VPSDetailView.as_view(), name='vps-detail'),
+    path("vps/<str:instance_id>/", VPSDetailView.as_view()),
+
     path('volume-option/', VolumeOptionsView.as_view(), name='volume-option'),
     path('compute/instances/', CreateInstanceAPI.as_view(), name='create-instance'),
     path('storage/volumes/', VolumeAPI.as_view(), name='volume_api'),
