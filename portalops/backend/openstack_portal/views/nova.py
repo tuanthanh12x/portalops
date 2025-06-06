@@ -410,7 +410,7 @@ class KeypairView(APIView):
 
 
 
-
+from datetime import datetime
 
 
 
@@ -477,6 +477,11 @@ class VPSDetailView(APIView):
                 if snap.status == "available" and snap.volume_id in [v["id"] for v in volumes]
             ]
 
+
+            if isinstance(instance.created_at, datetime):
+                created_at = instance.created_at.isoformat()
+            else:
+                created_at = instance.created_at  # giữ nguyên nếu đã là string
             data = {
                 "id": instance.id,
                 "name": instance.name,
