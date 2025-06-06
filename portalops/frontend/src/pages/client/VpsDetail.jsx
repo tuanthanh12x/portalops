@@ -19,6 +19,7 @@ const VPSDetailPage = () => {
   const [vps, setVps] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadingId, setLoadingId] = useState(null);
 
   useEffect(() => {
     const fetchVps = async () => {
@@ -36,34 +37,90 @@ const VPSDetailPage = () => {
     fetchVps();
   }, [id]);
 
+  const performInstanceAction = async (instanceId, action, payload = {}) => {
+    try {
+      const res = await axiosInstance.post(
+        `/openstack/compute/instances/${instanceId}/action/`,
+        { action, ...payload }
+      );
+      alert(res.data.message || "Action executed successfully");
+      // Reload VPS data after action
+      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+      setVps(updated.data);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to execute action");
+    }
+  };
+
   const handlePowerOn = () => performInstanceAction(id, "start");
+  const handlePowerOff = () => performInstanceAction(id, "stop");
+  const handleReboot = () => performInstanceAction(id, "reboot");
 
-const handlePowerOff = () => performInstanceAction(id, "stop");
+  const handleResize = () => {
+    const newFlavorId = prompt("Enter new flavor ID for resize:");
+    if (newFlavorId) {
+      performInstanceAction(id, "resize", { flavor_id: newFlavorId });
+    }
+  };
 
-const handleReboot = () => performInstanceAction(id, "reboot");
+  const handleConsole = async () => {
+    setLoadingId(id);
+    try {
+      const res = await axiosInstance.post("/overview/console/", {
+        server_id: id,
+        type: "novnc",
+      });
+      const consoleUrl = res.data.console?.url;
+      if (consoleUrl) {
+        window.open(consoleUrl, "_blank", "noopener,noreferrer");
+      } else {
+        alert("Console URL not found in response.");
+      }
+    } catch (error) {
+      alert(
+        `Failed to open console: ${error.response?.data?.error || error.message}`
+      );
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
-const handleResize = () => {
-  const newFlavorId = prompt("Enter new flavor ID for resize:");
-  if (newFlavorId) {
-    performInstanceAction(id, "resize", { flavor_id: newFlavorId });
+const handleBackup = async () => {
+  const backupName = prompt("Enter backup name:");
+  if (!backupName) {
+    alert("Backup name is required.");
+    return;
+  }
+
+  try {
+    const res = await axiosInstance.post(
+      `/openstack/compute/instances/${id}/snapshot/`,
+      { name: backupName }
+    );
+    alert(res.data.message || "Backup created successfully.");
+    // Refresh VPS data to include new snapshot/backup
+    const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+    setVps(updated.data);
+  } catch (error) {
+    console.error("Backup failed:", error);
+    alert(
+      error.response?.data?.error ||
+      error.message ||
+      "Backup operation failed."
+    );
   }
 };
 
-const handleConsole = () => {
-  alert("Console not yet implemented."); // Tuỳ bạn xử lý thêm
-};
-
-const handleBackup = () => {
-  alert("Backup feature coming soon.");
-};
-
-
-const handleDestroy = () => {
-  if (window.confirm("Are you sure you want to destroy this VPS? This action is irreversible.")) {
-    performInstanceAction(id, "delete");
-  }
-};
-
+  const handleDestroy = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to destroy this VPS? This action is irreversible."
+      )
+    ) {
+      performInstanceAction(id, "delete");
+    }
+  };
 
   if (loading) {
     return (
@@ -80,20 +137,6 @@ const handleDestroy = () => {
       </div>
     );
   }
-
-  const performInstanceAction = async (instanceId, action, payload = {}) => {
-  try {
-    const res = await axiosInstance.post(`/openstack/compute/instances/${instanceId}/action/`, {
-      action,
-      ...payload,
-    });
-    alert(res.data.message || "Action executed successfully");
-  } catch (err) {
-    console.error(err);
-    alert(err.response?.data?.error || "Failed to execute action");
-  }
-};
-
 
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-200 overflow-x-hidden">
@@ -124,8 +167,9 @@ const handleDestroy = () => {
             <ActionButton
               color="blue"
               icon={<Terminal size={16} />}
-              label="Console"
+              label={loadingId === id ? "Loading..." : "Console"}
               onClick={handleConsole}
+              disabled={loadingId === id}
             />
             <ActionButton
               color="gray"
@@ -144,9 +188,9 @@ const handleDestroy = () => {
 
         {/* VPS Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <InfoCard icon={<Cpu />} label="CPU" value={vps.cpu} />
-          <InfoCard icon={<Server />} label="RAM" value={vps.ram} />
-          <InfoCard icon={<HardDrive />} label="Disk" value={vps.disk} />
+          <InfoCard icon={<Cpu />} label="CPU" value={`${vps.cpu} cores`} />
+          <InfoCard icon={<Server />} label="RAM" value={`${vps.ram} GB`} />
+          <InfoCard icon={<HardDrive />} label="Disk" value={`${vps.disk} GB`} />
           <InfoCard icon={<Globe />} label="IP Address" value={vps.ip} />
           <InfoCard label="Operating System" value={vps.os} />
           <InfoCard label="Region" value={vps.datacenter || "Unknown"} />
@@ -206,7 +250,7 @@ const handleDestroy = () => {
                 <VolumeCard
                   key={vol.id || vol.name}
                   name={vol.name}
-                  size={vol.size}
+                  size={`${vol.size} GB`}
                   status={vol.status}
                 />
               ))}
@@ -229,10 +273,7 @@ const handleDestroy = () => {
               label="MAC Address"
               value={vps.network?.mac_address || "Unknown"}
             />
-            <NetworkCard
-              label="Subnet"
-              value={vps.network?.subnet || "Unknown"}
-            />
+            <NetworkCard label="Subnet" value={vps.network?.subnet || "Unknown"} />
           </div>
         </Section>
       </div>
@@ -252,7 +293,7 @@ const InfoCard = ({ icon, label, value }) => (
   </div>
 );
 
-const ActionButton = ({ color, icon, label, onClick }) => {
+const ActionButton = ({ color, icon, label, onClick, disabled }) => {
   const colorClasses = {
     green: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
     yellow: "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-400",
@@ -263,8 +304,11 @@ const ActionButton = ({ color, icon, label, onClick }) => {
 
   return (
     <button
+      disabled={disabled}
       onClick={onClick}
-      className={`${colorClasses[color]} text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium shadow-lg transition focus:outline-none focus:ring-2`}
+      className={`${colorClasses[color]} ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium shadow-lg transition focus:outline-none focus:ring-2`}
     >
       {icon} {label}
     </button>
