@@ -21,6 +21,9 @@ const VPSDetailPage = () => {
   const [error, setError] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
 
+  // State for Snapshot Modal
+  const [isSnapshotModalOpen, setSnapshotModalOpen] = useState(false);
+
   useEffect(() => {
     const fetchVps = async () => {
       try {
@@ -86,31 +89,32 @@ const VPSDetailPage = () => {
     }
   };
 
-const handleBackup = async () => {
-  const backupName = prompt("Enter backup name:");
-  if (!backupName) {
-    alert("Backup name is required.");
-    return;
-  }
+  // Instead of prompt, open modal for backup name input
+  const handleBackup = () => {
+    setSnapshotModalOpen(true);
+  };
 
-  try {
-    const res = await axiosInstance.post(
-      `/openstack/compute/instances/${id}/snapshot/`,
-      { name: backupName }
-    );
-    alert(res.data.message || "Backup created successfully.");
-    // Refresh VPS data to include new snapshot/backup
-    const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
-    setVps(updated.data);
-  } catch (error) {
-    console.error("Backup failed:", error);
-    alert(
-      error.response?.data?.error ||
-      error.message ||
-      "Backup operation failed."
-    );
-  }
-};
+  // Called from modal onCreate
+  const createBackup = async (backupName) => {
+    try {
+      const res = await axiosInstance.post(
+        `/openstack/compute/instances/${id}/snapshot/`,
+        { name: backupName }
+      );
+      alert(res.data.message || "Backup created successfully.");
+      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+      setVps(updated.data);
+    } catch (error) {
+      console.error("Backup failed:", error);
+      alert(
+        error.response?.data?.error ||
+          error.message ||
+          "Backup operation failed."
+      );
+    } finally {
+      setSnapshotModalOpen(false);
+    }
+  };
 
   const handleDestroy = () => {
     if (
@@ -261,101 +265,137 @@ const handleBackup = async () => {
         {/* Network Info */}
         <Section title="Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <NetworkCard
-              label="Floating IP"
-              value={vps.network?.floating_ip || "None"}
-            />
-            <NetworkCard
-              label="Private IP"
-              value={vps.network?.private_ip || "None"}
-            />
-            <NetworkCard
-              label="MAC Address"
-              value={vps.network?.mac_address || "Unknown"}
-            />
-            <NetworkCard label="Subnet" value={vps.network?.subnet || "Unknown"} />
+            <InfoCard label="IPv4" value={vps.ipv4 || "N/A"} />
+            <InfoCard label="IPv6" value={vps.ipv6 || "N/A"} />
+            <InfoCard label="MAC Address" value={vps.mac_address || "N/A"} />
+            <InfoCard label="Gateway" value={vps.gateway || "N/A"} />
           </div>
         </Section>
+      </div>
+
+      {/* Snapshot Modal */}
+      {isSnapshotModalOpen && (
+        <SnapshotModal
+          onClose={() => setSnapshotModalOpen(false)}
+          onCreate={createBackup}
+        />
+      )}
+    </div>
+  );
+};
+
+const SnapshotModal = ({ onClose, onCreate }) => {
+  const [name, setName] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (name.trim() === "") {
+      alert("Snapshot name cannot be empty.");
+      return;
+    }
+    onCreate(name.trim());
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div className="bg-gray-800 rounded-md p-6 w-96 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-indigo-400">
+          Create Snapshot Backup
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-gray-300">
+            Snapshot Name
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              autoFocus
+              required
+              maxLength={64}
+            />
+          </label>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 text-white font-semibold"
+            >
+              Create
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 };
 
-// Components
-
-const InfoCard = ({ icon, label, value }) => (
-  <div className="bg-black/30 border border-gray-700 rounded-2xl shadow-md p-5 flex items-start gap-4 backdrop-blur-lg">
-    {icon && <div className="text-blue-400 mt-1">{icon}</div>}
-    <div>
-      <div className="text-sm text-gray-400">{label}</div>
-      <div className="text-lg font-semibold text-gray-200">{value}</div>
-    </div>
-  </div>
-);
-
-const ActionButton = ({ color, icon, label, onClick, disabled }) => {
-  const colorClasses = {
-    green: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
-    yellow: "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-400",
-    blue: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
-    gray: "bg-gray-600 hover:bg-gray-700 focus:ring-gray-400",
-    red: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+const ActionButton = ({ icon, label, onClick, color, disabled }) => {
+  const colors = {
+    green: "bg-green-600 hover:bg-green-700",
+    yellow: "bg-yellow-500 hover:bg-yellow-600",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    gray: "bg-gray-600 hover:bg-gray-700",
+    red: "bg-red-600 hover:bg-red-700",
   };
-
   return (
     <button
-      disabled={disabled}
       onClick={onClick}
-      className={`${colorClasses[color]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium shadow-lg transition focus:outline-none focus:ring-2`}
+      disabled={disabled}
+      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-white ${
+        colors[color] || colors.gray
+      } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
-      {icon} {label}
+      {icon}
+      {label}
     </button>
   );
 };
 
-const Section = ({ title, children }) => (
-  <div className="bg-black/30 border border-gray-700 rounded-2xl shadow-md p-6 backdrop-blur-lg">
-    <h2 className="text-xl font-bold text-indigo-300 mb-4">{title}</h2>
-    {children}
+const InfoCard = ({ icon, label, value }) => (
+  <div className="bg-gray-800 rounded-md p-4 flex items-center gap-4">
+    {icon && <div className="text-indigo-400">{icon}</div>}
+    <div>
+      {label && <div className="text-gray-400 text-xs">{label}</div>}
+      <div className="font-semibold">{value}</div>
+    </div>
   </div>
 );
 
+const Section = ({ title, children }) => (
+  <section className="mb-8">
+    <h3 className="text-lg font-semibold text-indigo-400 mb-3">{title}</h3>
+    {children}
+  </section>
+);
+
 const UsageBar = ({ label, percent, color }) => (
-  <div className="mb-4">
+  <div className="mb-3">
     <div className="flex justify-between mb-1 text-sm text-gray-400">
       <span>{label}</span>
       <span>{percent}%</span>
     </div>
-    <div className="w-full h-4 bg-gray-700 rounded-full">
-      <div className={`${color} h-full rounded-full`} style={{ width: `${percent}%` }}></div>
+    <div className="w-full h-4 bg-gray-700 rounded-md overflow-hidden">
+      <div className={`${color} h-full`} style={{ width: `${percent}%` }} />
     </div>
   </div>
 );
 
 const VolumeCard = ({ name, size, status }) => (
-  <div className="bg-gray-800 rounded-xl p-4 flex justify-between items-center">
-    <div>
-      <div className="text-sm font-semibold text-gray-200">{name}</div>
-      <div className="text-xs text-gray-400">{size}</div>
-    </div>
-    <span
-      className={`text-xs font-bold px-2 py-1 rounded-full ${
-        status === "attached"
-          ? "bg-green-700 text-green-200"
-          : "bg-yellow-700 text-yellow-200"
-      }`}
-    >
-      {status}
-    </span>
-  </div>
-);
-
-const NetworkCard = ({ label, value }) => (
-  <div className="bg-gray-800 rounded-xl p-4">
-    <div className="text-sm text-gray-400">{label}</div>
-    <div className="text-base font-medium text-gray-200">{value}</div>
+  <div className="bg-gray-800 rounded-md p-4">
+    <div className="font-semibold text-indigo-400">{name}</div>
+    <div className="text-gray-400 text-sm">{size}</div>
+    <div className="mt-1 text-xs text-gray-500">Status: {status}</div>
   </div>
 );
 

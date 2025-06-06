@@ -36,6 +36,7 @@ class VolumeAPI(APIView):
                 result.append({
                     "id": vol.id,
                     "name": vol.name,
+                    "type": vol.type,
                     "size": vol.size,
                     "status": vol.status,
                     "created_at": vol.created_at,
