@@ -27,7 +27,7 @@ const SnapshotListPage = () => {
 
       <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-1 mt-8">
         <h2 className="text-4xl font-bold tracking-tight text-green-400 drop-shadow-md font-fantasy">
-          🛡️ My Snapshots
+          My Backups
         </h2>
       </header>
 
@@ -53,13 +53,13 @@ const SnapshotListPage = () => {
             {loading ? (
               <tr>
                 <td colSpan="6" className="text-center py-10 text-gray-500 font-medium">
-                  ⏳ Loading snapshots...
+                  ⏳ Loading backups...
                 </td>
               </tr>
             ) : snapshots.length === 0 ? (
               <tr>
                 <td colSpan="6" className="text-center py-10 text-gray-500 font-medium">
-                  🚫 No snapshots found.
+                  🚫 No backup found.
                 </td>
               </tr>
             ) : (

@@ -89,6 +89,7 @@ class SnapshotListAPIView(APIView):
                 snapshots.append({
                     "id": img.id,
                     "name": img.name,
+                    "size": img.size,
                     "status": img.status,
                     "created_at": img.created_at,
                     "instance_id": props.get("instance_uuid"),
