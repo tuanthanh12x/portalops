@@ -520,6 +520,7 @@ class VPSDetailView(APIView):
             return Response({"error": str(e)}, status=500)
 
 
+
 class InstanceSnapshotView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -532,9 +533,21 @@ class InstanceSnapshotView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         snapshot_name = serializer.validated_data["name"]
-        conn = vl_connect_with_token(request.user)
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        if not project_id:
+            return Response({"error": "Missing project_id in token"}, status=400)
+
+        token_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(token_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+        if isinstance(token, bytes):
+            token = token.decode()
 
         try:
+            conn = vl_connect_with_token(token, project_id)
+
             image = conn.compute.create_server_image(instance_id, snapshot_name)
             return Response(
                 {"message": f"Snapshot '{snapshot_name}' created successfully", "image_id": image.id},
