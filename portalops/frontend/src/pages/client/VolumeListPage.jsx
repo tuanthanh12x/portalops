@@ -43,7 +43,7 @@ const VolumeListPage = () => {
             <tr>
               <th className="px-6 py-4 text-left">Name</th>
               <th className="px-6 py-4 text-left">Size (GB)</th>
-                           <th className="px-6 py-4 text-left">Type</th>
+              <th className="px-6 py-4 text-left">Type</th>
               <th className="px-6 py-4 text-left">Status</th>
               <th className="px-6 py-4 text-left">Description</th>
               <th className="px-6 py-4 text-left">Created</th>
@@ -71,7 +71,8 @@ const VolumeListPage = () => {
                 >
                   <td className="px-6 py-4 font-medium">{volume.name || "-"}</td>
                   <td className="px-6 py-4">{volume.size}</td>
-                              <td className="px-6 py-4">{volume.type}</td>
+                  <td className="px-6 py-4">{volume.type}</td>
+                  <td className="px-6 py-4">{volume.source_type}</td>
                   <td className={`px-6 py-4 font-semibold ${volume.status === "available" ? "text-green-400" : "text-yellow-400"
                     }`}>
                     {volume.status}

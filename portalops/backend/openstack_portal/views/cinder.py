@@ -32,12 +32,20 @@ class VolumeAPI(APIView):
             volumes = conn.block_storage.volumes(details=True)
 
             result = []
+
             for vol in volumes:
+                source_type = "Empty"
+                if getattr(vol, "snapshot_id", None):
+                    source_type = "Snapshot"
+                elif getattr(vol, "volume_image_metadata", None):
+                    source_type = "Image"
+                elif getattr(vol, "source_volid", None):
+                    source_type = "Volume"
                 result.append({
                     "id": vol.id,
                     "name": vol.name,
                     "type": vol.volume_type,
-
+                    "source_type": source_type,
                     "size": vol.size,
                     "status": vol.status,
                     "created_at": vol.created_at,
