@@ -14,6 +14,7 @@ import KeypairListPage from "../pages/client/KeypairListPage";
 import ClientDashBoard from "../pages/client/ClientDashBoard";
 import UserManagementPage from "../pages/admin/UserManagePage";
 import VPSDetailPage from "../pages/client/VpsDetail";
+import SnapshotListPage from "../pages/client/SnapshotListPage";
 
 function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ function AppRoutes() {
           <Route path="/users-manager" element={<UserManagementPage />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
+                    <Route path="/vps-backup" element={<SnapshotListPage />} />
         </Route>
 
         {/* Redirect unknown routes to Home */}

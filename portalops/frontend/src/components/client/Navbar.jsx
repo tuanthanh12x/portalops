@@ -149,7 +149,7 @@ const Navbar = () => {
 
                 <li>
                   <a
-                    href="/keypairs"
+                    href="/vps-backup"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
