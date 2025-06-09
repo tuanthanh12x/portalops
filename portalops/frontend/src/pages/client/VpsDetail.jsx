@@ -49,9 +49,9 @@ const VPSDetailPage = () => {
       setPopup({ message: res.data.message || "Action executed successfully", type: "success" });
 
       if (action === "start") {
-        setVps((prev) => ({ ...prev, status: "ACTIVE" }));
+        setVps((prev) => ({ ...prev, status: "Online" }));
       } else if (action === "stop") {
-        setVps((prev) => ({ ...prev, status: "SHUTOFF" }));
+        setVps((prev) => ({ ...prev, status: "Offline" }));
       } else if (action === "delete") {
         setVps(null);
       }
@@ -177,9 +177,25 @@ const VPSDetailPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-indigo-400">{vps.name}</h1>
             <p className="text-sm text-gray-400">
-              Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
-              <span className="text-green-400 font-semibold">{vps.status}</span>
-            </p>
+  Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
+  <span
+    className={`font-semibold ${
+      vps.status.toLowerCase() === "shutoff"
+        ? "text-red-500"
+        : vps.status.toLowerCase() === "active"
+        ? "text-green-400"
+        : "text-yellow-400"
+    }`}
+  >
+    {vps.status.toLowerCase() === "shutoff"
+      ? "Offline"
+      : vps.status.toLowerCase() === "active"
+      ? "Online"
+      : vps.status}
+  </span>
+</p>
+
+
           </div>
           <div className="flex gap-3">
             {vps.status.toLowerCase() === "active" ? (
