@@ -8,6 +8,7 @@ const CreateImageForm = () => {
   const [visibility, setVisibility] = useState('private');
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);       // thêm state thông báo thành công
   const [loading, setLoading] = useState(false);
 
   const diskFormats = ['qcow2', 'raw', 'vmdk', 'vdi', 'iso'];
@@ -15,6 +16,7 @@ const CreateImageForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);      // reset thông báo thành công mỗi lần submit
 
     if (!name || !file) {
       setError('⚠️ Name and image file are required.');
@@ -40,6 +42,7 @@ const CreateImageForm = () => {
         setFile(null);
         setDiskFormat('qcow2');
         setVisibility('private');
+        setSuccess('✅ Image created successfully!');   // hiện thông báo thành công
       } else {
         setError('Image creation failed.');
       }
@@ -65,6 +68,12 @@ const CreateImageForm = () => {
           {error && (
             <div className="text-red-400 text-sm bg-red-900/40 py-2 px-3 rounded text-center">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="text-green-400 text-sm bg-green-900/40 py-2 px-3 rounded text-center">
+              {success}
             </div>
           )}
 
