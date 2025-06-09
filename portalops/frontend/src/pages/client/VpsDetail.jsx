@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/client/Navbar";
+import Popup from "../../components/client/Popup";
 import {
   Power,
   RefreshCw,
@@ -20,9 +21,8 @@ const VPSDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
-
-  // State for Snapshot Modal
   const [isSnapshotModalOpen, setSnapshotModalOpen] = useState(false);
+    const [popup, setPopup] = useState(null);
 
   useEffect(() => {
     const fetchVps = async () => {
@@ -36,7 +36,6 @@ const VPSDetailPage = () => {
         setLoading(false);
       }
     };
-
     fetchVps();
   }, [id]);
 
@@ -46,20 +45,29 @@ const VPSDetailPage = () => {
         `/openstack/compute/instances/${instanceId}/action/`,
         { action, ...payload }
       );
-      alert(res.data.message || "Action executed successfully");
-      // Reload VPS data after action
-      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+
+      setPopup({ message: res.data.message || "Action executed successfully", type: "success" });
+
+      if (action === "start") {
+        setVps((prev) => ({ ...prev, status: "ACTIVE" }));
+      } else if (action === "stop") {
+        setVps((prev) => ({ ...prev, status: "SHUTOFF" }));
+      } else if (action === "delete") {
+        setVps(null);
+      }
+
+      const updated = await axiosInstance.get(`/openstack/vps/${instanceId}/`);
       setVps(updated.data);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.error || "Failed to execute action");
+      setPopup({ message: err.response?.data?.error || "Failed to execute action", type: "error" });
     }
   };
+
 
   const handlePowerOn = () => performInstanceAction(id, "start");
   const handlePowerOff = () => performInstanceAction(id, "stop");
   const handleReboot = () => performInstanceAction(id, "reboot");
-
   const handleResize = () => {
     const newFlavorId = prompt("Enter new flavor ID for resize:");
     if (newFlavorId) {
@@ -89,12 +97,10 @@ const VPSDetailPage = () => {
     }
   };
 
-  // Instead of prompt, open modal for backup name input
   const handleBackup = () => {
     setSnapshotModalOpen(true);
   };
 
-  // Called from modal onCreate
   const createBackup = async (backupName) => {
     try {
       const res = await axiosInstance.post(
@@ -116,21 +122,18 @@ const VPSDetailPage = () => {
     }
   };
 
-
   const handleDeleteSnapshot = async (snapshotId) => {
-  if (!window.confirm("Are you sure you want to delete this snapshot?")) return;
-
-  try {
-    await axiosInstance.delete(`/openstack/compute/snapshots/${snapshotId}/`);
-    alert("Snapshot deleted successfully.");
-    const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
-    setVps(updated.data);
-  } catch (error) {
-    console.error("Failed to delete snapshot:", error);
-    alert(error.response?.data?.error || "Failed to delete snapshot.");
-  }
-};
-
+    if (!window.confirm("Are you sure you want to delete this snapshot?")) return;
+    try {
+      await axiosInstance.delete(`/openstack/compute/snapshots/${snapshotId}/`);
+      alert("Snapshot deleted successfully.");
+      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+      setVps(updated.data);
+    } catch (error) {
+      console.error("Failed to delete snapshot:", error);
+      alert(error.response?.data?.error || "Failed to delete snapshot.");
+    }
+  };
 
   const handleDestroy = () => {
     if (
@@ -161,8 +164,15 @@ const VPSDetailPage = () => {
   return (
     <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-gray-200 overflow-x-hidden">
       <Navbar credits={150} />
+      {popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
+
       <div className="p-8 max-w-7xl mx-auto space-y-10">
-        {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-4">
           <div>
             <h1 className="text-3xl font-bold text-indigo-400">{vps.name}</h1>
@@ -172,12 +182,21 @@ const VPSDetailPage = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <ActionButton
-              color="green"
-              icon={<Power size={16} />}
-              label="Power On"
-              onClick={handlePowerOn}
-            />
+            {vps.status.toLowerCase() === "active" ? (
+              <ActionButton
+                color="red"
+                icon={<Power size={16} />}
+                label="Power Off"
+                onClick={handlePowerOff}
+              />
+            ) : (
+              <ActionButton
+                color="green"
+                icon={<Power size={16} />}
+                label="Power On"
+                onClick={handlePowerOn}
+              />
+            )}
             <ActionButton
               color="yellow"
               icon={<RefreshCw size={16} />}
@@ -206,7 +225,6 @@ const VPSDetailPage = () => {
           </div>
         </div>
 
-        {/* VPS Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <InfoCard icon={<Cpu />} label="CPU" value={`${vps.cpu} cores`} />
           <InfoCard icon={<Server />} label="RAM" value={`${vps.ram} `} />
@@ -216,23 +234,10 @@ const VPSDetailPage = () => {
           <InfoCard label="Region" value={vps.datacenter || "Unknown"} />
         </div>
 
-        {/* Monitoring */}
         <Section title="Monitoring">
-          <UsageBar
-            label="CPU Usage"
-            percent={vps.monitoring?.cpu_usage || 0}
-            color="bg-blue-500"
-          />
-          <UsageBar
-            label="RAM Usage"
-            percent={vps.monitoring?.ram_usage || 0}
-            color="bg-green-500"
-          />
-          <UsageBar
-            label="Disk Usage"
-            percent={vps.monitoring?.disk_usage || 0}
-            color="bg-yellow-500"
-          />
+          <UsageBar label="CPU Usage" percent={vps.monitoring?.cpu_usage || 0} color="bg-blue-500" />
+          <UsageBar label="RAM Usage" percent={vps.monitoring?.ram_usage || 0} color="bg-green-500" />
+          <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
         </Section>
 
         <Section title="Snapshots">
@@ -262,7 +267,6 @@ const VPSDetailPage = () => {
               </div>
             ))
           )}
-
           <button
             onClick={handleBackup}
             className="mt-3 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
@@ -271,8 +275,6 @@ const VPSDetailPage = () => {
           </button>
         </Section>
 
-
-        {/* Volumes */}
         <Section title="Volumes">
           {vps.volumes.length === 0 ? (
             <p className="text-gray-400">No volumes attached.</p>
@@ -290,7 +292,6 @@ const VPSDetailPage = () => {
           )}
         </Section>
 
-        {/* Network Info */}
         <Section title="Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard label="IPv4" value={vps.ipv4 || "N/A"} />
@@ -301,7 +302,6 @@ const VPSDetailPage = () => {
         </Section>
       </div>
 
-      {/* Snapshot Modal */}
       {isSnapshotModalOpen && (
         <SnapshotModal
           onClose={() => setSnapshotModalOpen(false)}
@@ -324,54 +324,50 @@ const SnapshotModal = ({ onClose, onCreate }) => {
     onCreate(name.trim());
   };
 
-
-return (
-  <div
-    className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-    aria-modal="true"
-    role="dialog"
-  >
-    <div className="bg-gray-800 rounded-md p-6 w-96 shadow-lg">
-      <h2 className="text-xl font-semibold mb-4 text-indigo-400">
-        Create Snapshot Backup
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-gray-300">
-          Snapshot Name
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. backup-2025-06-06"
-            className="mt-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            autoFocus
-            required
-            maxLength={64}
-          />
-        </label>
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 text-white font-semibold"
-          >
-            Create
-          </button>
-        </div>
-      </form>
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div className="bg-gray-800 rounded-md p-6 w-96 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-indigo-400">
+          Create Snapshot Backup
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-gray-300">
+            Snapshot Name
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. backup-2025-06-06"
+              className="mt-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              autoFocus
+              required
+              maxLength={64}
+            />
+          </label>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 text-white font-semibold"
+            >
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
-
-
+  );
 };
-
 
 const ActionButton = ({ icon, label, onClick, color, disabled }) => {
   const colors = {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import Navbar from '../../components/client/Navbar';
-
+import Popup from "../../components/client/Popup";
 const CreateVolumePage = () => {
   const [name, setName] = useState('');
   const [size, setSize] = useState(10);
@@ -13,7 +13,7 @@ const CreateVolumePage = () => {
   const [sourceVolume, setSourceVolume] = useState('');
   const [sourceSnapshot, setSourceSnapshot] = useState('');
   const [loading, setLoading] = useState(true);
-
+    const [popup, setPopup] = useState(null);
   const [options, setOptions] = useState({
     volume_types: [],
     availability_zones: [],
@@ -39,32 +39,32 @@ const CreateVolumePage = () => {
   }, []);
 
   const handleCreateVolume = async () => {
-    if (!name || !size || !volumeType || !availabilityZone) {
-      alert('❌ Please fill all required fields.');
-      return;
-    }
+  if (!name || !size || !volumeType || !availabilityZone) {
+    setPopup({ message: "❌ Please fill all required fields.", type: "error" });
+    return;
+  }
 
-    const payload = {
-      name,
-      size,
-      description,
-      volume_type: volumeType,
-      availability_zone: availabilityZone,
-      bootable: isBootable,
-      source_image: isBootable ? sourceImage : null,
-      source_volume: sourceVolume || null,
-      source_snapshot: sourceSnapshot || null,
-    };
-
-    try {
-      const res = await axiosInstance.post('/openstack/storage/volumes/', payload);
-      alert('✅ Volume created successfully!');
-      console.log(res.data);
-    } catch (err) {
-      console.error('❌ Failed to create volume:', err);
-      alert('❌ Failed to create volume. Check console.');
-    }
+  const payload = {
+    name,
+    size,
+    description,
+    volume_type: volumeType,
+    availability_zone: availabilityZone,
+    bootable: isBootable,
+    source_image: isBootable ? sourceImage : null,
+    source_volume: sourceVolume || null,
+    source_snapshot: sourceSnapshot || null,
   };
+
+  try {
+    const res = await axiosInstance.post('/openstack/storage/volumes/', payload);
+    setPopup({ message: "✅ Volume created successfully!", type: "success" });
+    console.log(res.data);
+  } catch (err) {
+    console.error('❌ Failed to create volume:', err);
+    setPopup({ message: "❌ Failed to create volume. Check console.", type: "error" });
+  }
+};
 
   if (loading) {
     return <div className="text-center text-gray-300 mt-10">Loading volume options...</div>;
@@ -73,7 +73,13 @@ const CreateVolumePage = () => {
   return (
     <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
       <Navbar />
-
+{popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
       <div className="max-w-2xl mx-auto p-8 space-y-6 animate-fade-in">
         <h1 className="text-3xl font-extrabold text-blue-400 tracking-wide drop-shadow mb-6">
           📦 Create New Volume

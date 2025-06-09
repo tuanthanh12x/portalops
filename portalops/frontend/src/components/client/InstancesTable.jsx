@@ -1,58 +1,57 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import { Link } from "react-router-dom";
-
+import Popup from "../../components/client/Popup";
 const InstancesTable = ({ instances }) => {
   const [instanceList, setInstanceList] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
-
+    const [popup, setPopup] = useState(null);
   useEffect(() => {
     if (Array.isArray(instances)) {
       setInstanceList(instances);
     }
   }, [instances]);
 
-  const handleConsole = async (instanceId) => {
-    setLoadingId(instanceId);
-    try {
-      const res = await axiosInstance.post("/overview/console/", {
-        server_id: instanceId,
-        type: "novnc",
-      });
+const handleConsole = async (instanceId) => {
+  setLoadingId(instanceId);
+  try {
+    const res = await axiosInstance.post("/overview/console/", {
+      server_id: instanceId,
+      type: "novnc",
+    });
 
-      const consoleUrl = res.data.console?.url;
-      if (consoleUrl) {
-        window.open(consoleUrl, "_blank", "noopener,noreferrer");
-      } else {
-        alert("Console URL not found in response.");
-      }
-    } catch (error) {
-      alert(`Failed to open console: ${error.response?.data?.error || error.message}`);
-    } finally {
-      setLoadingId(null);
+    const consoleUrl = res.data.console?.url;
+    if (consoleUrl) {
+      window.open(consoleUrl, "_blank", "noopener,noreferrer");
+    } else {
+      setPopup({ message: "Console URL not found in response.", type: "error" });
     }
-  };
+  } catch (error) {
+    setPopup({ message: `Failed to open console: ${error.response?.data?.error || error.message}`, type: "error" });
+  } finally {
+    setLoadingId(null);
+  }
+};
 
-  const handleAction = async (instanceId, action) => {
-    setLoadingId(instanceId);
-    try {
-      await axiosInstance.post(
-        `/openstack/compute/instances/${instanceId}/action/`,
-        { action }
-      );
-      setInstanceList((prev) =>
-        prev.map((i) =>
-          i.id === instanceId
-            ? { ...i, status: action === "start" ? "ONLINE" : "SHUTOFF" }
-            : i
-        )
-      );
-    } catch (err) {
-      console.error("Action failed:", err);
-    } finally {
-      setLoadingId(null);
-    }
-  };
+const handleAction = async (instanceId, action) => {
+  setLoadingId(instanceId);
+  try {
+    await axiosInstance.post(`/openstack/compute/instances/${instanceId}/action/`, { action });
+    setInstanceList((prev) =>
+      prev.map((i) =>
+        i.id === instanceId
+          ? { ...i, status: action === "start" ? "Online" : "Offline" }
+          : i
+      )
+    );
+    setPopup({ message: `Action '${action}' executed successfully.`, type: "success" });
+  } catch (err) {
+    console.error("Action failed:", err);
+    setPopup({ message: `Failed to execute action '${action}'. Check console for details.`, type: "error" });
+  } finally {
+    setLoadingId(null);
+  }
+};
 
   return (
     <section className="mx-auto px-4 py-10">
@@ -60,6 +59,7 @@ const InstancesTable = ({ instances }) => {
         <h2 className="text-4xl font-bold tracking-tight text-indigo-400 drop-shadow-md">
           🖥️ My Instances
         </h2>
+
         <Link
           to="/create-instance"
           className="px-5 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg transition focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -67,6 +67,13 @@ const InstancesTable = ({ instances }) => {
           + Create Instance
         </Link>
       </header>
+      {popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
 
       <div className="overflow-x-auto rounded-xl bg-black/30 backdrop-blur-lg shadow-xl border border-gray-700">
         <table className="min-w-full divide-y divide-gray-700 text-sm">

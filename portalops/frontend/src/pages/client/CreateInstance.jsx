@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import Navbar from '../../components/client/Navbar';
+import Popup from '../../components/client/Popup';
 import { useNavigate } from "react-router-dom";
 const CreateInstancePage = () => {
+  
   const [name, setName] = useState('');
   const [region, setRegion] = useState('');
   const [imageTab, setImageTab] = useState('my-images');
@@ -12,6 +14,7 @@ const CreateInstancePage = () => {
   const [options, setOptions] = useState({ ha: true, floatingIp: false, backups: true });
   const [authMethod, setAuthMethod] = useState('ssh');
   const [sshKey, setSshKey] = useState('default-key');
+      const [popup, setPopup] = useState(null);
 const navigate = useNavigate();
   const [instanceOptions, setInstanceOptions] = useState({
     regions: [],
@@ -60,13 +63,17 @@ const navigate = useNavigate();
     };
     console.log("📤 Sending create-instance payload:", payload);
     try {
-      const res = await axiosInstance.post('/openstack/compute/instances/', payload);
-      alert('✅ Instance created successfully!');
-      console.log(res.data);
-    } catch (err) {
-      console.error('❌ Failed to create instance:', err.response?.data || err.message);
-      alert(`❌ ${err.response?.data?.error || 'Failed to create instance. Check console.'}`);
-    }
+  const res = await axiosInstance.post('/openstack/compute/instances/', payload);
+  setPopup({ message: res.data.message || "Instance created successfully", type: "success" });
+  console.log(res.data);
+} catch (err) {
+  console.error('❌ Failed to create instance:', err.response?.data || err.message);
+  setPopup({ 
+    message: err.response?.data?.error || 'Failed to create instance. Check console.', 
+    type: "error" 
+  });
+}
+
   };
 
   const renderImagesByTab = () => {
@@ -99,6 +106,13 @@ const navigate = useNavigate();
   return (
     <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
       <Navbar credits={150} />
+       {popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
       <div className="max-w-5xl mx-auto p-8 space-y-8 animate-fade-in">
         <h1 className="text-3xl font-extrabold text-blue-400 tracking-wide drop-shadow">🚀 Launch a New Cloud Instance</h1>
         <div className="bg-black/40 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6 border border-gray-700">
