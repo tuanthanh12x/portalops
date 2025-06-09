@@ -15,7 +15,9 @@ import ClientDashBoard from "../pages/client/ClientDashBoard";
 import UserManagementPage from "../pages/admin/UserManagePage";
 import VPSDetailPage from "../pages/client/VpsDetail";
 import SnapshotListPage from "../pages/client/SnapshotListPage";
-
+import VolumeSnapshotListPage from "../pages/client/VolumeBackupList";
+import BillingDashBoard from "../pages/client/BillingDashboard";
+import SupportPage from "../pages/client/SupportPage";
 function AppRoutes() {
   return (
     <Router>
@@ -25,22 +27,24 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Protected routes */}
-        <Route element={<RequireAuth />}>
-          <Route path="/dashboard" element={<ClientDashBoard />} />
-          <Route path="/create-instance" element={<CreateInstancePage />} />
-          <Route path="/instances" element={<MyInstancesPage />} />
-          <Route path="/images" element={<ImageListPage />} />
-          <Route path="/client/vps/:id" element={<VPSDetailPage />} />
-
-          <Route path="/volumes" element={<VolumeListPage />} />
-          <Route path="/keypairs" element={<KeypairListPage />} />
-          <Route path="/create-volume" element={<CreateVolumePage />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/users-manager" element={<UserManagementPage />} />
-          <Route path="/create-image" element={<CreateImageForm />} />
-          <Route path="/create-keypair" element={<CreateKeypairForm />} />
-                    <Route path="/vps-backup" element={<SnapshotListPage />} />
-        </Route>
+        {/* <Route element={<RequireAuth />}> */}
+        <Route path="/dashboard" element={<ClientDashBoard />} />
+        <Route path="/billing" element={<BillingDashBoard />} />
+        <Route path="/create-instance" element={<CreateInstancePage />} />
+        <Route path="/instances" element={<MyInstancesPage />} />
+        <Route path="/images" element={<ImageListPage />} />
+        <Route path="/client/vps/:id" element={<VPSDetailPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/volumes" element={<VolumeListPage />} />
+        <Route path="/keypairs" element={<KeypairListPage />} />
+        <Route path="/create-volume" element={<CreateVolumePage />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/users-manager" element={<UserManagementPage />} />
+        <Route path="/create-image" element={<CreateImageForm />} />
+        <Route path="/create-keypair" element={<CreateKeypairForm />} />
+        <Route path="/vps-backup" element={<SnapshotListPage />} />
+        <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
+        {/* </Route> */}
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />

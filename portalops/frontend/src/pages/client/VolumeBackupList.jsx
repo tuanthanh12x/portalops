@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../components/client/Navbar";
 import axiosInstance from "../../api/axiosInstance";
 
-const SnapshotListPage = () => {
+const VolumeSnapshotListPage = () => {
   const [snapshots, setSnapshots] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,7 @@ const SnapshotListPage = () => {
 
       <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-1 mt-8">
         <h2 className="text-4xl font-bold tracking-tight text-green-400 drop-shadow-md font-fantasy">
-          My VM Backups
+          My Volume Backups
         </h2>
       </header>
 
@@ -98,4 +98,4 @@ const SnapshotListPage = () => {
   );
 };
 
-export default SnapshotListPage;
+export default VolumeSnapshotListPage;

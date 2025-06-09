@@ -198,7 +198,7 @@ const Navbar = () => {
                 </li>
                 <li>
                   <a
-                    href="/snapshots"
+                    href="/volume-backup"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
@@ -228,7 +228,7 @@ const Navbar = () => {
           </li>
           <li>
             <a
-              href="/"
+              href="/billing"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Billing
@@ -236,7 +236,7 @@ const Navbar = () => {
           </li>
           <li>
             <a
-              href="/"
+              href="/support"
               className="hover:text-emerald-400 transition-colors duration-300 font-medium"
             >
               Support
