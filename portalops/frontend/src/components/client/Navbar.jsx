@@ -153,7 +153,7 @@ const Navbar = () => {
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
-                    Backup
+                    Backups
                   </a>
                 </li>
               </ul>
