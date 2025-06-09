@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Server
+name: 🚀 Deploy via SSH & Docker Compose
 
 on:
   push:
@@ -7,29 +7,22 @@ on:
 
 jobs:
   deploy:
-    name: Deploy via SSH
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Copy files to server
-      run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-          mkdir -p ~/deploy/project &&
-          rm -rf ~/deploy/project/*"
-        scp -r * ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/deploy/project/
-
-    - name: Deploy using Docker Compose
-      run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-          cd ~/deploy/project &&
-          docker compose down &&
-          docker compose up -d --build
-        "
+      - name: Copy files to server via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /home/project/portalops/portalops
+            git pull origin master
+            docker compose down
+            docker compose up -d --build
+          EOF
