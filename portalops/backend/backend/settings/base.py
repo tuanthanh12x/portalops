@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 
 from corsheaders.defaults import default_headers
-
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-3@=g$vkv#x3#0dg93^%6!v#x$kqa9ub+u#*oh$-+d6i@%1o(lk'
@@ -14,7 +15,6 @@ ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -22,9 +22,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'shared',
     'drf_spectacular',
     'userauth',
-    'users',
     'openstack_portal',
 ]
 
@@ -38,23 +38,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+AUTH_USER_MODEL = 'auth.User'
 ROOT_URLCONF = 'backend.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
 WSGI_APPLICATION = 'backend.wsgi.application'
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 
@@ -114,9 +100,12 @@ REST_FRAMEWORK = {
 }
 from datetime import timedelta
 
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
 CORS_ALLOW_CREDENTIALS = True
@@ -157,3 +146,11 @@ OPENSTACK_AUTH_URL = OPENSTACK_AUTH.get("auth_url", "").rstrip("/")
 USER_DOMAIN_NAME = OPENSTACK_AUTH.get("user_domain_name", "Default")
 PROJECT_DOMAIN_NAME = OPENSTACK_AUTH.get("project_domain_name", "Default")
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+
+FRONTEND_URL = config('FRONTEND_URL')

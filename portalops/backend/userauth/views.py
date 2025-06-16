@@ -1,14 +1,27 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
-from django.utils.timezone import now
+import base64
+
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.http import JsonResponse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from openstack import connection
 import requests
 from django.conf import settings
 
+from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
+from django.contrib.auth import get_user_model
+from django.utils.timezone import now
+from django.contrib.auth.hashers import make_password
+from django.utils.timezone import localtime, is_naive, make_aware
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .models import UserProfile, UserRoleMapping, Role
 from utils.redis_client import redis_client
-
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import UserProfile
 
 
 class LoginView(APIView):
@@ -19,62 +32,372 @@ class LoginView(APIView):
         if not username or not password:
             return Response({"detail": "Missing credentials"}, status=400)
 
+        user = authenticate(request, username=username, password=password)
+        if not user or not user.is_active:
+            return Response({"detail": "Invalid credentials."}, status=401)
+
         try:
-            # Step 1: Authenticate user globally (without project scope)
-            conn = connection.Connection(
-                auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                username=username,
-                password=password,
-                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                identity_api_version='3',
-            )
-            conn.authorize()
+            profile = user.userprofile
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User profile not found."}, status=500)
 
-            token = conn.session.get_token()
-            keystone_url = settings.OPENSTACK_AUTH["auth_url"].rstrip("/")
-            projects_url = f"{keystone_url}/auth/projects"
-            headers = {"X-Auth-Token": token}
+        if profile.two_factor_enabled:
+            return Response({
+                "require_2fa": True,
+                "username": username
+            }, status=200)
 
-            resp = requests.get(projects_url, headers=headers)
-            resp.raise_for_status()
-            projects = resp.json().get("projects", [])
+        refresh = RefreshToken.for_user(user)
+        refresh["username"] = user.username
+        refresh["email"] = user.email
 
-            project_id = projects[0]["id"]  # Lấy project_id đầu tiên
+        # Optional: lấy Keystone token nếu có
+        if profile.project_id:
+            try:
+                conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=username,
+                    password=password,
+                    project_id=profile.project_id,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version='3',
+                )
+                conn.authorize()
+                keystone_token = conn.session.get_token()
 
-            # Step 4: Authenticate scoped to that project
-            conn_project = connection.Connection(
-                auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                username=username,
-                password=password,
-                project_id=project_id,
-                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                identity_api_version='3',
-            )
-            conn_project.authorize()
-            keystone_token = conn_project.session.get_token()
+                redis_key = f"keystone_token:{username}:{profile.project_id}"
+                redis_client.set(redis_key, keystone_token, ex=3600)
 
-            redis_key = f"keystone_token:{username}:{project_id}"
-            redis_client.set(redis_key, keystone_token, ex=3600)
+                refresh["project_id"] = profile.project_id
+            except Exception as e:
+                print(f"[⚠️ OpenStack Error] {e}")
 
-            # Step 5: Generate JWT token & return
+        response = JsonResponse({
+            "message": "Login successful.",
+            "access": str(refresh.access_token),
+        })
+
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            path="/api/auth/token/refresh/"
+        )
+
+        return response
+
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+
+        if not refresh_token:
+            return Response({"detail": "No refresh token provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            token = RefreshToken(refresh_token)
+            access_token = str(token.access_token)
+            return Response({"access": access_token})
+        except TokenError:
+            return Response({"detail": "Invalid or expired refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        response = Response({"message": "Logged out successfully."}, status=200)
+        response.delete_cookie(
+            key="refresh_token",
+            path="/api/auth/token/refresh/",
+            # samesite="Lax",  # or "Strict", depending on your settings
+            # secure=True
+        )
+        return response
+
+
+class SignUpView(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+        if not username or not email or not password:
+            return Response({"detail": "Missing username, email or password."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
             User = get_user_model()
-            user, _ = User.objects.get_or_create(username=username)
-            user.last_login = now()
-            user.save(update_fields=['last_login'])
+
+            if User.objects.filter(username=username).exists():
+                return Response({"detail": "Username already taken."}, status=status.HTTP_409_CONFLICT)
+
+            if User.objects.filter(email=email).exists():
+                return Response({"detail": "Email already in use."}, status=status.HTTP_409_CONFLICT)
+
+            user = User.objects.create(
+                username=username,
+                email=email,
+                password=make_password(password),
+                last_login=now(),
+            )
+            profile = UserProfile.objects.create(user=user)
+
+
+            default_role_name = "client"
+            try:
+                default_role = Role.objects.get(name=default_role_name)
+                UserRoleMapping.objects.create(user_profile=profile, role=default_role)
+            except Role.DoesNotExist:
+                return Response({"detail": f"Default role '{default_role_name}' not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             refresh = RefreshToken.for_user(user)
-
-            # Gắn dữ liệu tùy chỉnh vào payload token
             refresh["username"] = username
-            refresh["project_id"] = project_id
-            refresh["keystone_token"] = keystone_token
+            refresh["email"] = email
 
             return Response({
+                "message": "Registration successful.",
                 "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"detail": f"Registration failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        return Response({
+            "email": user.email,
+            "two_factor_enabled": getattr(user, "two_factor_enabled", False),
+            "last_login": user.last_login,
+            "timezone": getattr(user, "timezone", "UTC"),
+        })
+
+def format_last_login(last_login):
+    if last_login:
+        if is_naive(last_login):
+            last_login = make_aware(last_login)
+        return localtime(last_login).isoformat()
+    return None
+
+def serialize_user_profile(user):
+    profile = user.profile
+    roles = [mapping.role.name for mapping in profile.role_mappings.all()]
+    return {
+        "email": user.email,
+        "username": user.username,
+        "company": profile.company,
+        "credits": float(profile.credits),
+        "two_factor_enabled": profile.two_factor_enabled,
+        "last_login": format_last_login(user.last_login),
+        "timezone": getattr(profile, "timezone", "UTC"),
+        "openstack_user_id": profile.openstack_user_id,
+        "phone_number": profile.phone_number,
+        "roles": roles,
+    }
+
+class AccountOverviewView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(serialize_user_profile(request.user))
+
+class ListUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(serialize_user_profile(request.user))
+
+
+
+class ResetPasswordConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        password = request.data.get("password")
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            return Response({"error": "Invalid token or user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
+            user.set_password(password)
+            user.save()
+            return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Token is invalid or has expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        if not current_password or not new_password or not confirm_password:
+            return Response(
+                {"error": "All fields are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_password != confirm_password:
+            return Response(
+                {"error": "New password and confirmation do not match."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.check_password(current_password):
+            return Response(
+                {"error": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if current_password == new_password:
+            return Response(
+                {"error": "New password must be different from the current password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(new_password)
+        user.save()
+        update_session_auth_hash(request, user)  # Prevents logout after password change
+
+        return Response(
+            {"message": "Your password has been successfully updated."},
+            status=status.HTTP_200_OK
+        )
+
+from .tasks import send_reset_password_email
+
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        send_reset_password_email.delay(user.email, uid, token)
+        return Response({"message": "Password reset email sent."}, status=status.HTTP_200_OK)
+
+import pyotp
+import qrcode
+import io
+
+
+class Generate2FAView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        profile = user.userprofile
+
+        if not profile.totp_secret:
+            profile.totp_secret = pyotp.random_base32()
+            profile.save()
+
+        totp_uri = pyotp.totp.TOTP(profile.totp_secret).provisioning_uri(
+            name=user.username,
+            issuer_name="PortalOps"
+        )
+
+        qr = qrcode.make(totp_uri)
+        buffer = io.BytesIO()
+        qr.save(buffer, format='PNG')
+        qr_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return Response({"qr_code": f"data:image/png;base64,{qr_b64}"})
+
+class Verify2FASetupView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        code = request.data.get("code")
+        profile = user.userprofile
+
+        totp = pyotp.TOTP(profile.totp_secret)
+        if totp.verify(code):
+            profile.is_2fa_enabled = True
+            profile.save()
+            return Response({"message": "2FA enabled successfully"})
+        return Response({"error": "Invalid code"}, status=400)
+
+
+
+class Login2FAVerifyView(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        code = request.data.get("code")
+
+        if not username or not password or not code:
+            return Response({"error": "Missing fields"}, status=400)
+
+        try:
+            user = authenticate(request, username=username, password=password)
+            if not user or not user.is_active:
+                return Response({"error": "Invalid credentials"}, status=401)
+
+            profile = user.userprofile
+            if not profile.two_factor_enabled:
+                return Response({"error": "2FA is not enabled for this user"}, status=400)
+
+            totp = pyotp.TOTP(profile.totp_secret)
+            if not totp.verify(code):
+                return Response({"error": "Invalid 2FA code"}, status=401)
+
+            # 2FA successful → generate token
+            refresh = RefreshToken.for_user(user)
+            refresh["username"] = user.username
+            refresh["email"] = user.email
+
+            if profile.project_id:
+                try:
+                    conn = connection.Connection(
+                        auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                        username=username,
+                        password=password,
+                        project_id=profile.project_id,
+                        user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                        project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                        identity_api_version='3',
+                    )
+                    conn.authorize()
+                    keystone_token = conn.session.get_token()
+
+                    redis_key = f"keystone_token:{username}:{profile.project_id}"
+                    redis_client.set(redis_key, keystone_token, ex=3600)
+
+                    refresh["project_id"] = profile.project_id
+                except Exception as e:
+                    print(f"[⚠️ OpenStack Error] {e}")
+
+            response = JsonResponse({
+                "message": "Login successful.",
                 "access": str(refresh.access_token),
             })
 
-        except Exception as e:
-            return Response({"detail": f"Login failed: {str(e)}"}, status=401)
+            response.set_cookie(
+                key="refresh_token",
+                value=str(refresh),
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+                path="/api/auth/token/refresh/"
+            )
+
+            return response
+
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)

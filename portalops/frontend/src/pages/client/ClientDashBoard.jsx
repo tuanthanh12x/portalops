@@ -10,7 +10,7 @@ import './ClientDashBoard.css';
 import axiosInstance from '../../api/axiosInstance';
 import getUserInfoFromToken from '../../utils/getUserInfoFromToken';
 import { useLogout } from '../../features/auth/Logout';
-
+import Popup from '../../components/client/Popup';
 export default function Home() {
   const logout = useLogout();
   const [userInfo, setUserInfo] = useState(null);
@@ -44,7 +44,7 @@ export default function Home() {
           setTimeout(fetchInstances, 2000); // retry after 2 seconds
         } else {
           console.warn("Max retries reached, no data available.");
-          setInstances([]); // set empty to avoid loading forever
+          setInstances([]); 
         }
       } catch (error) {
         console.error("Failed to fetch instances", error);

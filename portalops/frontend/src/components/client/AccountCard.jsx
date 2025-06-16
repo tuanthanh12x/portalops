@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../api/axiosInstance"; // adjust the path as needed
-
+import Popup from "../../components/client/Popup"
 const AccountCard = () => {
   const [account, setAccount] = useState(null);
-
+  const [popup, setPopup] = useState(null);
   useEffect(() => {
     const fetchAccount = async () => {
       try {
         const res = await axiosInstance.get("/user/getuserinfo");
         setAccount(res.data);
       } catch (err) {
-        console.error("Failed to fetch account info:", err);
+        setPopup({ message: 'Failed to load user info',type: 'error' });
       }
     };
 
@@ -30,11 +30,10 @@ const AccountCard = () => {
           value={
             <span
               className={`px-3 py-1 rounded-full text-xs font-mono border 
-              ${
-                account?.two_factor_enabled
+              ${account?.two_factor_enabled
                   ? "bg-green-900 text-green-400 border-green-600"
                   : "bg-yellow-900 text-yellow-400 border-yellow-600"
-              }`}
+                }`}
             >
               {account
                 ? account.two_factor_enabled

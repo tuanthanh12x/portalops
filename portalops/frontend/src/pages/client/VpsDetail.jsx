@@ -22,7 +22,7 @@ const VPSDetailPage = () => {
   const [error, setError] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
   const [isSnapshotModalOpen, setSnapshotModalOpen] = useState(false);
-    const [popup, setPopup] = useState(null);
+  const [popup, setPopup] = useState(null);
 
   useEffect(() => {
     const fetchVps = async () => {
@@ -177,23 +177,22 @@ const VPSDetailPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-indigo-400">{vps.name}</h1>
             <p className="text-sm text-gray-400">
-  Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
-  <span
-    className={`font-semibold ${
-      vps.status.toLowerCase() === "shutoff"
-        ? "text-red-500"
-        : vps.status.toLowerCase() === "active"
-        ? "text-green-400"
-        : "text-yellow-400"
-    }`}
-  >
-    {vps.status.toLowerCase() === "shutoff"
-      ? "Offline"
-      : vps.status.toLowerCase() === "active"
-      ? "Online"
-      : vps.status}
-  </span>
-</p>
+              Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
+              <span
+                className={`font-semibold ${vps.status.toLowerCase() === "shutoff"
+                    ? "text-red-500"
+                    : vps.status.toLowerCase() === "active"
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                  }`}
+              >
+                {vps.status.toLowerCase() === "shutoff"
+                  ? "Offline"
+                  : vps.status.toLowerCase() === "active"
+                    ? "Online"
+                    : vps.status}
+              </span>
+            </p>
 
 
           </div>
@@ -256,7 +255,7 @@ const VPSDetailPage = () => {
           <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
         </Section>
 
-    
+
 
         <Section title="Volumes">
           {vps.volumes.length === 0 ? (

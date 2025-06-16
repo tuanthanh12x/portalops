@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import InstancesTable from "../../components/client/InstancesTable";
 import Navbar from "../../components/client/Navbar";
-
+import Popup from "../../components/client/Popup";
 const MyInstancesPage = () => {
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);

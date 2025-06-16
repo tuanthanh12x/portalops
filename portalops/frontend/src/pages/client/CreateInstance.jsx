@@ -14,7 +14,7 @@ const CreateInstancePage = () => {
   const [options, setOptions] = useState({ ha: true, floatingIp: false, backups: true });
   const [authMethod, setAuthMethod] = useState('ssh');
   const [sshKey, setSshKey] = useState('default-key');
-      const [popup, setPopup] = useState(null);
+  const [popup, setPopup] = useState(null);
 const navigate = useNavigate();
   const [instanceOptions, setInstanceOptions] = useState({
     regions: [],
@@ -42,7 +42,7 @@ const navigate = useNavigate();
         setNetwork(data.networks[0]?.id || '');
       })
       .catch(err => {
-        console.error('❌ Failed to fetch instance options:', err);
+          setPopup({ message: 'Failed to load instance options.', type: 'error' });
       });
   }, []);
 
@@ -52,7 +52,7 @@ const navigate = useNavigate();
 
   const handleCreate = async () => {
     if (!image || !plan || !network || !sshKey) {
-      alert("❌ Please fill all required fields.");
+   setPopup({ message: "❌ Please fill all required fields.", type: "error" });
       return;
     }
     const payload = {
@@ -61,13 +61,10 @@ const navigate = useNavigate();
       flavor_id: plan,
       network_id: network,
     };
-    console.log("📤 Sending create-instance payload:", payload);
     try {
   const res = await axiosInstance.post('/openstack/compute/instances/', payload);
   setPopup({ message: res.data.message || "Instance created successfully", type: "success" });
-  console.log(res.data);
 } catch (err) {
-  console.error('❌ Failed to create instance:', err.response?.data || err.message);
   setPopup({ 
     message: err.response?.data?.error || 'Failed to create instance. Check console.', 
     type: "error" 

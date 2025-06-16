@@ -59,7 +59,6 @@ const CreateVolumePage = () => {
   try {
     const res = await axiosInstance.post('/openstack/storage/volumes/', payload);
     setPopup({ message: "✅ Volume created successfully!", type: "success" });
-    console.log(res.data);
   } catch (err) {
     console.error('❌ Failed to create volume:', err);
     setPopup({ message: "❌ Failed to create volume. Check console.", type: "error" });
