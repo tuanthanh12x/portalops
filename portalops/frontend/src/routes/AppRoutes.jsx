@@ -18,6 +18,8 @@ import SnapshotListPage from "../pages/client/SnapshotListPage";
 import VolumeSnapshotListPage from "../pages/client/VolumeBackupList";
 import BillingDashBoard from "../pages/client/BillingDashboard";
 import SupportPage from "../pages/client/SupportPage";
+import ForgotPasswordPage from "../pages/client/ForgotPassPage";
+import RegisterPage from "../pages/RegisterPage";
 function AppRoutes() {
   return (
     <Router>
@@ -25,7 +27,8 @@ function AppRoutes() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
-
+                <Route path="/register" element={<RegisterPage />} />
+<Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* Protected routes */}
         {/* <Route element={<RequireAuth />}> */}
         <Route path="/dashboard" element={<ClientDashBoard />} />
@@ -44,6 +47,7 @@ function AppRoutes() {
         <Route path="/create-keypair" element={<CreateKeypairForm />} />
         <Route path="/vps-backup" element={<SnapshotListPage />} />
         <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
+              <Route path="/" element={<VolumeSnapshotListPage />} />
         {/* </Route> */}
 
         {/* Redirect unknown routes to Home */}
