@@ -13,6 +13,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 CORS_ALLOW_ALL_ORIGINS = True
+APPEND_SLASH = True
 
 INSTALLED_APPS = [
     'django.contrib.auth',
