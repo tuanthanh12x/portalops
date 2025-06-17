@@ -66,7 +66,7 @@ class LoginView(APIView):
                 )
                 conn.authorize()
                 keystone_token = conn.session.get_token()
-
+                refresh["keystone_token"] = keystone_token
                 redis_key = f"keystone_token:{username}:{profile.project_id}"
                 redis_client.set(redis_key, keystone_token, ex=3600)
 
