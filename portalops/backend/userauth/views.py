@@ -175,6 +175,52 @@ class UserInfoView(APIView):
             "timezone": getattr(user, "timezone", "UTC"),
         })
 
+class UserProfileInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        profile = getattr(user, 'userprofile', None)
+
+        return Response({
+            "username": user.username,
+            "full_name": f"{user.first_name} {user.last_name}".strip(),
+            "email": user.email,
+            "last_login": user.last_login,
+            "date_joined": user.date_joined,
+
+            # Profile fields
+            "phone_number": profile.phone_number if profile else "",
+            "company": profile.company if profile else "",
+            "address": profile.address if profile else "",
+            "timezone": profile.timezone if profile else "UTC",
+            "two_factor_enabled": profile.two_factor_enabled if profile else False,
+            "credits": str(profile.credits) if profile else "0.00",
+            "customer_id": profile.customer_id if profile else "",
+            "openstack_user_id": profile.openstack_user_id if profile else "",
+            "project_id": profile.project_id if profile else "",
+        })
+class UpdateUserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        data = request.data
+
+        profile.full_name = data.get('full_name', profile.full_name)
+        profile.phone_number = data.get('phone_number', profile.phone_number)
+        profile.company = data.get('company', profile.company)
+        profile.address = data.get('address', profile.address)
+        profile.timezone = data.get('timezone', profile.timezone)
+
+        try:
+            profile.save()
+            return Response({'message': 'Profile updated successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 def format_last_login(last_login):
     if last_login:
         if is_naive(last_login):

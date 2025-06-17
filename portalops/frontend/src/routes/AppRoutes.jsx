@@ -21,6 +21,7 @@ import SupportPage from "../pages/client/SupportPage";
 import ForgotPasswordPage from "../pages/client/ForgotPassPage";
 import RegisterPage from "../pages/RegisterPage";
 import TwoFactorSetupPage from "../pages/client/TwoFactorSetupPage";
+import EditProfilePage from './../pages/client/EditProfilePage';
 function AppRoutes() {
   return (
     <Router>
@@ -30,7 +31,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-<Route path="/forgot-password" element={<ForgotPasswordPage />} />
+<Route path="/profile" element={<EditProfilePage />} />
         {/* Protected routes */}
         <Route element={<RequireAuth />}>
         <Route path="/dashboard" element={<ClientDashBoard />} />
