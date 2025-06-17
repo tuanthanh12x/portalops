@@ -395,7 +395,7 @@ class Verify2FASetupView(APIView):
 
 
 
-class Verify2FALoginView(APIView):
+class Login2FAVerifyView(APIView):
     """
     Verifies 2FA code after username/password login.
     Responds with JWT token and optional OpenStack token.
