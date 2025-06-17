@@ -20,7 +20,7 @@ from utils.redis_client import redis_client
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from .models import UserProfile
 
 
@@ -364,13 +364,25 @@ class Generate2FAView(APIView):
 
         return Response({"qr_code": f"data:image/png;base64,{qr_b64}"})
 
+class CodeOnlySerializer(serializers.Serializer):
+    code = serializers.CharField(required=True)
+
+
 class Verify2FASetupView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def require_fields(data, *fields):
+        missing = [f for f in fields if f not in data or data[f] in [None, ""]]
+        if missing:
+            raise ValueError(f"Missing required field(s): {', '.join(missing)}")
+
     def post(self, request):
-        user = request.user
-        code = request.data.get("code")
-        profile = user.userprofile
+        serializer = CodeOnlySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        code = serializer.validated_data["code"]
+        profile = request.user.userprofile
 
         totp = pyotp.TOTP(profile.totp_secret)
         if totp.verify(code):
