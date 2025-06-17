@@ -32,7 +32,7 @@ function AppRoutes() {
 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* Protected routes */}
-        {/* <Route element={<RequireAuth />}> */}
+        <Route element={<RequireAuth />}>
         <Route path="/dashboard" element={<ClientDashBoard />} />
         <Route path="/billing" element={<BillingDashBoard />} />
         <Route path="/create-instance" element={<CreateInstancePage />} />
@@ -51,7 +51,7 @@ function AppRoutes() {
         <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
         <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
               <Route path="/" element={<VolumeSnapshotListPage />} />
-        {/* </Route> */}
+        </Route>
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />
