@@ -33,7 +33,6 @@ const SupportPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // FAQ state: search term and pagination
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -44,9 +43,12 @@ const SupportPage = () => {
   const fetchTickets = async () => {
     try {
       const res = await axios.get("/api/support/tickets");
-      setTickets(res.data);
+      const result = res.data;
+      const ticketList = Array.isArray(result) ? result : result.tickets || [];
+      setTickets(ticketList);
     } catch {
       setError("Cannot load tickets.");
+      setTickets([]);
     }
   };
 
@@ -86,7 +88,6 @@ const SupportPage = () => {
     }
   };
 
-  // Filter FAQ items by search term
   const filteredFaq = useMemo(() => {
     if (!searchTerm.trim()) return FAQ_ITEMS;
     return FAQ_ITEMS.filter(({ question }) =>
@@ -111,11 +112,11 @@ const SupportPage = () => {
 
   return (
     <div className="dark">
-      <div className="fixed top-4 right-4 z-[100] space-y-2" id="toast-container" data-turbo-permanent="" />
+      <div className="fixed top-4 right-4 z-[100] space-y-2" id="toast-container" />
       <Navbar credits={150} />
 
       <div className="max-w-5xl mx-auto p-5 flex gap-10 text-gray-200 bg-black/30 backdrop-blur-lg rounded-lg">
-        {/* Left: Support Form + Tickets */}
+        {/* Left Panel */}
         <div className="flex-1">
           <h1 className="text-3xl font-semibold mb-6 text-indigo-400 drop-shadow-md">
             Support Center
@@ -147,9 +148,7 @@ const SupportPage = () => {
                   required
                   className="w-full p-2 border border-gray-700 rounded bg-gray-900 text-gray-200"
                 >
-                  <option value="" className="text-gray-500">
-                    -- Select category --
-                  </option>
+                  <option value="">-- Select category --</option>
                   <option value="billing">Billing</option>
                   <option value="technical">Technical issue</option>
                   <option value="general">General question</option>
@@ -192,7 +191,7 @@ const SupportPage = () => {
 
           <section>
             <h2 className="text-xl font-semibold mb-4 text-gray-300">Your Tickets</h2>
-            {tickets.length === 0 ? (
+            {!Array.isArray(tickets) || tickets.length === 0 ? (
               <p>You have no support tickets.</p>
             ) : (
               <ul className="space-y-4">
@@ -223,14 +222,13 @@ const SupportPage = () => {
           </section>
         </div>
 
-        {/* Right: FAQ */}
+        {/* Right Panel */}
         <div className="w-72">
           <section>
             <h2 className="text-xl font-semibold mb-4 text-gray-300">
               Frequently Asked Questions (FAQ)
             </h2>
 
-            {/* Search */}
             <input
               type="text"
               placeholder="Search questions..."
@@ -239,7 +237,6 @@ const SupportPage = () => {
               className="w-full mb-4 p-2 rounded bg-gray-900 border border-gray-700 text-gray-200"
             />
 
-            {/* FAQ List */}
             <ul className="space-y-3 max-h-96 overflow-auto">
               {currentFaqItems.length === 0 ? (
                 <li className="text-gray-400">No matching questions found.</li>
@@ -255,7 +252,6 @@ const SupportPage = () => {
               )}
             </ul>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-4 text-gray-300">
                 <button
@@ -269,7 +265,6 @@ const SupportPage = () => {
                 >
                   Prev
                 </button>
-                
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button

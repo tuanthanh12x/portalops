@@ -7,7 +7,7 @@ const AccountCard = () => {
   useEffect(() => {
     const fetchAccount = async () => {
       try {
-        const res = await axiosInstance.get("/user/getuserinfo");
+        const res = await axiosInstance.get("/auth/userinfo");
         setAccount(res.data);
       } catch (err) {
         setPopup({ message: 'Failed to load user info',type: 'error' });
