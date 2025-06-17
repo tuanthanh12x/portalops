@@ -5,6 +5,6 @@ auth:
   project_domain_name: "Default"
 
 services:
-  compute: "http://96.9.226.68:8774"
-  image: "http://96.9.226.68:9292"
-  network: "http://96.9.226.68:9696"
+  compute: "http://96.9.226.68/compute/v2.1"
+  image: "http://96.9.226.68/image"
+  network: "http://96.9.226.68/networking"
