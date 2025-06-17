@@ -31,6 +31,7 @@ function LoginPage() {
 
       if (response.data.require_2fa) {
         setRequire2FA(true);
+        localStorage.setItem('temp_username', username);
       } else {
         setTokenWithExpiry('accessToken', response.data.access);
         window.location.href = '/';
@@ -43,8 +44,13 @@ function LoginPage() {
   const handle2FAVerify = async () => {
     setError('');
     try {
+       const storedUsername = localStorage.getItem('temp_username');
+  if (!storedUsername) {
+    setError("Username missing. Please login again.");
+    return;
+  }
       const response = await axiosInstance.get('/auth/logi/', {
-        username,
+        username:storedUsername,
         code: otpCode,
       });
       setTokenWithExpiry('accessToken', response.data.access);
