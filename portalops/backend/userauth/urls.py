@@ -5,7 +5,8 @@ from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfo
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
-    path('2fa/verify/', Verify2FASetupView.as_view(), name='login-2fa-verify'),
+    path('login-2fa/', Login2FAVerifyView.as_view(), name='login-2fa-verify'),
+    path('2fa/verify/', Verify2FASetupView.as_view(), name=''),
     path('2fa/generate/', Generate2FAView.as_view(), name='2fa-generate'),
     path('2fa/enable/', Verify2FASetupView.as_view(), name='2fa-verify-enable'),
     path('signup/', SignUpView.as_view(), name='signup'),
