@@ -1,10 +1,10 @@
 auth:
-  auth_url: "http://172.93.187.251/identity/v3"
+  auth_url: "http://96.9.226.68/identity/v3"
 
   user_domain_name: "Default"
   project_domain_name: "Default"
 
 services:
-  compute: "http://172.93.187.251:8774"
-  image: "http://172.93.187.251:9292"
-  network: "http://172.93.187.251:9696"
+  compute: "http://96.9.226.68:8774"
+  image: "http://96.9.226.68:9292"
+  network: "http://96.9.226.68:9696"
