@@ -50,7 +50,8 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
-
+        profile.last_login = format_last_login(now())
+        profile.save()
         # Optional: lấy Keystone token nếu có
         if profile.project_id:
             try:
@@ -167,10 +168,10 @@ class UserInfoView(APIView):
 
     def get(self, request):
         user = request.user
-
+        profile, _ = UserProfile.objects.get_or_create(user=user)
         return Response({
             "email": user.email,
-            "two_factor_enabled": getattr(user, "two_factor_enabled", False),
+            "two_factor_enabled": profile.two_factor_enabled if profile else False,
             "last_login": user.last_login,
             "timezone": getattr(user, "timezone", "UTC"),
         })
@@ -393,69 +394,73 @@ class Verify2FASetupView(APIView):
 
 
 
-class Login2FAVerifyView(APIView):
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        code = request.data.get("code")
 
-        if not username or not password or not code:
-            return Response({"error": "Missing fields"}, status=400)
+class Verify2FALoginView(APIView):
+    """
+    Verifies 2FA code after username/password login.
+    Responds with JWT token and optional OpenStack token.
+    """
+    def post(self, request):
+        serializer = CodeOnlySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        username = serializer.validated_data.get("username")
+        code = serializer.validated_data.get("code")
 
         try:
-            user = authenticate(request, username=username, password=password)
-            if not user or not user.is_active:
-                return Response({"error": "Invalid credentials"}, status=401)
-
+            user = User.objects.get(username=username)
             profile = user.userprofile
-            if not profile.two_factor_enabled:
-                return Response({"error": "2FA is not enabled for this user"}, status=400)
+        except (User.DoesNotExist, UserProfile.DoesNotExist):
+            return Response({"error": "Invalid user."}, status=404)
 
-            totp = pyotp.TOTP(profile.totp_secret)
-            if not totp.verify(code):
-                return Response({"error": "Invalid 2FA code"}, status=401)
+        # Validate TOTP
+        totp = pyotp.TOTP(profile.totp_secret)
+        if not totp.verify(code):
+            return Response({"error": "Invalid 2FA code."}, status=400)
 
-            # 2FA successful → generate token
-            refresh = RefreshToken.for_user(user)
-            refresh["username"] = user.username
-            refresh["email"] = user.email
+        # Issue JWT tokens
+        profile.last_login = format_last_login()
+        profile.save()
 
-            if profile.project_id:
-                try:
-                    conn = connection.Connection(
-                        auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                        username=username,
-                        password=password,
-                        project_id=profile.project_id,
-                        user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                        project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                        identity_api_version='3',
-                    )
-                    conn.authorize()
-                    keystone_token = conn.session.get_token()
+        refresh = RefreshToken.for_user(user)
+        refresh["username"] = user.username
+        refresh["email"] = user.email
 
-                    redis_key = f"keystone_token:{username}:{profile.project_id}"
-                    redis_client.set(redis_key, keystone_token, ex=3600)
+        if profile.project_id:
+            refresh["project_id"] = profile.project_id
 
-                    refresh["project_id"] = profile.project_id
-                except Exception as e:
-                    print(f"[⚠️ OpenStack Error] {e}")
+            # Cache Keystone token if project_id exists
+            try:
+                conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=username,
+                    password=None,
+                    project_id=profile.project_id,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version="3"
+                )
+                conn.authorize()
+                token = conn.session.get_token()
+                redis_client.set(
+                    f"keystone_token:{username}:{profile.project_id}",
+                    token,
+                    ex=3600
+                )
+            except Exception as e:
+                print(f"[OpenStack] Failed to authorize user: {e}")
 
-            response = JsonResponse({
-                "message": "Login successful.",
-                "access": str(refresh.access_token),
-            })
-
-            response.set_cookie(
-                key="refresh_token",
-                value=str(refresh),
-                httponly=True,
-                secure=True,
-                samesite="Strict",
-                path="/api/auth/token/refresh/"
-            )
-
-            return response
-
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=404)
+        response = JsonResponse({
+            "access": str(refresh.access_token),
+            "message": "2FA login successful"
+        })
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=False,
+            samesite="Strict",
+            path="/api/auth/token/refresh/"
+        )
+        return response
