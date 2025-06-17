@@ -20,6 +20,7 @@ import BillingDashBoard from "../pages/client/BillingDashboard";
 import SupportPage from "../pages/client/SupportPage";
 import ForgotPasswordPage from "../pages/client/ForgotPassPage";
 import RegisterPage from "../pages/RegisterPage";
+import TwoFactorSetupPage from "../pages/client/TwoFactorSetupPage";
 function AppRoutes() {
   return (
     <Router>
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+<Route path="/forgot-password" element={<ForgotPasswordPage />} />
 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* Protected routes */}
         {/* <Route element={<RequireAuth />}> */}
@@ -47,6 +49,7 @@ function AppRoutes() {
         <Route path="/create-keypair" element={<CreateKeypairForm />} />
         <Route path="/vps-backup" element={<SnapshotListPage />} />
         <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
+        <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
               <Route path="/" element={<VolumeSnapshotListPage />} />
         {/* </Route> */}
 

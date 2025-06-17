@@ -34,7 +34,6 @@ function RegisterPage() {
       const { access, refresh } = response.data;
 
       setTokenWithExpiry('accessToken', access);
-      setTokenWithExpiry('refreshToken', refresh);
       setSuccess('✅ Registration successful! Redirecting...');
       setTimeout(() => {
         window.location.href = '/'; // Navigate to dashboard

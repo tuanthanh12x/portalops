@@ -8,7 +8,6 @@ export function useLogout() {
   return () => {
 
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
 
     // Gửi action logout
     dispatch(logout());
