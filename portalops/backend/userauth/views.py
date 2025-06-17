@@ -82,7 +82,7 @@ class LoginView(APIView):
             key="refresh_token",
             value=str(refresh),
             httponly=True,
-            secure=True,
+            secure=False,
             samesite="Strict",
             path="/api/auth/token/refresh/"
         )
