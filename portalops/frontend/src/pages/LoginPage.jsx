@@ -43,7 +43,7 @@ function LoginPage() {
   const handle2FAVerify = async () => {
     setError('');
     try {
-      const response = await axiosInstance.post('/auth/logi/', {
+      const response = await axiosInstance.get('/auth/logi/', {
         username,
         code: otpCode,
       });
