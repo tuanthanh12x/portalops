@@ -1,11 +1,11 @@
 from django.urls import path
 from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfoView, ResetPasswordConfirmView, \
-    ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, Login2FAVerifyView, \
-    UserProfileInfoView, UpdateUserProfileView
+    ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, \
+    UserProfileInfoView, UpdateUserProfileView, TWOFALoginView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
-    path('logi/', Login2FAVerifyView.as_view(), name='login-2f-verify'),
+
     path('2fa/verify/', Verify2FASetupView.as_view(), name=''),
     path('2fa/generate/', Generate2FAView.as_view(), name='2fa-generate'),
     path('2fa/enable/', Verify2FASetupView.as_view(), name='2fa-verify-enable'),
@@ -18,4 +18,5 @@ urlpatterns = [
     path('profile/info/', UserProfileInfoView.as_view(), name='userinfo'),
     path('profile/update/', UpdateUserProfileView.as_view()),
     path("token/refresh/", RefreshTokenView.as_view(), name="token-refresh"),
+    path('two-fa-login/', TWOFALoginView.as_view(), name='2falog'),
 ]

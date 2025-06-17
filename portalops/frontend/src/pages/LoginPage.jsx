@@ -49,7 +49,7 @@ function LoginPage() {
     setError("Username missing. Please login again.");
     return;
   }
-      const response = await axiosInstance.post('/auth/logi/', {
+      const response = await axiosInstance.post('/auth/two-fa-login/', {
         username:storedUsername,
         code: otpCode,
       });

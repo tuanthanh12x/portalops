@@ -395,48 +395,49 @@ class Verify2FASetupView(APIView):
 
 
 
-class Login2FAVerifyView(APIView):
-    """
-    Verifies 2FA code after username/password login.
-    Responds with JWT token and optional OpenStack token.
-    """
-    def post(self, request):
-        serializer = CodeOnlySerializer(data=request.data)
+
+class TwoFactorLoginHandler:
+    def __init__(self, request_data):
+        self.data = request_data
+        self.user = None
+        self.profile = None
+
+    def validate_input(self):
+        serializer = CodeOnlySerializer(data=self.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return None, Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return serializer.validated_data, None
 
-        username = serializer.validated_data.get("username")
-        code = serializer.validated_data.get("code")
-
+    def load_user_profile(self, username):
         try:
-            user = User.objects.get(username=username)
-            profile = user.userprofile
+            self.user = User.objects.get(username=username)
+            self.profile = self.user.userprofile
         except (User.DoesNotExist, UserProfile.DoesNotExist):
             return Response({"error": "Invalid user."}, status=404)
+        return None
 
-        # Validate TOTP
-        totp = pyotp.TOTP(profile.totp_secret)
+    def verify_totp(self, code):
+        totp = pyotp.TOTP(self.profile.totp_secret)
         if not totp.verify(code):
             return Response({"error": "Invalid 2FA code."}, status=400)
+        return None
 
-        # Issue JWT tokens
-        profile.last_login = format_last_login()
-        profile.save()
+    def issue_tokens_and_cache(self):
+        self.profile.last_login = format_last_login()
+        self.profile.save()
 
-        refresh = RefreshToken.for_user(user)
-        refresh["username"] = user.username
-        refresh["email"] = user.email
+        refresh = RefreshToken.for_user(self.user)
+        refresh["username"] = self.user.username
+        refresh["email"] = self.user.email
 
-        if profile.project_id:
-            refresh["project_id"] = profile.project_id
-
-            # Cache Keystone token if project_id exists
+        if self.profile.project_id:
+            refresh["project_id"] = self.profile.project_id
             try:
                 conn = connection.Connection(
                     auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                    username=username,
+                    username=self.user.username,
                     password=None,
-                    project_id=profile.project_id,
+                    project_id=self.profile.project_id,
                     user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
                     project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
                     identity_api_version="3"
@@ -444,7 +445,7 @@ class Login2FAVerifyView(APIView):
                 conn.authorize()
                 token = conn.session.get_token()
                 redis_client.set(
-                    f"keystone_token:{username}:{profile.project_id}",
+                    f"keystone_token:{self.user.username}:{self.profile.project_id}",
                     token,
                     ex=3600
                 )
@@ -464,3 +465,31 @@ class Login2FAVerifyView(APIView):
             path="/api/auth/token/refresh/"
         )
         return response
+
+    def execute(self):
+        validated_data, error_response = self.validate_input()
+        if error_response:
+            return error_response
+
+        username = validated_data.get("username")
+        code = validated_data.get("code")
+
+        error_response = self.load_user_profile(username)
+        if error_response:
+            return error_response
+
+        error_response = self.verify_totp(code)
+        if error_response:
+            return error_response
+
+        return self.issue_tokens_and_cache()
+
+
+class TWOFALoginView(APIView):
+    """
+    Verifies 2FA code after username/password login.
+    Returns JWT and sets refresh token cookie.
+    """
+    def post(self, request):
+        handler = TwoFactorLoginHandler(request.data)
+        return handler.execute()
