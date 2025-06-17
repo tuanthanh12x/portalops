@@ -49,10 +49,12 @@ function LoginPage() {
     setError("Username missing. Please login again.");
     return;
   }
-      const response = await axiosInstance.get('/auth/logi/', {
+      const response = await axiosInstance.post('/auth/logi/', {
         username:storedUsername,
         code: otpCode,
       });
+      localStorage.removeItem('temp_username');
+
       setTokenWithExpiry('accessToken', response.data.access);
       window.location.href = '/';
     } catch (err) {

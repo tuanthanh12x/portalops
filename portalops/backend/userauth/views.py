@@ -400,7 +400,7 @@ class Login2FAVerifyView(APIView):
     Verifies 2FA code after username/password login.
     Responds with JWT token and optional OpenStack token.
     """
-    def get(self, request):
+    def post(self, request):
         serializer = CodeOnlySerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
