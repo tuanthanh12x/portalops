@@ -43,7 +43,7 @@ function LoginPage() {
   const handle2FAVerify = async () => {
     setError('');
     try {
-      const response = await axiosInstance.post('/auth/2fa-login/', {
+      const response = await axiosInstance.post('/auth/logi/', {
         username,
         code: otpCode,
       });
@@ -116,7 +116,7 @@ function LoginPage() {
               </label>
               <input
                 type="text"
-                placeholder="e.g. 123456"
+                placeholder=""
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 required
