@@ -9,35 +9,22 @@ function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Token helper
-  const setTokenWithExpiry = (key, token, ttl = 3600000) => {
-    const now = new Date();
-    const item = {
-      token,
-      expiry: now.getTime() + ttl,
-    };
-    localStorage.setItem(key, JSON.stringify(item));
-  };
-
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
     try {
-      const response = await axiosInstance.post('/auth/signup/', {
+      await axiosInstance.post('/auth/signup/', {
         username,
         email,
         password,
       });
 
-      const { access, refresh } = response.data;
-
-      setTokenWithExpiry('accessToken', access);
-      setSuccess('✅ Registration successful! Redirecting...');
+      setSuccess('✅ Registration successful! Redirecting to login...');
       setTimeout(() => {
-        window.location.href = '/'; // Navigate to dashboard
-      }, 1000);
+        window.location.href = '/login'; // Redirect to login page
+      }, 1500);
     } catch (err) {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
@@ -70,6 +57,7 @@ function RegisterPage() {
               className="mt-2 w-full px-4 py-3 bg-gray-800/50 text-white border border-green-600/50 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-0 font-orbitron hover:shadow-glow focus:shadow-glow transition-all duration-300"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-green-300 font-orbitron">
               Email
@@ -83,6 +71,7 @@ function RegisterPage() {
               className="mt-2 w-full px-4 py-3 bg-gray-800/50 text-white border border-green-600/50 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-0 font-orbitron hover:shadow-glow focus:shadow-glow transition-all duration-300"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-green-300 font-orbitron">
               Password
@@ -113,8 +102,12 @@ function RegisterPage() {
             Register Account
           </button>
 
-          {error && <p className="text-red-400 text-sm text-center font-orbitron">{error}</p>}
-          {success && <p className="text-green-400 text-sm text-center font-orbitron animate-pulse">{success}</p>}
+          {error && (
+            <p className="text-red-400 text-sm text-center font-orbitron">{error}</p>
+          )}
+          {success && (
+            <p className="text-green-400 text-sm text-center font-orbitron animate-pulse">{success}</p>
+          )}
         </form>
       </div>
     </div>
@@ -122,6 +115,3 @@ function RegisterPage() {
 }
 
 export default RegisterPage;
-
-
-

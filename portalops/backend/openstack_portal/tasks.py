@@ -1,40 +1,45 @@
 import json
 import logging
+from typing import Dict
+
 from celery import shared_task
+
 from utils.conn import connect_with_token
 from utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
 
-@shared_task
-def fetch_and_cache_instance_options(username: str, token: str, project_id: str) -> dict:
-    """
-    Fetches OpenStack instance options and caches them in Redis.
 
-    Parameters:
-    - username: The username of the requester
-    - token: Keystone authentication token
-    - project_id: OpenStack project ID
+@shared_task
+def fetch_and_cache_instance_options(username: str, token: str, project_id: str) -> Dict:
+    """
+    Fetch and cache instance options (regions, flavors, images, networks) from OpenStack.
+
+    Args:
+        username (str): Authenticated user's username
+        token (str): Keystone authentication token
+        project_id (str): User's selected OpenStack project ID
 
     Returns:
-    - dict containing instance options or an error message
+        dict: Instance options or error details
     """
     try:
         conn = connect_with_token(token, project_id)
-        if not conn:
-            error_msg = "Failed to initialize OpenStack connection"
-            logger.error(error_msg)
-            return {"error": error_msg}
     except Exception as e:
-        logger.exception("Connection failed")
-        return {"error": f"Connection failed: {str(e)}"}
+        logger.exception("OpenStack connection initialization failed.")
+        return {"error": f"Connection initialization failed: {str(e)}"}
 
-    # 1. Regions
+    if not conn:
+        error_msg = "OpenStack connection could not be established."
+        logger.error(error_msg)
+        return {"error": error_msg}
+
+    # 1. Availability Zones / Regions
     try:
         az_list = conn.compute.availability_zones()
         regions = [az.name for az in az_list if az.state.get('available', False)]
     except Exception as e:
-        logger.warning(f"Failed to fetch regions: {e}")
+        logger.warning(f"[{username}] Failed to fetch availability zones: {e}")
         regions = []
 
     # 2. Images
@@ -45,9 +50,8 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
         "iso": []
     }
     try:
-        img_list = list(conn.image.images())
-        for img in img_list:
-            name = img.name.lower() if img.name else ""
+        for img in conn.image.images():
+            name = (img.name or "").lower()
             entry = {"id": img.id, "name": img.name}
 
             if "ubuntu" in name or "centos" in name:
@@ -56,10 +60,10 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
                 images["marketplace"].append(entry)
             elif "iso" in name or img.disk_format == "iso":
                 images["iso"].append(entry)
-            elif project_id and img.owner_id == project_id:
+            elif img.owner_id == project_id:
                 images["my_images"].append(entry)
     except Exception as e:
-        logger.warning(f"Failed to fetch images: {e}")
+        logger.warning(f"[{username}] Failed to fetch images: {e}")
 
     # 3. Flavors (Plans)
     plans = []
@@ -70,7 +74,7 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
                 "label": f"{flavor.name} - {flavor.vcpus} CPU, {flavor.ram}MB RAM, {flavor.disk}GB SSD"
             })
     except Exception as e:
-        logger.warning(f"Failed to fetch flavors: {e}")
+        logger.warning(f"[{username}] Failed to fetch flavors: {e}")
 
     # 4. Networks
     networks = []
@@ -78,8 +82,9 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
         for net in conn.network.networks():
             networks.append({"id": net.id, "name": net.name})
     except Exception as e:
-        logger.warning(f"Failed to fetch networks: {e}")
+        logger.warning(f"[{username}] Failed to fetch networks: {e}")
 
+    # Final structure
     data_to_cache = {
         "regions": regions,
         "plans": plans,
@@ -89,9 +94,10 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
 
     redis_key = f"instance_options:{username}:{project_id}"
     try:
-        redis_client.set(redis_key, json.dumps(data_to_cache), ex=300)
+        redis_client.set(redis_key, json.dumps(data_to_cache), ex=300)  # Expires in 5 minutes
+        logger.info(f"[{username}] Cached instance options under key: {redis_key}")
     except Exception as e:
-        logger.error(f"Failed to cache instance options: {e}")
+        logger.error(f"[{username}] Failed to cache instance options: {e}")
         return {"error": f"Failed to cache instance options: {str(e)}"}
 
     return data_to_cache

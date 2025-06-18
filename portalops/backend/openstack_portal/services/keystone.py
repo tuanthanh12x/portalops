@@ -8,7 +8,7 @@ def login_with_keystone(username: str, password: str, project_name: str) -> dict
     if not all([username, password, project_name]):
         raise ValueError("Username, password, and project_name are required")
 
-    keystone_url = settings.OPENSTACK_AUTH['auth_url'].rstrip('/') + '/auth/tokens'
+    keystone_url = settings.OPENSTACK_AUTH_URL + '/auth/tokens'
     payload = {
         "auth": {
             "identity": {

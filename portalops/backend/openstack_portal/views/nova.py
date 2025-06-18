@@ -252,7 +252,7 @@ class CreateImageAPI(APIView):
         if not all([name, disk_format, image_file]):
             return Response({"error": "Missing required fields"}, status=400)
 
-        glance_url = f"http://96.9.226.68/image/v2/images"
+        glance_url = f"{settings.OPENSTACK_IMAGE_URL}/v2/images"
         headers = {
             "X-Auth-Token": token,
             "Content-Type": "application/json"
@@ -275,7 +275,7 @@ class CreateImageAPI(APIView):
             image_id = image['id']
 
             # Upload file image (PUT)
-            upload_url = f"http://96.9.226.68/image/v2/images/{image_id}/file"
+            upload_url = f"{settings.OPENSTACK_IMAGE_URL}/v2/images/{image_id}/file"
             upload_headers = {
                 "X-Auth-Token": token,
                 "Content-Type": "application/octet-stream"
@@ -389,7 +389,7 @@ class KeypairView(APIView):
         if not keypair_name:
             return Response({"error": "Keypair name is required"}, status=400)
 
-        nova_url = "http://96.9.226.68/compute/v2.1"
+        nova_url = f"{settings.OPENSTACK_COMPUTE_URL}"
         headers = {
             "X-Auth-Token": token.decode() if isinstance(token, bytes) else token,
             "Content-Type": "application/json"

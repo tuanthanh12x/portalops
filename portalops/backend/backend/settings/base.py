@@ -143,9 +143,14 @@ OPENSTACK_AUTH = OPENSTACK_CONFIG.get("auth", {})
 OPENSTACK_SERVICES = OPENSTACK_CONFIG.get("services", {})
 
 
-OPENSTACK_AUTH_URL = OPENSTACK_AUTH.get("auth_url", "").rstrip("/")
-USER_DOMAIN_NAME = OPENSTACK_AUTH.get("user_domain_name", "Default")
-PROJECT_DOMAIN_NAME = OPENSTACK_AUTH.get("project_domain_name", "Default")
+OPENSTACK_AUTH_URL = config("OPENSTACK_AUTH_URL")
+USER_DOMAIN_NAME = config("OPENSTACK_USER_DOMAIN", default="Default")
+PROJECT_DOMAIN_NAME = config("OPENSTACK_PROJECT_DOMAIN", default="Default")
+
+OPENSTACK_IMAGE_URL = config("OPENSTACK_IMAGE_URL").rstrip("/")
+OPENSTACK_COMPUTE_URL = config("OPENSTACK_COMPUTE_URL").rstrip("/")
+OPENSTACK_NETWORK_URL = config("OPENSTACK_NETWORK_URL").rstrip("/")
+OPENSTACK_BLOCK_STORAGE_URL = config("OPENSTACK_STORAGE_URL").rstrip("/")
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST')
