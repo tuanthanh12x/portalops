@@ -24,7 +24,7 @@ const navigate = useNavigate();
   });
 
   useEffect(() => {
-    axiosInstance.get('/openstack/instance-option')
+    axiosInstance.get('/openstack/instance-option/')
       .then(res => {
         const data = res.data;
         setInstanceOptions(data);
