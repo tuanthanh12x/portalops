@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-
+import Popup from "../../components/client/Popup";
 import Header from '../../components/admin/Navbar';
+
 export default function CreateUserPage() {
   const navigate = useNavigate();
+      const [popup, setPopup] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -15,15 +17,12 @@ export default function CreateUserPage() {
   });
 
   const [roles, setRoles] = useState([]);
-  const [timezones, setTimezones] = useState([]);
   const [error, setError] = useState(null);
 
-  // Fetch roles and timezones
   useEffect(() => {
     axiosInstance.get('auth/roles-list/')
       .then(res => setRoles(res.data))
-      .catch(() => setError('Failed to load roles'));
-
+      .catch(() => setError('⚠️ Failed to load roles.'));
   }, []);
 
   const handleChange = e => {
@@ -34,107 +33,119 @@ export default function CreateUserPage() {
     e.preventDefault();
     try {
       await axiosInstance.post('auth/create-user/', formData);
-      alert('User created successfully.');
-      navigate('/users-manager'); // adjust based on your routes
+      setPopup({ message: " ✅ User created successfully. " });
+      navigate('/users-manager');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create user.');
+      setError(err.response?.data?.detail || '❌ Failed to create user.');
     }
   };
 
   return (
-      <div className="min-h-screen w-screen bg-gray-900 overflow-x-hidden">
-    <Header/>
-    <div className="max-w-2xl mx-auto mt-10 bg-black/30 backdrop-blur-lg p-8 rounded-2xl shadow-xl text-white">
-      <h2 className="text-2xl font-bold mb-6 text-indigo-400">Create New User</h2>
+    <div className="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-gray-100 min-h-screen">
+      <Header />
+       {popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
+      <div className="max-w-2xl mx-auto px-6 py-12 animate-fade-in">
+        <div className="backdrop-blur-lg bg-black/40 border border-gray-700 rounded-2xl shadow-2xl p-8 space-y-6">
+          <h2 className="text-3xl font-bold text-indigo-400 text-center tracking-wide drop-shadow">
+            👤 Create New User
+          </h2>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+          {error && (
+            <div className="text-red-400 text-sm bg-red-900/40 py-2 px-3 rounded text-center">
+              {error}
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm">Username</label>
-          <input
-            name="username"
-            type="text"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.username}
-            onChange={handleChange}
-            required
-          />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block mb-1 text-sm font-medium">Username</label>
+              <input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Password</label>
+              <input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Email</label>
+              <input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Phone Number</label>
+              <input
+                name="phone_number"
+                type="text"
+                value={formData.phone_number}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Address</label>
+              <input
+                name="address"
+                type="text"
+                value={formData.address}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm font-medium">Role</label>
+              <select
+                name="role_id"
+                value={formData.role_id}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-indigo-500"
+                required
+              >
+                <option value="">Select a role</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.id}>{role.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all shadow-md"
+            >
+              ➕ Create User
+            </button>
+          </form>
         </div>
-
-        <div>
-          <label className="block text-sm">Password</label>
-          <input
-            name="password"
-            type="password"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm">Email</label>
-          <input
-            name="email"
-            type="email"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm">Phone Number</label>
-          <input
-            name="phone_number"
-            type="text"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.phone_number}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm">Address</label>
-          <input
-            name="address"
-            type="text"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.address}
-            onChange={handleChange}
-          />
-        </div>
-
-    
-
-
-        <div>
-          <label className="block text-sm">Role</label>
-          <select
-            name="role_id"
-            className="w-full bg-transparent border border-gray-600 rounded-lg p-2"
-            value={formData.role_id}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select a role</option>
-            {roles.map(role => (
-              <option key={role.id} value={role.id}>{role.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition duration-300"
-        >
-          Create User
-        </button>
-      </form>
-    </div>
+      </div>
     </div>
   );
 }

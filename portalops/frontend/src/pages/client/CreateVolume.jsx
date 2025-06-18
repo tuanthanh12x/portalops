@@ -33,7 +33,7 @@ const CreateVolumePage = () => {
         setSourceSnapshot(res.data.snapshots[0]?.id || '');
       })
       .catch(err => {
-        console.error('Failed to load volume options:', err);
+        setPopup({ message: "❌ Failed to load volume options: ", type: "error" });
       })
       .finally(() => setLoading(false));
   }, []);

@@ -12,6 +12,7 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState(mockUsers);
   const [filter, setFilter] = useState("All");
 
+
   const filteredUsers = users
     .filter(user => filter === "All" || user.status === filter)
     .filter(user =>
@@ -66,7 +67,7 @@ export default function UserManagementPage() {
           <table className="min-w-full text-sm divide-y divide-gray-700">
             <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider font-semibold">
               <tr>
-                {['Username', 'Email', 'Role', 'Status', 'Resources', 'Credits','Created At', 'Actions'].map((col, idx) => (
+                {['Username', 'Email', 'Role', 'Status', 'Resources', 'Credits','Date Joined', 'Actions'].map((col, idx) => (
                   <th key={idx} className="px-6 py-4 text-left">{col}</th>
                 ))}
               </tr>
