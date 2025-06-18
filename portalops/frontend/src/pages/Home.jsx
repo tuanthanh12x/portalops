@@ -216,7 +216,7 @@ const Home = () => {
               </ul>
               <button className="mt-6 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold hover:from-green-400 hover:to-teal-400 transition-all duration-300">
                 Build with {pack.name.split(' ')[0]}
-              </button>
+              </button> 
             </div>
           ))}
         </div>
