@@ -48,3 +48,31 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ['id', 'name']
+
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username')
+    email = serializers.EmailField(source='user.email')
+    role = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    # resources = serializers.SerializerMethodField()
+    # credits = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='user.date_joined')
+    vm_count = serializers.SerializerMethodField()
+    class Meta:
+        model = UserProfile
+        fields = ['username', 'email', 'role', 'status', 'resources', 'credits', 'created_at', 'vm_count']
+
+    def get_role(self, obj):
+        mapping = obj.role_mappings.first()
+        return mapping.role.name if mapping else "N/A"
+
+    def get_status(self, obj):
+        return "Active" if obj.user.is_active else "Locked"
+
+
+
+
+    # def get_credits(self, obj):
+    #     return f"${obj.credits}" if obj.credits else "N/A"

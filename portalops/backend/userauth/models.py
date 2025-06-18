@@ -27,7 +27,7 @@ class Role(models.Model):
 
 
 TIMEZONE_CHOICES = [(tz, tz) for tz in pytz.common_timezones]
-
+STATUS=[]
 class UserProfile(models.Model):
     # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -41,6 +41,8 @@ class UserProfile(models.Model):
     company = models.CharField(max_length=128, blank=True)
 
     # System fields
+    vm_count = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=128, blank=True)
     two_factor_enabled = models.BooleanField(default=False)
     totp_secret = models.CharField(max_length=32, blank=True, null=True)
     credits = models.DecimalField(max_digits=10, decimal_places=2, default=0)

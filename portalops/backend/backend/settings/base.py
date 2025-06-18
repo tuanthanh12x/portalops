@@ -138,6 +138,17 @@ CACHES = {
     }
 }
 
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "update-vm-counts-every-30min": {
+        "task": "userauth.tasks.update_user_vm_counts",
+        "schedule": crontab(minute="*/30"),  # every 30 minutes
+    },
+}
+
+
+
 
 OPENSTACK_AUTH = OPENSTACK_CONFIG.get("auth", {})
 OPENSTACK_SERVICES = OPENSTACK_CONFIG.get("services", {})

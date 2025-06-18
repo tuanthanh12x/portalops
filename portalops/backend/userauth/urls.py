@@ -3,7 +3,7 @@ from django.urls import path
 from .serializers import CreateUserSerializer
 from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfoView, ResetPasswordConfirmView, \
     ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, \
-    UserProfileInfoView, UpdateUserProfileView, TWOFALoginView, CreateUserAPIView, RoleListAPIView
+    UserProfileInfoView, UpdateUserProfileView, TWOFALoginView, CreateUserAPIView, RoleListAPIView, UserListView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -17,11 +17,17 @@ urlpatterns = [
     path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
     path("reset-password/<uidb64>/<token>/", ResetPasswordConfirmView.as_view(), name="reset-password-confirm"),
     path('userinfo/', UserInfoView.as_view(), name='userinfo'),
-    path('create-user/', CreateUserAPIView.as_view(), name='create-user'),
-    path('roles-list/', RoleListAPIView.as_view(), name='role-list'),
     path('profile/info/', UserProfileInfoView.as_view(), name='userinfo'),
     path('profile/update/', UpdateUserProfileView.as_view()),
     path("token/refresh/", RefreshTokenView.as_view(), name="token-refresh"),
     path('two-fa-login/', TWOFALoginView.as_view(), name='2falog'),
+
+
+
+
+    #admin
+    path('create-user/', CreateUserAPIView.as_view(), name='create-user'),
+    path('roles-list/', RoleListAPIView.as_view(), name='role-list'),
+    path("users-list/", UserListView.as_view(), name="user-list"),
 
 ]

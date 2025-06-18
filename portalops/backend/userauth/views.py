@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
 from .models import UserProfile
-from .serializers import CreateUserSerializer, RoleSerializer
+from .serializers import CreateUserSerializer, RoleSerializer, UserListSerializer
 
 
 class LoginView(APIView):
@@ -514,3 +514,12 @@ class TWOFALoginView(APIView):
     def post(self, request):
         handler = TwoFactorLoginHandler(request.data)
         return handler.execute()
+
+class UserListView(APIView):
+    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = UserProfile.objects.select_related("user").all()
+        serializer = UserListSerializer(queryset, many=True)
+        return Response(serializer.data)
