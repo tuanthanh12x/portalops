@@ -31,6 +31,7 @@ def update_user_vm_counts():
 
     for profile in UserProfile.objects.select_related("user"):
         project_id = profile.project_id
+        user_id = profile.openstack_user_id
         if not project_id:
             continue
 
@@ -44,7 +45,7 @@ def update_user_vm_counts():
             res.raise_for_status()
 
             servers = res.json().get("servers", [])
-            user_vm_count = sum(1 for s in servers if s.get("user_id") == profile.openstack_user_id)
+            user_vm_count = sum(1 for s in servers if s.get("user_id") == user_id)
 
             profile.vm_count = user_vm_count
             profile.save(update_fields=["vm_count"])

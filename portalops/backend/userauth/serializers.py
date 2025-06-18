@@ -62,7 +62,7 @@ class UserListSerializer(serializers.ModelSerializer):
     vm_count = serializers.SerializerMethodField()
     class Meta:
         model = UserProfile
-        fields = ['username', 'email', 'role', 'status', 'resources', 'credits', 'created_at', 'vm_count']
+        fields = ['username', 'email', 'role', 'status', 'credits', 'created_at', 'vm_count']
 
     def get_role(self, obj):
         mapping = obj.role_mappings.first()
