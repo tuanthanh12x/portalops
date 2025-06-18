@@ -59,7 +59,7 @@ class UserListSerializer(serializers.ModelSerializer):
     # resources = serializers.SerializerMethodField()
     # credits = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='user.date_joined')
-    vm_count = serializers.SerializerMethodField()
+    vm_count = serializers.IntegerField()
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'role', 'status', 'credits', 'created_at', 'vm_count']
