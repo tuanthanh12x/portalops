@@ -57,6 +57,36 @@ def update_user_vm_counts():
 
 
 
+def get_nova_client():
+    return connection.Connection(
+        auth_url=settings.OPENSTACK_AUTH_URL,
+        project_domain_name=settings.PROJECT_DOMAIN_NAME,
+        user_domain_name=settings.USER_DOMAIN_NAME,
+        username=settings.OPENSTACK_ADMIN_NAME,
+        password=settings.OPENSTACK_ADMIN_PASSWORD,
+        project_name='admin',
+        compute_api_version='2.1',
+    )
+
+@shared_task
+def sync_vm_count_for_all_users():
+    nova = get_nova_client()
+
+    profiles = UserProfile.objects.exclude(project_id__isnull=True)
+
+    for profile in profiles:
+        try:
+            servers = nova.compute.servers(details=True, all_projects=True, filters={
+                'project_id': profile.project_id
+            })
+            vm_count = len(list(servers))  # Convert generator to list to count
+            profile.vm_count = vm_count
+            profile.save(update_fields=['vm_count', 'updated_at'])
+        except Exception as e:
+            print(f"Failed to sync user {profile.user.username}: {e}")
+
+
+
 
 User = get_user_model()
 

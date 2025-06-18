@@ -142,7 +142,7 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "update-vm-counts-every-30min": {
-        "task": "userauth.tasks.update_user_vm_counts",
+        "task": "userauth.tasks.sync_vm_count_for_all_users",
         "schedule": crontab(minute="*/30"),  # every 30 minutes
     },
 }
