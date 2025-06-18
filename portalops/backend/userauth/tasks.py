@@ -68,10 +68,10 @@ def create_openstack_project_and_user(user_id):
         conn = connection.Connection(
             auth_url=settings.OPENSTACK_AUTH_URL,
             username=settings.OPENSTACK_ADMIN_NAME,
-            password=settings.OPENSTACK_ADMIN_PASS,
+            password=settings.OPENSTACK_ADMIN_PASSWORD,
             project_name='admin',
-            user_domain_name=settings.OPENSTACK_USER_DOMAIN_NAME,
-            project_domain_name=settings.OPENSTACK_PROJECT_DOMAIN_NAME,
+            user_domain_name=settings.USER_DOMAIN_NAME,
+            project_domain_name=settings.PROJECT_DOMAIN_NAME,
         )
 
         # 1. Create a new project
