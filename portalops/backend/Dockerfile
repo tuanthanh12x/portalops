@@ -1,16 +1,29 @@
 FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Prevent Python from writing .pyc files and buffering stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y build-essential libpq-dev curl && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
 
-CMD ["gunicorn", "backend.wsgi:application", "--chdir", "/app", "--bind", "0.0.0.0:8000"]
-
-
+# Run Gunicorn with optimized parameters
+CMD ["gunicorn", "backend.wsgi:application", \
+     "--chdir", "/app", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers=3", \
+     "--threads=2", \
+     "--timeout=120", \
+     "--max-requests=1000", \
+     "--max-requests-jitter=50", \
+     "--log-level=info"]
