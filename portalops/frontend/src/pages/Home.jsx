@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const FeatureCard = ({ title, description, delay }) => {
   const cardRef = useRef(null);
@@ -30,26 +31,32 @@ const FeatureCard = ({ title, description, delay }) => {
 };
 
 const Home = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authStatus, setAuthStatus] = useState("unauthenticated");
   const navigate = useNavigate();
 
   useEffect(() => {
-  const isTokenValid = () => {
-    const itemStr = localStorage.getItem("accessToken");
-    if (!itemStr) return false;
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setAuthStatus("unauthenticated");
+      return;
+    }
 
     try {
-      const item = JSON.parse(itemStr);
-      const now = new Date();
-      return now.getTime() < item.expiry;
-    } catch (e) {
-      return false;
+      const decoded = jwtDecode(token);
+      if (decoded?.project_id) {
+        setAuthStatus("project_selected");
+      } else {
+        setAuthStatus("awaiting_project");
+      }
+    } catch {
+      setAuthStatus("unauthenticated");
     }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    window.location.reload();
   };
-
-  setIsLoggedIn(isTokenValid());
-}, []);
-
 
   useEffect(() => {
     const particlesContainer = document.createElement('div');
@@ -114,15 +121,27 @@ const Home = () => {
               <a href="#features" className="text-gray-300 hover:text-white transition duration-300">Features</a>
               <a href="#pricing" className="text-gray-300 hover:text-white transition duration-300">Pricing</a>
               <a href="#contact" className="text-gray-300 hover:text-white transition duration-300">Contact</a>
-              {isLoggedIn ? (
+
+              {authStatus === "unauthenticated" && (
+                <a href="/login" className="text-gray-300 hover:text-white transition duration-300">Login</a>
+              )}
+
+              {authStatus === "awaiting_project" && (
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-300 hover:text-white transition duration-300"
+                >
+                  Logout
+                </button>
+              )}
+
+              {authStatus === "project_selected" && (
                 <button
                   onClick={() => navigate("/dashboard")}
                   className="text-gray-300 hover:text-white transition duration-300"
                 >
                   Dashboard
                 </button>
-              ) : (
-                <a href="/login" className="text-gray-300 hover:text-white transition duration-300">Login</a>
               )}
             </div>
           </div>
@@ -166,7 +185,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Resource Packages Section */}
+      {/* Pricing Section */}
       <section id="pricing" className="py-16 px-4 md:px-8 bg-gradient-to-br from-green-900/50 to-teal-900/50">
         <h2 className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500">
           Choose Your Resource Pack

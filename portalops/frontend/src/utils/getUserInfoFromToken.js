@@ -8,7 +8,7 @@ export default function getUserInfoFromToken(token) {
       username: decoded.username || decoded.name || '',
       email: decoded.email || '',
       roles: decoded.roles || [],
-      project: decoded.project_name || '',
+      project: decoded.project_id || '',
     };
   } catch (err) {
     console.error('Error decoding token:', err);
