@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from django.utils.timezone import localtime, is_naive, make_aware
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile, UserRoleMapping, Role
 from utils.redis_client import redis_client
@@ -22,6 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
 from .models import UserProfile
+from .serializers import CreateUserSerializer, RoleSerializer
 
 
 class LoginView(APIView):
@@ -320,6 +322,25 @@ class ChangePasswordView(APIView):
             {"message": "Your password has been successfully updated."},
             status=status.HTTP_200_OK
         )
+
+class CreateUserAPIView(APIView):
+    def post(self, request):
+        serializer = CreateUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user_profile = serializer.save()
+            return Response({
+                "message": "User created successfully.",
+                "username": user_profile.user.username,
+                "role": user_profile.role_mappings.first().role.name
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class RoleListAPIView(ListAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+
 
 from .tasks import send_reset_password_email
 

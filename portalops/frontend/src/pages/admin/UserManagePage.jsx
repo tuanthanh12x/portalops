@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Header from '../../components/admin/Navbar';
-
+import { Link } from "react-router-dom";
 const mockUsers = [
-  { username: "user1", email: "x@x.x", role: "User", status: "Active", resources: "2 VMs", credits: "$50" },
+  { username: "user1", email: "x@x.x", role: "User", status: "Active", resources: "2 VMs", credits: "$50" ,created_at:"11/20"},
   { username: "user2", email: "y@y.y", role: "Admin", status: "Active", resources: "0 VMs", credits: "N/A" },
   { username: "user3", email: "z@z.z", role: "User", status: "Locked", resources: "1 VM", credits: "$0" },
 ];
@@ -28,9 +28,11 @@ export default function UserManagementPage() {
           👥 User Management
         </h2>
         <div className="flex gap-3">
+          <Link to="/create-user">
           <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-md transition">
             + Add User
           </button>
+          </Link>
           <button className="px-5 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium shadow-md transition">
             Export List
           </button>
@@ -64,7 +66,7 @@ export default function UserManagementPage() {
           <table className="min-w-full text-sm divide-y divide-gray-700">
             <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider font-semibold">
               <tr>
-                {['Username', 'Email', 'Role', 'Status', 'Resources', 'Credits', 'Actions'].map((col, idx) => (
+                {['Username', 'Email', 'Role', 'Status', 'Resources', 'Credits','Created At', 'Actions'].map((col, idx) => (
                   <th key={idx} className="px-6 py-4 text-left">{col}</th>
                 ))}
               </tr>
@@ -87,6 +89,7 @@ export default function UserManagementPage() {
                     </td>
                     <td className="px-6 py-4">{user.resources}</td>
                     <td className="px-6 py-4">{user.credits}</td>
+                               <td className="px-6 py-4">{user.created_at}</td>
                     <td className="px-6 py-4">
                       <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md shadow text-xs transition">
                         View

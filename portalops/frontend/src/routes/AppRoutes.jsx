@@ -22,6 +22,7 @@ import ForgotPasswordPage from "../pages/client/ForgotPassPage";
 import RegisterPage from "../pages/RegisterPage";
 import TwoFactorSetupPage from "../pages/client/TwoFactorSetupPage";
 import EditProfilePage from './../pages/client/EditProfilePage';
+import CreateUserPage from "../pages/admin/CreateUserPage";
 function AppRoutes() {
   return (
     <Router>
@@ -53,6 +54,17 @@ function AppRoutes() {
         <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
               <Route path="/" element={<VolumeSnapshotListPage />} />
         </Route>
+
+
+
+        {/* Staff routes */}
+
+
+              <Route path="/create-user" element={<CreateUserPage />} />
+
+
+
+
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />

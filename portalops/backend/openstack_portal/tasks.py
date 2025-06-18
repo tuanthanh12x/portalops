@@ -94,7 +94,7 @@ def fetch_and_cache_instance_options(username: str, token: str, project_id: str)
 
     redis_key = f"instance_options:{username}:{project_id}"
     try:
-        redis_client.set(redis_key, json.dumps(data_to_cache), ex=300)  # Expires in 5 minutes
+        redis_client.set(redis_key, json.dumps(data_to_cache), ex=20)
         logger.info(f"[{username}] Cached instance options under key: {redis_key}")
     except Exception as e:
         logger.error(f"[{username}] Failed to cache instance options: {e}")
