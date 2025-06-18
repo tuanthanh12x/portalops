@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from django.utils.timezone import localtime, is_naive, make_aware
+from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile, UserRoleMapping, Role
@@ -351,7 +352,7 @@ class RoleListAPIView(ListAPIView):
     serializer_class = RoleSerializer
 
 
-from .tasks import send_reset_password_email, create_openstack_project_and_user
+from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users
 
 
 class ForgotPasswordView(APIView):
@@ -427,10 +428,11 @@ class Verify2FASetupView(APIView):
 
 
 class TwoFactorLoginHandler:
-    def __init__(self, request_data):
-        self.data = request_data
-        self.user = None
+    def __init__(self, request):
+        self.request = request
+        self.user = request.user
         self.profile = None
+        self.data = request.data
 
     def validate_input(self):
         serializer = CodeOnlySerializer(data=self.data)
@@ -438,12 +440,11 @@ class TwoFactorLoginHandler:
             return None, Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return serializer.validated_data, None
 
-    def load_user_profile(self, username):
+    def load_user_profile(self):
         try:
-            self.user = User.objects.get(username=username)
             self.profile = self.user.userprofile
-        except (User.DoesNotExist, UserProfile.DoesNotExist):
-            return Response({"error": "Invalid user."}, status=404)
+        except UserProfile.DoesNotExist:
+            return Response({"error": "User profile not found."}, status=404)
         return None
 
     def verify_totp(self, code):
@@ -501,10 +502,9 @@ class TwoFactorLoginHandler:
         if error_response:
             return error_response
 
-        username = validated_data.get("username")
         code = validated_data.get("code")
 
-        error_response = self.load_user_profile(username)
+        error_response = self.load_user_profile()
         if error_response:
             return error_response
 
@@ -532,3 +532,10 @@ class UserListView(APIView):
         queryset = UserProfile.objects.select_related("user").all()
         serializer = UserListSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+
+@api_view(['POST'])
+def trigger_vm_sync(request):
+    sync_vm_count_for_all_users.delay()
+    return Response({"message": "VM count sync triggered"}, status=202)

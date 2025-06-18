@@ -139,7 +139,7 @@ CACHES = {
 }
 
 from celery.schedules import crontab
-
+CELERY_IMPORTS = ("userauth.tasks",)
 CELERY_BEAT_SCHEDULE = {
     "update-vm-counts-every-30min": {
         "task": "userauth.tasks.sync_vm_count_for_all_users",
