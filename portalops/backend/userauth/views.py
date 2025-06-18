@@ -328,11 +328,20 @@ class CreateUserAPIView(APIView):
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid():
             user_profile = serializer.save()
+
+            # Get first role mapping (nếu bạn đảm bảo mỗi user chỉ có 1 role)
+            role = user_profile.role_mappings.first().role.name.lower()
+
+            if role == "customer":
+                # Gọi Celery task bất đồng bộ
+                create_openstack_project_and_user.delay(user_profile.user_id)
+
             return Response({
                 "message": "User created successfully.",
                 "username": user_profile.user.username,
-                "role": user_profile.role_mappings.first().role.name
+                "role": role
             }, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -342,7 +351,7 @@ class RoleListAPIView(ListAPIView):
     serializer_class = RoleSerializer
 
 
-from .tasks import send_reset_password_email
+from .tasks import send_reset_password_email, create_openstack_project_and_user
 
 
 class ForgotPasswordView(APIView):

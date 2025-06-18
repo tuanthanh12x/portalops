@@ -1,8 +1,10 @@
 
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
 from django.http import request
+from openstack import connection
 
 from utils.token import get_admin_token_for_project
 
@@ -52,3 +54,55 @@ def update_user_vm_counts():
 
         except Exception as e:
             continue
+
+
+
+
+User = get_user_model()
+
+@shared_task
+def create_openstack_project_and_user(user_id):
+    try:
+        user = User.objects.get(id=user_id)
+
+        conn = connection.Connection(
+            auth_url=settings.OPENSTACK_AUTH_URL,
+            username=settings.OPENSTACK_ADMIN_NAME,
+            password=settings.OPENSTACK_ADMIN_PASS,
+            project_name='admin',
+            user_domain_name=settings.OPENSTACK_USER_DOMAIN_NAME,
+            project_domain_name=settings.OPENSTACK_PROJECT_DOMAIN_NAME,
+        )
+
+        # 1. Create a new project
+        project_name = f"{user.username}_project"
+        new_project = conn.identity.create_project(
+            name=project_name,
+            domain_id="default",
+            description=f"Project for user {user.username}"
+        )
+
+        # 2. Create OpenStack user
+        os_user = conn.identity.create_user(
+            name=user.username,
+            password="GreenCloud@123",  # You can make this random and email it
+            domain_id="default",
+            default_project_id=new_project.id,
+            email=user.email,
+            enabled=True
+        )
+
+        # 3. Assign "admin" role to the user in that project
+        admin_role = conn.identity.find_role("admin")
+        conn.identity.assign_project_role_to_user(
+            project=new_project.id,
+            user=os_user.id,
+            role=admin_role.id
+        )
+
+        return f"Successfully created OpenStack user and project for {user.username}"
+
+    except Exception as e:
+        # Log or handle the exception properly
+        print(f"Error creating OpenStack user/project: {e}")
+        return str(e)

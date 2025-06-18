@@ -1,17 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from '../../components/admin/Navbar';
 import { Link } from "react-router-dom";
-const mockUsers = [
-  { username: "user1", email: "x@x.x", role: "User", status: "Active", resources: "2 VMs", credits: "$50" ,created_at:"11/20"},
-  { username: "user2", email: "y@y.y", role: "Admin", status: "Active", resources: "0 VMs", credits: "N/A" },
-  { username: "user3", email: "z@z.z", role: "User", status: "Locked", resources: "1 VM", credits: "$0" },
-];
+import axiosInstance from "../../api/axiosInstance";
 
 export default function UserManagementPage() {
   const [search, setSearch] = useState("");
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("All");
 
+  useEffect(() => {
+    axiosInstance.get("/auth/users-list/")
+      .then((res) => {
+        const enhancedUsers = res.data.map(user => ({
+          ...user,
+          resources: `${user.vm_count} VM${user.vm_count !== 1 ? "s" : ""}`,
+          credits: `$${parseFloat(user.credits || 0).toFixed(2)}`,
+        }));
+        setUsers(enhancedUsers);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch user list:", err);
+      });
+  }, []);
 
   const filteredUsers = users
     .filter(user => filter === "All" || user.status === filter)
@@ -30,9 +40,9 @@ export default function UserManagementPage() {
         </h2>
         <div className="flex gap-3">
           <Link to="/create-user">
-          <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-md transition">
-            + Add User
-          </button>
+            <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-md transition">
+              + Add User
+            </button>
           </Link>
           <button className="px-5 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium shadow-md transition">
             Export List
@@ -67,15 +77,20 @@ export default function UserManagementPage() {
           <table className="min-w-full text-sm divide-y divide-gray-700">
             <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider font-semibold">
               <tr>
-                {['Username', 'Email', 'Role', 'Status', 'Resources', 'Credits','Date Joined', 'Actions'].map((col, idx) => (
-                  <th key={idx} className="px-6 py-4 text-left">{col}</th>
-                ))}
+                <th className="px-6 py-4 text-left">Username</th>
+                <th className="px-6 py-4 text-left">Email</th>
+                <th className="px-6 py-4 text-left">Role</th>
+                <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-6 py-4 text-left">Resources</th>
+                <th className="px-6 py-4 text-left">Credits</th>
+                <th className="px-6 py-4 text-left">Date Joined</th>
+                <th className="px-6 py-4 text-left">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800 text-gray-200">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-10 text-gray-500 font-medium">
+                  <td colSpan="8" className="text-center py-10 text-gray-500 font-medium">
                     🚫 No users found.
                   </td>
                 </tr>
@@ -90,7 +105,7 @@ export default function UserManagementPage() {
                     </td>
                     <td className="px-6 py-4">{user.resources}</td>
                     <td className="px-6 py-4">{user.credits}</td>
-                               <td className="px-6 py-4">{user.created_at}</td>
+                    <td className="px-6 py-4">{new Date(user.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
                       <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md shadow text-xs transition">
                         View
