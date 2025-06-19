@@ -411,7 +411,9 @@ class Generate2FAView(APIView):
         return Response({"qr_code": f"data:image/png;base64,{qr_b64}"})
 
 class CodeOnlySerializer(serializers.Serializer):
-    code = serializers.CharField(required=True)
+    code = serializers.CharField()
+    session_key = serializers.CharField()
+
 
 
 class Verify2FASetupView(APIView):
