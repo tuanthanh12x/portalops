@@ -80,12 +80,12 @@ class UserListSerializer(serializers.ModelSerializer):
     # users/serializers.py
     from rest_framework import serializers
     from django.contrib.auth import get_user_model
-    from rbac.serializers import RoleSerializer
+    # from rbac.serializers import RoleSerializer
 
     User = get_user_model()
 
     class AdminUserDetailSerializer(serializers.ModelSerializer):
-        role = RoleSerializer()
+        # role = RoleSerializer()
         resource_summary = serializers.SerializerMethodField()
         billing = serializers.SerializerMethodField()
 

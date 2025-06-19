@@ -107,12 +107,9 @@ export default function UserManagementPage() {
                     <td className="px-6 py-4">{user.credits}</td>
                     <td className="px-6 py-4">{new Date(user.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <Link
-                        to={`auth/admin/users/${user.id}`}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md shadow text-xs transition inline-block"
-                      >
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md shadow text-xs transition">
                         View
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))
