@@ -337,10 +337,11 @@ class CreateUserAPIView(APIView):
     def post(self, request):
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid():
+            user_profile = serializer.save()
             user = serializer.save()
             raw_password = getattr(user, "raw_password", None)
 
-            role = user.userprofile.role_mappings.first().role.name.lower()
+            role = user_profile.role_mappings.first().role.name.lower()
 
             if role == "customer" and raw_password:
                 create_openstack_project_and_user.delay(user.id, raw_password)
