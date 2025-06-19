@@ -662,7 +662,6 @@ class ImpersonateUserTokenView(APIView):
         except Exception:
             return Response({"detail": "User profile not found."}, status=500)
 
-        # Get the admin's scoped token from Redis
         redis_key = f"keystone_token:{admin.username}:{project_id}"
         keystone_token = redis_client.get(redis_key)
 
