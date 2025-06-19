@@ -52,7 +52,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 class UserListSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+    user_id = serializers.IntegerField(read_only=True)
     username = serializers.CharField(source='user.username')
     email = serializers.EmailField(source='user.email')
     role = serializers.SerializerMethodField()
