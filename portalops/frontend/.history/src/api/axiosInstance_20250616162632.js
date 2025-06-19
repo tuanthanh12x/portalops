@@ -1,14 +1,14 @@
-// src/api/axiosInstance.js
 import axios from "axios";
 
-// Create Axios instance
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
   timeout: process.env.NODE_ENV === 'production' ? 10000 : 5000,
-  withCredentials: true, // for refresh token cookie
+  withCredentials: true, // ⬅️ Required for HttpOnly cookie (refresh token)
 });
 
-// Token with expiry from localStorage
+/**
+ * Retrieve token from localStorage and check expiry.
+ */
 function getTokenWithExpiry(key) {
   const itemStr = localStorage.getItem(key);
   if (!itemStr) return null;
@@ -26,37 +26,31 @@ function getTokenWithExpiry(key) {
   }
 }
 
-// Request interceptor: Add Authorization header
 axiosInstance.interceptors.request.use(
   (config) => {
-    const impersonationToken = sessionStorage.getItem("impersonation_token");
-    const token = impersonationToken || getTokenWithExpiry("accessToken");
-
+    const token = getTokenWithExpiry("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     config.headers["X-Requested-With"] = "XMLHttpRequest";
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: Handle token refresh
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const isImpersonating = Boolean(sessionStorage.getItem("impersonation_token"));
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isImpersonating) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const res = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/auth/token/refresh/`,
           {},
-          { withCredentials: true }
+          { withCredentials: true } 
         );
 
         const { access } = res.data;
@@ -73,8 +67,9 @@ axiosInstance.interceptors.response.use(
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
+        console.warn("🔒 Refresh token failed. Redirecting to login.");
         localStorage.removeItem("accessToken");
-        window.location.href = "/login";
+        window.location.href = "/login"; // Force logout
       }
     }
 

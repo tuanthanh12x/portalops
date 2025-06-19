@@ -1,8 +1,9 @@
+// src/pages/admin/AdminUserDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import AdminNavbar from '../../components/admin/Navbar';
-
+import { impersonateUser } from "../../utils/impersonation";
 export default function AdminUserDetailPage() {
     const { id } = useParams();
     const [user, setUser] = useState(null);
@@ -12,26 +13,6 @@ export default function AdminUserDetailPage() {
             .then(res => setUser(res.data))
             .catch(err => console.error("Failed to load user", err));
     }, [id]);
-
-    const impersonateUser = async () => {
-        try {
-            const res = await axiosInstance.post("/auth/admin/impersonate-usertoken/", {
-                user_id: user.id,
-                project_id: user.default_project_id, // make sure this exists
-            });
-
-            const { access_token, username, project_id } = res.data;
-
-            sessionStorage.setItem("impersonation_token", access_token);
-            sessionStorage.setItem("impersonated_username", username);
-            sessionStorage.setItem("impersonated_project_id", project_id);
-
-            window.location.href = "/client/dashboard";
-        } catch (err) {
-            console.error("Impersonation failed:", err);
-            alert("Unable to impersonate user.");
-        }
-    };
 
     if (!user) return <div className="text-white p-8">Loading user details...</div>;
 
@@ -52,7 +33,7 @@ export default function AdminUserDetailPage() {
                             <p><span className="font-semibold text-white/80">Username:</span> {user.username}</p>
                             <p><span className="font-semibold text-white/80">Email:</span> {user.email}</p>
                             <p><span className="font-semibold text-white/80">Created:</span> {new Date(user.date_joined).toLocaleDateString()}</p>
-                            <p><span className="font-semibold text-white/80">Status:</span>
+                            <p><span className="font-semibold text-white/80">Status:</span> 
                                 <span className={`ml-1 font-bold ${user.is_active ? 'text-green-400' : 'text-red-400'}`}>
                                     {user.is_active ? 'Active' : 'Suspended'}
                                 </span>
@@ -63,7 +44,6 @@ export default function AdminUserDetailPage() {
                                 <ActionBtn color="yellow" label="Reset Pass" />
                                 <ActionBtn color="red" label="Suspend" />
                                 <ActionBtn color="gray" label="Delete" />
-                                <ActionBtn color="green" label="Go to Dashboard" onClick={impersonateUser} />
                             </div>
                         </div>
 
@@ -101,7 +81,7 @@ export default function AdminUserDetailPage() {
     );
 }
 
-function ActionBtn({ label, color, onClick }) {
+function ActionBtn({ label, color }) {
     const base = "px-3 py-1 rounded font-medium text-sm transition";
     const colors = {
         indigo: "bg-indigo-500 hover:bg-indigo-600",
@@ -111,7 +91,7 @@ function ActionBtn({ label, color, onClick }) {
         green: "bg-green-600 hover:bg-green-700",
     };
     return (
-        <button onClick={onClick} className={`${base} ${colors[color] || "bg-white/20 hover:bg-white/30"}`}>
+        <button className={`${base} ${colors[color] || "bg-white/20 hover:bg-white/30"}`}>
             {label}
         </button>
     );

@@ -558,3 +558,6 @@ class InstanceSnapshotView(APIView):
                 {"error": f"Failed to create snapshot: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+

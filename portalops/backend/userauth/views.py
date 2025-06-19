@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -22,7 +23,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile, UserRoleMapping, Role
 from utils.redis_client import redis_client
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError, AccessToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
@@ -645,3 +646,61 @@ class AdminUserDetailView(APIView):
                 "current_usage": "18.75"
             }
         })
+
+
+
+class ImpersonateUserTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized"}, status=403)
+
+        user_id = request.data.get("user_id")
+        project_id = request.data.get("project_id")
+
+        if not user_id or not project_id:
+            return Response({"error": "Missing user_id or project_id"}, status=400)
+
+        try:
+            target_user = User.objects.get(id=user_id)
+            profile = target_user.userprofile
+        except (User.DoesNotExist, User.userprofile.RelatedObjectDoesNotExist):
+            return Response({"error": "User or profile not found"}, status=404)
+
+        try:
+            # Use admin's token (already authenticated via DRF)
+            admin_token = request.auth.get("keystone_token")
+            if not admin_token:
+                return Response({"error": "Missing admin Keystone token"}, status=401)
+
+            # Get scoped token for user's project
+            conn = connection.Connection(
+                auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                token=admin_token,
+                project_id=project_id,
+                identity_api_version='3',
+            )
+            scoped_token = conn.session.get_token()
+
+            # Store the scoped token in Redis for later usage
+            redis_key = f"keystone_token:{target_user.username}:{project_id}"
+            redis_client.set(redis_key, scoped_token, ex=3600)
+
+            # Generate short-lived JWT access token for frontend
+            access_token = AccessToken.for_user(target_user)
+            access_token.set_exp(lifetime=timedelta(minutes=10))
+            access_token["project_id"] = project_id
+            access_token["keystone_token"] = scoped_token
+            access_token["impersonated_by"] = request.user.username
+
+            return Response({
+                "message": "Impersonation token generated",
+                "access_token": str(access_token),
+                "username": target_user.username,
+                "project_id": project_id,
+                "expires_in": 1200
+            })
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

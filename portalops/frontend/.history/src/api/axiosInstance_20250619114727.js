@@ -1,21 +1,26 @@
-// src/api/axiosInstance.js
 import axios from "axios";
 
-// Create Axios instance
+// Base setup
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
-  timeout: process.env.NODE_ENV === 'production' ? 10000 : 5000,
-  withCredentials: true, // for refresh token cookie
+  timeout: process.env.NODE_ENV === "production" ? 10000 : 5000,
+  withCredentials: true, // required for sending HttpOnly cookies (refresh token)
 });
 
-// Token with expiry from localStorage
-function getTokenWithExpiry(key) {
+/**
+ * Retrieve access token from localStorage with expiry check
+ */
+function getTokenWithExpiry(key: string): string | null {
   const itemStr = localStorage.getItem(key);
   if (!itemStr) return null;
 
   try {
     const item = JSON.parse(itemStr);
-    if (!item.expiry || typeof item.expiry !== "number" || Date.now() > item.expiry) {
+    if (
+      !item.expiry ||
+      typeof item.expiry !== "number" ||
+      Date.now() > item.expiry
+    ) {
       localStorage.removeItem(key);
       return null;
     }
@@ -26,14 +31,20 @@ function getTokenWithExpiry(key) {
   }
 }
 
-// Request interceptor: Add Authorization header
+/**
+ * Request Interceptor
+ * - Uses impersonation_token if present (sessionStorage)
+ * - Falls back to accessToken from localStorage
+ */
 axiosInstance.interceptors.request.use(
   (config) => {
     const impersonationToken = sessionStorage.getItem("impersonation_token");
-    const token = impersonationToken || getTokenWithExpiry("accessToken");
+    const normalToken = getTokenWithExpiry("accessToken");
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (impersonationToken) {
+      config.headers.Authorization = `Bearer ${impersonationToken}`;
+    } else if (normalToken) {
+      config.headers.Authorization = `Bearer ${normalToken}`;
     }
 
     config.headers["X-Requested-With"] = "XMLHttpRequest";
@@ -42,14 +53,24 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: Handle token refresh
+/**
+ * Response Interceptor
+ * - Handles 401 (unauthorized) with token refresh
+ * - Skips refresh if impersonation is active
+ */
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const isImpersonating = Boolean(sessionStorage.getItem("impersonation_token"));
+    const isImpersonating = Boolean(
+      sessionStorage.getItem("impersonation_token")
+    );
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isImpersonating) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isImpersonating
+    ) {
       originalRequest._retry = true;
 
       try {
@@ -68,11 +89,13 @@ axiosInstance.interceptors.response.use(
           JSON.stringify({ token: access, expiry: now.getTime() + expiryMs })
         );
 
+        // Update token in headers
         axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${access}`;
         originalRequest.headers["Authorization"] = `Bearer ${access}`;
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
+        console.warn("🔒 Refresh token failed. Redirecting to login.");
         localStorage.removeItem("accessToken");
         window.location.href = "/login";
       }
