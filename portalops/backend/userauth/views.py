@@ -410,9 +410,12 @@ class Generate2FAView(APIView):
 
         return Response({"qr_code": f"data:image/png;base64,{qr_b64}"})
 
-class CodeOnlySerializer(serializers.Serializer):
+class CodeSessionSerializer(serializers.Serializer):
     code = serializers.CharField()
     session_key = serializers.CharField()
+
+class CodeOnlySerializer(serializers.Serializer):
+    code = serializers.CharField()
 
 
 
@@ -451,7 +454,7 @@ class TwoFactorLoginHandler:
         self.password = None
 
     def validate_input(self):
-        serializer = CodeOnlySerializer(data=self.data)
+        serializer = CodeSessionSerializer(data=self.data)
         if not serializer.is_valid():
             return None, Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return serializer.validated_data, None
