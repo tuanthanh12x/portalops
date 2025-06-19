@@ -4,6 +4,7 @@ import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
 
 class Permission(models.Model):
@@ -87,7 +88,18 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"Profile of {self.user.username}"
 
+class Pending2FASession(models.Model):
+    session_key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(max_length=150)
+    encrypted_password = models.TextField()  # If you store password here, encrypt it!
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
 
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"2FA session for {self.username} (expires {self.expires_at})"
 
 class UserRoleMapping(models.Model):
     user_profile = models.ForeignKey(

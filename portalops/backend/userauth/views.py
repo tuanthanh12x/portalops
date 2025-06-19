@@ -1,5 +1,6 @@
 import base64
 import json
+import uuid
 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -46,18 +47,28 @@ class LoginView(APIView):
         except UserProfile.DoesNotExist:
             return Response({"detail": "User profile not found."}, status=500)
 
+        # Two-Factor Authentication required
         if profile.two_factor_enabled:
+            # Generate session_key and store temporarily (in Redis or DB)
+            session_key = str(uuid.uuid4())
+            redis_key = f"2fa_session:{session_key}"
+            redis_client.set(redis_key, f"{username}:{password}", ex=300)  # 5-minute expiry
+
             return Response({
                 "require_2fa": True,
-                "username": username
+                "session_key": session_key,
+                "message": "2FA required. Please verify your OTP code."
             }, status=200)
 
+        # If no 2FA required, proceed to generate token
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
+
         profile.last_login = format_last_login(now())
         profile.save()
-        # Optional: lấy Keystone token nếu có
+
+        # Keystone Token for OpenStack
         if profile.project_id:
             try:
                 conn = connection.Connection(
@@ -71,11 +82,12 @@ class LoginView(APIView):
                 )
                 conn.authorize()
                 keystone_token = conn.session.get_token()
+
                 refresh["keystone_token"] = keystone_token
+                refresh["project_id"] = profile.project_id
+
                 redis_key = f"keystone_token:{username}:{profile.project_id}"
                 redis_client.set(redis_key, keystone_token, ex=3600)
-
-                refresh["project_id"] = profile.project_id
             except Exception as e:
                 print(f"[⚠️ OpenStack Error] {e}")
 
