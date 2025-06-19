@@ -332,16 +332,16 @@ class ChangePasswordView(APIView):
             {"message": "Your password has been successfully updated."},
             status=status.HTTP_200_OK
         )
-
 class CreateUserAPIView(APIView):
     def post(self, request):
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid():
             user_profile = serializer.save()
             user = user_profile.user
-            raw_password = getattr(user, "raw_password", None)
+            raw_password = getattr(user_profile, "raw_password", None)  # ✅ Correct object
 
-            role = user_profile.role_mappings.first().role.name.lower()
+            role_mapping = user_profile.role_mappings.first()
+            role = role_mapping.role.name.lower() if role_mapping else "unknown"
 
             if role == "customer" and raw_password:
                 create_openstack_project_and_user.delay(user.id, raw_password)
@@ -353,8 +353,6 @@ class CreateUserAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class RoleListAPIView(ListAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
