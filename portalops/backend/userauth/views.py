@@ -458,12 +458,23 @@ class TwoFactorLoginHandler:
         session_data = redis_client.get(f"2fa_session:{session_key}")
         if not session_data:
             return Response({"error": "Session expired or invalid."}, status=403)
+
         try:
-            data = json.loads(session_data)
-            self.username = data["username"]
-            self.password = data["password"]
-        except (json.JSONDecodeError, KeyError):
+            value = session_data
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+
+            username, password = value.split(":", 1)
+
+            # Gán lại cho self để dùng tiếp
+            self.user = User.objects.get(username=username)
+            self.profile = self.user.userprofile
+            self.password = password
+        except (User.DoesNotExist, UserProfile.DoesNotExist):
+            return Response({"error": "User or profile not found."}, status=404)
+        except ValueError:
             return Response({"error": "Corrupted session data."}, status=400)
+
         return None
 
     def load_user_profile(self):
