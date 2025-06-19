@@ -338,6 +338,7 @@ class CreateUserAPIView(APIView):
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid():
             user_profile = serializer.save()
+            user = user_profile.user
             raw_password = getattr(user, "raw_password", None)
 
             role = user_profile.role_mappings.first().role.name.lower()
