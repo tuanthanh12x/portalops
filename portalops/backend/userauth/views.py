@@ -162,7 +162,7 @@ class SignUpView(APIView):
             profile = UserProfile.objects.create(user=user)
 
 
-            default_role_name = "client"
+            default_role_name = "Guest"
             try:
                 default_role = Role.objects.get(name=default_role_name)
                 UserRoleMapping.objects.create(user_profile=profile, role=default_role)
