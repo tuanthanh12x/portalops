@@ -623,6 +623,7 @@ class AdminUserDetailView(APIView):
             "phone_number": profile.phone_number if profile else "",
             "is_active": user.is_active,
             "is_2fa_enabled": profile.two_factor_enabled if profile else False,
+            "project_id": profile.project_id,
             "role": {
                 "name": role_name
             },

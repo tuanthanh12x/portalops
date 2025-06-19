@@ -15,9 +15,9 @@ export default function AdminUserDetailPage() {
 
     const impersonateUser = async () => {
         try {
-            const res = await axiosInstance.post("auth/impersonate-usertoken/", {
+            const res = await axiosInstance.post("authimpersonate-usertoken/", {
                 user_id: user.id,
-                project_id: user.project_id, // make sure this exists
+                project_id: user.default_project_id, // make sure this exists
             });
 
             const { access_token, username, project_id } = res.data;
