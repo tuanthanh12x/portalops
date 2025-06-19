@@ -76,3 +76,42 @@ class UserListSerializer(serializers.ModelSerializer):
 
     # def get_credits(self, obj):
     #     return f"${obj.credits}" if obj.credits else "N/A"
+
+    # users/serializers.py
+    from rest_framework import serializers
+    from django.contrib.auth import get_user_model
+    from rbac.serializers import RoleSerializer
+
+    User = get_user_model()
+
+    class AdminUserDetailSerializer(serializers.ModelSerializer):
+        role = RoleSerializer()
+        resource_summary = serializers.SerializerMethodField()
+        billing = serializers.SerializerMethodField()
+
+        class Meta:
+            model = User
+            fields = [
+                'id', 'username', 'email', 'phone_number',
+                'is_active', 'role', 'two_factor_enabled',
+                'date_joined', 'last_login',
+                'vm_count', 'billing'
+            ]
+
+        def get_resource_summary(self, obj):
+            return {
+                "vms": 2,
+                "storage": 40,  # GB
+                "floating_ips": 1,
+                "snapshots": 3
+            }
+
+        def get_billing(self, obj):
+            return {
+                "balance": "50.00",
+                "last_payment_date": "2025-06-01",
+                "due_date": "2025-07-01",
+                "plan_name": "Premium",
+                "current_usage": "18.75"
+            }
+

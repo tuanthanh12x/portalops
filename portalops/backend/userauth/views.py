@@ -591,3 +591,54 @@ class UserListView(APIView):
 def trigger_vm_sync(request):
     sync_vm_count_for_all_users.delay()
     return Response({"message": "VM count sync triggered"}, status=202)
+
+
+
+
+
+class AdminUserDetailView(APIView):
+    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        # Try get UserProfile if exists
+        profile = getattr(user, 'userprofile', None)
+
+        # Try get Role if exists
+        role_mapping = profile.role_mappings.first() if profile else None
+        role_name = role_mapping.role.name if role_mapping else "No Role Assigned"
+
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "phone_number": profile.phone_number if profile else "",
+            "is_active": user.is_active,
+            "is_2fa_enabled": profile.two_factor_enabled if profile else False,
+            "role": {
+                "name": role_name
+            },
+            "date_joined": user.date_joined,
+            "last_login": user.last_login,
+
+            # Mocked resource summary
+            "resource_summary": {
+                "vms": profile.vm_count if profile else 0,
+                "storage": 40,
+                "floating_ips": 1,
+                "snapshots": 3
+            },
+
+            # Mocked billing summary
+            "billing": {
+                "balance": "50.00",
+                "last_payment_date": "2025-06-01",
+                "due_date": "2025-07-01",
+                "plan_name": "Premium",
+                "current_usage": "18.75"
+            }
+        })

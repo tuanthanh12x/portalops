@@ -23,7 +23,7 @@ import RegisterPage from "../pages/RegisterPage";
 import TwoFactorSetupPage from "../pages/client/TwoFactorSetupPage";
 import EditProfilePage from './../pages/client/EditProfilePage';
 import CreateUserPage from "../pages/admin/CreateUserPage";
-import AdminUserDetailPage from "../pages/admin/UserDetailPage";
+import CreateUserPage from "../pages/admin/CreateUserPage";
 function AppRoutes() {
   return (
     <Router>

@@ -4,7 +4,7 @@ from .serializers import CreateUserSerializer
 from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfoView, ResetPasswordConfirmView, \
     ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, \
     UserProfileInfoView, UpdateUserProfileView, TWOFALoginView, CreateUserAPIView, RoleListAPIView, UserListView, \
-    trigger_vm_sync
+    trigger_vm_sync, AdminUserDetailView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -31,5 +31,5 @@ urlpatterns = [
     path('roles-list/', RoleListAPIView.as_view(), name='role-list'),
     path("users-list/", UserListView.as_view(), name="user-list"),
     path("sync-vm-count/", trigger_vm_sync, name="sync-vm-count"),
-
+    path('admin/users/<int:id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
 ]
