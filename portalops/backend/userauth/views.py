@@ -1,8 +1,10 @@
 import base64
+import json
 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.http import JsonResponse
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from openstack import connection
@@ -418,21 +420,21 @@ class Verify2FASetupView(APIView):
 
         totp = pyotp.TOTP(profile.totp_secret)
         if totp.verify(code):
-            profile.is_2fa_enabled = True
+            profile.two_factor_enabled = True
             profile.save()
             return Response({"message": "2FA enabled successfully"})
         return Response({"error": "Invalid code"}, status=400)
 
 
 
-
-
 class TwoFactorLoginHandler:
     def __init__(self, request):
         self.request = request
-        self.user = request.user
-        self.profile = None
         self.data = request.data
+        self.user = None
+        self.profile = None
+        self.username = None
+        self.password = None
 
     def validate_input(self):
         serializer = CodeOnlySerializer(data=self.data)
@@ -440,11 +442,24 @@ class TwoFactorLoginHandler:
             return None, Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return serializer.validated_data, None
 
+    def load_user_session(self, session_key):
+        session_data = redis_client.get(f"2fa_session:{session_key}")
+        if not session_data:
+            return Response({"error": "Session expired or invalid."}, status=403)
+        try:
+            data = json.loads(session_data)
+            self.username = data["username"]
+            self.password = data["password"]
+        except (json.JSONDecodeError, KeyError):
+            return Response({"error": "Corrupted session data."}, status=400)
+        return None
+
     def load_user_profile(self):
         try:
+            self.user = User.objects.get(username=self.username)
             self.profile = self.user.userprofile
-        except UserProfile.DoesNotExist:
-            return Response({"error": "User profile not found."}, status=404)
+        except (User.DoesNotExist, UserProfile.DoesNotExist):
+            return Response({"error": "Invalid user or missing profile."}, status=404)
         return None
 
     def verify_totp(self, code):
@@ -454,7 +469,7 @@ class TwoFactorLoginHandler:
         return None
 
     def issue_tokens_and_cache(self):
-        self.profile.last_login = format_last_login()
+        self.profile.last_login = timezone.now()
         self.profile.save()
 
         refresh = RefreshToken.for_user(self.user)
@@ -466,8 +481,8 @@ class TwoFactorLoginHandler:
             try:
                 conn = connection.Connection(
                     auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                    username=self.user.username,
-                    password=None,
+                    username=self.username,
+                    password=self.password,
                     project_id=self.profile.project_id,
                     user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
                     project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
@@ -476,7 +491,7 @@ class TwoFactorLoginHandler:
                 conn.authorize()
                 token = conn.session.get_token()
                 redis_client.set(
-                    f"keystone_token:{self.user.username}:{self.profile.project_id}",
+                    f"keystone_token:{self.username}:{self.profile.project_id}",
                     token,
                     ex=3600
                 )
@@ -503,6 +518,11 @@ class TwoFactorLoginHandler:
             return error_response
 
         code = validated_data.get("code")
+        session_key = validated_data.get("session_key")
+
+        error_response = self.load_user_session(session_key)
+        if error_response:
+            return error_response
 
         error_response = self.load_user_profile()
         if error_response:
@@ -512,6 +532,9 @@ class TwoFactorLoginHandler:
         if error_response:
             return error_response
 
+        # Delete temp session after use
+        redis_client.delete(f"2fa_session:{session_key}")
+
         return self.issue_tokens_and_cache()
 
 
@@ -520,9 +543,12 @@ class TWOFALoginView(APIView):
     Verifies 2FA code after username/password login.
     Returns JWT and sets refresh token cookie.
     """
+    permission_classes = []  # Allow unauthenticated access here
+
     def post(self, request):
-        handler = TwoFactorLoginHandler(request.data)
+        handler = TwoFactorLoginHandler(request)
         return handler.execute()
+
 
 class UserListView(APIView):
     # permission_classes = [IsAdminUser]

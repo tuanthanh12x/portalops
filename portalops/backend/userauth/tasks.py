@@ -71,7 +71,6 @@ def get_nova_client():
 @shared_task
 def sync_vm_count_for_all_users():
     nova = get_nova_client()
-
     profiles = UserProfile.objects.exclude(project_id__isnull=True)
 
     for profile in profiles:

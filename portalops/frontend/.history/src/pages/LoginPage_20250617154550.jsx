@@ -7,7 +7,6 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [require2FA, setRequire2FA] = useState(false);
-  const [sessionKey, setSessionKey] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -32,7 +31,7 @@ function LoginPage() {
 
       if (response.data.require_2fa) {
         setRequire2FA(true);
-        setSessionKey(response.data.session_key); // Save session_key from backend
+        localStorage.setItem('temp_username', username);
       } else {
         setTokenWithExpiry('accessToken', response.data.access);
         window.location.href = '/';
@@ -44,16 +43,17 @@ function LoginPage() {
 
   const handle2FAVerify = async () => {
     setError('');
-    if (!sessionKey) {
-      setError("Session expired. Please login again.");
-      return;
-    }
-
     try {
+       const storedUsername = localStorage.getItem('temp_username');
+  if (!storedUsername) {
+    setError("Username missing. Please login again.");
+    return;
+  }
       const response = await axiosInstance.post('/auth/two-fa-login/', {
-        session_key: sessionKey,
+        username:storedUsername,
         code: otpCode,
       });
+      localStorage.removeItem('temp_username');
 
       setTokenWithExpiry('accessToken', response.data.access);
       window.location.href = '/';
@@ -124,7 +124,7 @@ function LoginPage() {
               </label>
               <input
                 type="text"
-                placeholder="Enter OTP"
+                placeholder=""
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 required
