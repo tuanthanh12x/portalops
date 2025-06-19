@@ -18,6 +18,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from django.utils.timezone import localtime, is_naive, make_aware
+from openstack.identity import v3
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -639,8 +640,8 @@ class AdminUserDetailView(APIView):
             }
         })
 
-
-
+from keystoneauth1.identity import v3
+from keystoneauth1 import session as ks_session
 class ImpersonateUserTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -655,10 +656,12 @@ class ImpersonateUserTokenView(APIView):
         try:
             target_user = User.objects.get(id=user_id)
             target_profile = target_user.userprofile
+            target_project_id = target_profile.project_id
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=404)
         except Exception:
             return Response({"detail": "User profile not found."}, status=500)
+
         # Get the admin's scoped token from Redis
         redis_key = f"keystone_token:{admin.username}:{project_id}"
         keystone_token = redis_client.get(redis_key)
@@ -666,27 +669,31 @@ class ImpersonateUserTokenView(APIView):
         if not keystone_token:
             return Response({"detail": "Admin token not found or expired."}, status=403)
 
-        # Use the admin token to request a new scoped token for the target project
         try:
-            new_conn = connection.Connection(
+            # Convert bytes to string if needed
+            admin_token = keystone_token.decode() if isinstance(keystone_token, bytes) else keystone_token
+
+            # Use the admin token to build a session and request a new scoped token
+            admin_auth = v3.Token(
                 auth_url=settings.OPENSTACK_AUTH_URL,
-                token=keystone_token.decode() if isinstance(keystone_token, bytes) else keystone_token,
-                project_id=project_id,
-                user_domain_name=settings.USER_DOMAIN_NAME,
+                token=admin_token,
+                project_id=target_project_id,
                 project_domain_name=settings.PROJECT_DOMAIN_NAME,
-                identity_api_version='3',
             )
-            new_conn.authorize()
-            scoped_token = new_conn.session.get_token()
+            sess = ks_session.Session(auth=admin_auth)
+            conn = connection.Connection(session=sess)
+            scoped_token = sess.get_token()
         except Exception as e:
             return Response({"detail": f"Failed to scope token: {e}"}, status=500)
 
+        # Generate JWT token as impersonated user
         refresh = RefreshToken.for_user(admin)
         refresh["username"] = target_user.username
         refresh["email"] = target_user.email
-        refresh["project_id"] = project_id
+        refresh["project_id"] = target_project_id
         refresh["impersonated"] = True
 
+        # Cache impersonated token for OpenStack API usage
         redis_token_key = f"keystone_token:{target_user.username}:{project_id}"
         redis_client.set(redis_token_key, scoped_token, ex=3600)
 
