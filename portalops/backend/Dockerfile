@@ -24,7 +24,7 @@ CMD ["gunicorn", "backend.wsgi:application", \
      "--threads=4", \
      "--worker-class=gthread", \
      "--timeout=90", \
-     "--graceful-timeout=30", \
-     "--max-requests=500", \
+     "--graceful-timeout=36", \
+     "--max-requests=700", \
      "--max-requests-jitter=50", \
      "--log-level=info"]
