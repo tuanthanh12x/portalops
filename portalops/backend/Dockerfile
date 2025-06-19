@@ -17,13 +17,14 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Run Gunicorn with optimized parameters
 CMD ["gunicorn", "backend.wsgi:application", \
      "--chdir", "/app", \
      "--bind", "0.0.0.0:8000", \
-     "--workers=3", \
-     "--threads=2", \
-     "--timeout=120", \
-     "--max-requests=1000", \
+     "--workers=2", \
+     "--threads=4", \
+     "--worker-class=gthread", \
+     "--timeout=90", \
+     "--graceful-timeout=30", \
+     "--max-requests=500", \
      "--max-requests-jitter=50", \
      "--log-level=info"]
