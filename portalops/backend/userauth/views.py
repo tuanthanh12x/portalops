@@ -168,14 +168,8 @@ class SignUpView(APIView):
             except Role.DoesNotExist:
                 return Response({"detail": f"Default role '{default_role_name}' not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            refresh = RefreshToken.for_user(user)
-            refresh["username"] = username
-            refresh["email"] = email
-
             return Response({
                 "message": "Registration successful.",
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -654,54 +648,54 @@ class ImpersonateUserTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if not request.user.is_staff:
-            return Response({"error": "Unauthorized"}, status=403)
-
+        admin = request.user
         user_id = request.data.get("user_id")
         project_id = request.data.get("project_id")
 
         if not user_id or not project_id:
-            return Response({"error": "Missing user_id or project_id"}, status=400)
+            return Response({"detail": "Missing user_id or project_id."}, status=400)
 
         try:
             target_user = User.objects.get(id=user_id)
-            profile = target_user.userprofile
-        except (User.DoesNotExist, User.userprofile.RelatedObjectDoesNotExist):
-            return Response({"error": "User or profile not found"}, status=404)
+            target_profile = target_user.userprofile
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=404)
+        except Exception:
+            return Response({"detail": "User profile not found."}, status=500)
 
+        # Get the admin's scoped token from Redis
+        redis_key = f"keystone_token:{admin.username}:{project_id}"
+        keystone_token = redis_client.get(redis_key)
+
+        if not keystone_token:
+            return Response({"detail": "Admin token not found or expired."}, status=403)
+
+        # Use the admin token to request a new scoped token for the target project
         try:
-            # Use admin's token (already authenticated via DRF)
-            admin_token = request.auth.get("keystone_token")
-            if not admin_token:
-                return Response({"error": "Missing admin Keystone token"}, status=401)
-
-            # Get scoped token for user's project
-            conn = connection.Connection(
-                auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                token=admin_token,
+            new_conn = connection.Connection(
+                auth_url=settings.OPENSTACK_AUTH_URL,
+                token=keystone_token.decode() if isinstance(keystone_token, bytes) else keystone_token,
                 project_id=project_id,
+                user_domain_name=settings.USER_DOMAIN_NAME,
+                project_domain_name=settings.PROJECT_DOMAIN_NAME,
                 identity_api_version='3',
             )
-            scoped_token = conn.session.get_token()
-
-            # Store the scoped token in Redis for later usage
-            redis_key = f"keystone_token:{target_user.username}:{project_id}"
-            redis_client.set(redis_key, scoped_token, ex=3600)
-
-            # Generate short-lived JWT access token for frontend
-            access_token = AccessToken.for_user(target_user)
-            access_token.set_exp(lifetime=timedelta(minutes=10))
-            access_token["project_id"] = project_id
-            access_token["keystone_token"] = scoped_token
-            access_token["impersonated_by"] = request.user.username
-
-            return Response({
-                "message": "Impersonation token generated",
-                "access_token": str(access_token),
-                "username": target_user.username,
-                "project_id": project_id,
-                "expires_in": 1200
-            })
-
+            new_conn.authorize()
+            scoped_token = new_conn.session.get_token()
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response({"detail": f"Failed to scope token: {e}"}, status=500)
+
+        refresh = RefreshToken.for_user(admin)
+        refresh["username"] = target_user.username
+        refresh["email"] = target_user.email
+        refresh["project_id"] = project_id
+        refresh["impersonated"] = True
+
+        redis_token_key = f"keystone_token:{target_user.username}:{project_id}"
+        redis_client.set(redis_token_key, scoped_token, ex=3600)
+
+        return Response({
+            "access_token": str(refresh.access_token),
+            "username": target_user.username,
+            "project_id": project_id
+        }, status=200)
