@@ -647,7 +647,7 @@ class ImpersonateUserTokenView(APIView):
     def post(self, request):
         admin = request.user
         user_id = request.data.get("user_id")
-        project_id = request.data.get("project_id")
+        project_id = request.auth.get('project_id')
 
         if not user_id or not project_id:
             return Response({"detail": "Missing user_id or project_id."}, status=400)
@@ -659,7 +659,6 @@ class ImpersonateUserTokenView(APIView):
             return Response({"detail": "User not found."}, status=404)
         except Exception:
             return Response({"detail": "User profile not found."}, status=500)
-
         # Get the admin's scoped token from Redis
         redis_key = f"keystone_token:{admin.username}:{project_id}"
         keystone_token = redis_client.get(redis_key)
