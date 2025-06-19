@@ -470,6 +470,7 @@ class TwoFactorLoginHandler:
 
             # Gán lại cho self để dùng tiếp
             self.user = User.objects.get(username=username)
+            self.username = username
             self.profile = self.user.userprofile
             self.password = password
         except (User.DoesNotExist, UserProfile.DoesNotExist):
