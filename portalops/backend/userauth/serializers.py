@@ -15,15 +15,17 @@ class CreateUserSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         role_id = validated_data.pop('role_id')
-        password = validated_data.pop('password')
+        raw_password = validated_data.pop('password')  # raw password
 
+        # Create Django user
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
         )
-        user.set_password(password)
+        user.set_password(raw_password)
         user.save()
 
+        # Create profile
         user_profile = UserProfile.objects.create(
             user=user,
             phone_number=validated_data.get('phone_number', ''),
@@ -31,16 +33,14 @@ class CreateUserSerializer(serializers.Serializer):
             timezone=validated_data.get('timezone', 'UTC'),
         )
 
+        # Assign role
         role = Role.objects.get(id=role_id)
         UserRoleMapping.objects.create(user_profile=user_profile, role=role)
 
+        # Attach raw_password temporarily for use in APIView
+        user_profile.raw_password = raw_password
         return user_profile
 
-        # def get(self):
-        #     user = User.objects.get(id=self.request.user.id)
-        #
-        #     return user_profile
-        #
 
 from .models import Role
 

@@ -89,8 +89,9 @@ def sync_vm_count_for_all_users():
 
 User = get_user_model()
 
+
 @shared_task
-def create_openstack_project_and_user(user_id):
+def create_openstack_project_and_user(user_id, raw_password):
     try:
         user = User.objects.get(id=user_id)
 
@@ -103,7 +104,6 @@ def create_openstack_project_and_user(user_id):
             project_domain_name=settings.PROJECT_DOMAIN_NAME,
         )
 
-        # 1. Create a new project
         project_name = f"{user.username}_project"
         new_project = conn.identity.create_project(
             name=project_name,
@@ -111,17 +111,15 @@ def create_openstack_project_and_user(user_id):
             description=f"Project for user {user.username}"
         )
 
-        # 2. Create OpenStack user
         os_user = conn.identity.create_user(
             name=user.username,
-            password="GreenCloud@123",  # You can make this random and email it
+            password=raw_password,
             domain_id="default",
             default_project_id=new_project.id,
             email=user.email,
             enabled=True
         )
 
-        # 3. Assign "admin" role to the user in that project
         admin_role = conn.identity.find_role("admin")
         conn.identity.assign_project_role_to_user(
             project=new_project.id,
@@ -132,6 +130,5 @@ def create_openstack_project_and_user(user_id):
         return f"Successfully created OpenStack user and project for {user.username}"
 
     except Exception as e:
-        # Log or handle the exception properly
-        print(f"Error creating OpenStack user/project: {e}")
+        print(f"[❌ OpenStack Error] {e}")
         return str(e)
