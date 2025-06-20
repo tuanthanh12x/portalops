@@ -85,7 +85,7 @@ class LoginView(APIView):
                 conn.authorize()
                 keystone_token = conn.session.get_token()
 
-                refresh["keystone_token"] = keystone_token
+                # refresh["keystone_token"] = keystone_token
                 refresh["project_id"] = profile.project_id
 
                 redis_key = f"keystone_token:{username}:{profile.project_id}"
@@ -720,6 +720,7 @@ class ImpersonateUserTokenView(APIView):
 
         # Return impersonated JWT
         refresh = RefreshToken.for_user(admin)
+        refresh["id"] = user_id
         refresh["username"] = target_user.username
         refresh["email"] = target_user.email
         refresh["project_id"] = target_project_id

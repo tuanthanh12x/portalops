@@ -13,15 +13,6 @@ export default function AdminUserDetailPage() {
             .catch(err => console.error("Failed to load user", err));
     }, [id]);
 
-    const setTokenWithExpiry = (token, ttl = 3600000) => {
-        const now = new Date();
-        const item = {
-            token,
-            expiry: now.getTime() + ttl,
-        };
-        localStorage.setItem("accessToken", JSON.stringify(item));
-    };
-
     const impersonateUser = async () => {
         if (!user?.project_id) {
             alert("This user has no associated project. Cannot impersonate.");
@@ -34,8 +25,11 @@ export default function AdminUserDetailPage() {
                 project_id: user.project_id,
             });
 
-            const { access_token } = res.data;
-            setTokenWithExpiry(access_token);
+            const { access_token, username, project_id } = res.data;
+
+            sessionStorage.setItem("impersonation_token", access_token);
+            sessionStorage.setItem("impersonated_username", username);
+            sessionStorage.setItem("impersonated_project_id", project_id);
 
             window.location.href = "/dashboard";
         } catch (err) {
