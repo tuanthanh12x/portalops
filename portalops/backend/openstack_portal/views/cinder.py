@@ -8,7 +8,7 @@ class VolumeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_token(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get('project_id')
 
         redis_key = f"keystone_token:{username}:{project_id}"

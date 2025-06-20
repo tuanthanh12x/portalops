@@ -197,7 +197,8 @@ class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        username = request.auth.get("username")
+        user = User.objects.get(username=username)
         profile, _ = UserProfile.objects.get_or_create(user=user)
         return Response({
             "email": user.email,
@@ -210,7 +211,8 @@ class UserProfileInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        username = request.auth.get("username")
+        user=User.objects.get(username=username)
         profile = getattr(user, 'userprofile', None)
 
         return Response({

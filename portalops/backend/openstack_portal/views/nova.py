@@ -82,7 +82,7 @@ class VolumeOptionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get('project_id')
 
         if not project_id:
@@ -168,7 +168,7 @@ class CreateInstanceAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get('project_id')
 
 
@@ -230,7 +230,7 @@ class CreateImageAPI(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
 
         project_id = request.auth.get('project_id')
 
@@ -297,7 +297,7 @@ class InstanceActionAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):  # id = instance_id
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get('project_id')
 
         if not project_id:
@@ -350,7 +350,7 @@ class KeypairView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get("project_id")
 
         redis_key = f"keystone_token:{username}:{project_id}"
@@ -422,7 +422,7 @@ class VPSDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, instance_id):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get("project_id")
         if not project_id:
             return Response({"error": "Missing project_id in token"}, status=400)
@@ -533,7 +533,7 @@ class InstanceSnapshotView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         snapshot_name = serializer.validated_data["name"]
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get("project_id")
         if not project_id:
             return Response({"error": "Missing project_id in token"}, status=400)
