@@ -5,9 +5,9 @@ from corsheaders.defaults import default_headers
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 BASE_DIR = Path(__file__).resolve().parent.parent
+from decouple import config
 
-SECRET_KEY = 'django-insecure-3@=g$vkv#x3#0dg93^%6!v#x$kqa9ub+u#*oh$-+d6i@%1o(lk'
-
+SECRET_KEY = config('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
@@ -45,7 +45,7 @@ ROOT_URLCONF = 'backend.urls'
 WSGI_APPLICATION = 'backend.wsgi.application'
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 
-from decouple import config
+
 
 DATABASES = {
     'default': {
@@ -143,7 +143,7 @@ CELERY_IMPORTS = ("userauth.tasks",)
 CELERY_BEAT_SCHEDULE = {
     "update-vm-counts-every-30min": {
         "task": "userauth.tasks.sync_vm_count_for_all_users",
-        "schedule": crontab(minute="*/30"),  # every 30 minutes
+        "schedule": crontab(minute="*/30"),
     },
 }
 

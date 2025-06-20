@@ -31,29 +31,29 @@ function AppRoutes() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/profile" element={<EditProfilePage />} />
+                <Route path="/register" element={<RegisterPage />} />
+<Route path="/forgot-password" element={<ForgotPasswordPage />} />
+<Route path="/profile" element={<EditProfilePage />} />
         {/* Protected routes */}
         <Route element={<RequireAuth />}>
-          <Route path="/dashboard" element={<ClientDashBoard />} />
-          <Route path="/billing" element={<BillingDashBoard />} />
-          <Route path="/create-instance" element={<CreateInstancePage />} />
-          <Route path="/instances" element={<MyInstancesPage />} />
-          <Route path="/images" element={<ImageListPage />} />
-          <Route path="/client/vps/:id" element={<VPSDetailPage />} />
-          <Route path="/support" element={<SupportPage />} />
-          <Route path="/volumes" element={<VolumeListPage />} />
-          <Route path="/keypairs" element={<KeypairListPage />} />
-          <Route path="/create-volume" element={<CreateVolumePage />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/dashboard" element={<ClientDashBoard />} />
+        <Route path="/billing" element={<BillingDashBoard />} />F
+        <Route path="/create-instance" element={<CreateInstancePage />} />
+        <Route path="/instances" element={<MyInstancesPage />} />
+        <Route path="/images" element={<ImageListPage />} />
+        <Route path="/client/vps/:id" element={<VPSDetailPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/volumes" element={<VolumeListPage />} />
+        <Route path="/keypairs" element={<KeypairListPage />} />
+        <Route path="/create-volume" element={<CreateVolumePage />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
-          <Route path="/create-image" element={<CreateImageForm />} />
-          <Route path="/create-keypair" element={<CreateKeypairForm />} />
-          <Route path="/vps-backup" element={<SnapshotListPage />} />
-          <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
-          <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
-          <Route path="/" element={<VolumeSnapshotListPage />} />
+        <Route path="/create-image" element={<CreateImageForm />} />
+        <Route path="/create-keypair" element={<CreateKeypairForm />} />
+        <Route path="/vps-backup" element={<SnapshotListPage />} />
+        <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
+        <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
+              <Route path="/" element={<VolumeSnapshotListPage />} />
         </Route>
 
 
@@ -61,9 +61,9 @@ function AppRoutes() {
         {/* Staff routes */}
 
 
-        <Route path="/create-user" element={<CreateUserPage />} />
-        <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
-        <Route path="/users-manager" element={<UserManagementPage />} />
+              <Route path="/create-user" element={<CreateUserPage />} />
+              <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
+         <Route path="/users-manager" element={<UserManagementPage />} />
 
 
 
