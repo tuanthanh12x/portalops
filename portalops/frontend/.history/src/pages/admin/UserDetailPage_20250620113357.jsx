@@ -35,8 +35,8 @@ export default function AdminUserDetailPage() {
             });
 
             const { access_token } = res.data;
-            setTokenWithExpiry('accessToken', access_token);
-
+            setTokenWithExpiry('accessToken', response.data.access);
+            setTokenWithExpiry(access_token);
 
             window.location.href = "/dashboard";
         } catch (err) {
