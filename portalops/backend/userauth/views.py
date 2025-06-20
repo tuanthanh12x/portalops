@@ -726,6 +726,7 @@ class ImpersonateUserTokenView(APIView):
         refresh["username"] = user_name
         refresh["email"] = target_user.email
         refresh["project_id"] = target_project_id
+        refresh["keystone_token"]= str(scoped_token)
         refresh["impersonated"] = True
 
         # Store scoped impersonated token
