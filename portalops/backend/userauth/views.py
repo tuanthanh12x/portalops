@@ -686,14 +686,16 @@ class ImpersonateUserTokenView(APIView):
     def post(self, request):
         admin = request.user
         user_id = request.data.get("id")
-
+        user_name =request.data.get("username")
+        project_id = request.data.get("project_id")
         if not user_id:
             return Response({"detail": "Missing user_id."}, status=400)
 
         try:
             target_user = User.objects.get(id=user_id)
             target_profile = target_user.userprofile
-            target_project_id = target_profile.project_id
+            target_project_id = project_id
+            # target_project_id = target_profile.project_id
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=404)
         except Exception:
@@ -721,14 +723,14 @@ class ImpersonateUserTokenView(APIView):
         # Return impersonated JWT
         refresh = RefreshToken.for_user(admin)
         refresh["id"] = user_id
-        refresh["username"] = target_user.username
+        refresh["username"] = user_name
         refresh["email"] = target_user.email
         refresh["project_id"] = target_project_id
         refresh["impersonated"] = True
 
         # Store scoped impersonated token
         redis_client.set(
-            f"keystone_token:{target_user.username}:{target_project_id}",
+            f"keystone_token:{user_name}:{target_project_id}",
             scoped_token,
             ex=3600
         )
