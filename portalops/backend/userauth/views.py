@@ -92,7 +92,7 @@ class LoginView(APIView):
                 redis_client.set(redis_key, keystone_token, ex=3600)
             except Exception as e:
                 print(f"[⚠️ OpenStack Error] {e}")
-            if profile.is_admin():
+            if profile.is_admin:
                 conn = connection.Connection(
                     auth_url=settings.OPENSTACK_AUTH["auth_url"],
                     username=username,
@@ -355,7 +355,7 @@ class CreateUserAPIView(APIView):
         if serializer.is_valid():
             user_profile = serializer.save()
             user = user_profile.user
-            raw_password = getattr(user_profile, "raw_password", None)  # ✅ Correct object
+            raw_password = getattr(user_profile, "raw_password", None)
 
             role_mapping = user_profile.role_mappings.first()
             role = role_mapping.role.name.lower() if role_mapping else "unknown"
@@ -536,6 +536,23 @@ class TwoFactorLoginHandler:
             except Exception as e:
                 print(f"[OpenStack] Failed to authorize user: {e}")
 
+            if self.profile.is_admin:
+                conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=self.username,
+                    password=self.password,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version='3',
+                )
+                conn.authorize()
+                keystone_token = conn.session.get_token()
+
+                refresh["keystone_token"] = keystone_token
+
+                redis_key = f"unscope_admin_keystone_token:{self.username}"
+                redis_client.set(redis_key, keystone_token, ex=36000)
+
         response = JsonResponse({
             "access": str(refresh.access_token),
             "message": "2FA login successful"
@@ -658,16 +675,19 @@ class AdminUserDetailView(APIView):
 
 from keystoneauth1.identity import v3
 from keystoneauth1 import session as ks_session
+
+from keystoneauth1.identity import v3
+from keystoneauth1 import session as ks_session
+
 class ImpersonateUserTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         admin = request.user
         user_id = request.data.get("user_id")
-        project_id = request.auth.get('project_id')
 
-        if not user_id or not project_id:
-            return Response({"detail": "Missing user_id or project_id."}, status=400)
+        if not user_id:
+            return Response({"detail": "Missing user_id."}, status=400)
 
         try:
             target_user = User.objects.get(id=user_id)
@@ -678,42 +698,41 @@ class ImpersonateUserTokenView(APIView):
         except Exception:
             return Response({"detail": "User profile not found."}, status=500)
 
-        redis_key = f"keystone_token:{admin.username}:{project_id}"
-        keystone_token = redis_client.get(redis_key)
-
-        if not keystone_token:
-            return Response({"detail": "Admin token not found or expired."}, status=403)
+        # Get unscoped admin token
+        unscoped_token = redis_client.get(f"unscope_admin_keystone_token:{admin.username}")
+        if not unscoped_token:
+            return Response({"detail": "Unscoped token not found or expired."}, status=403)
 
         try:
-            # Convert bytes to string if needed
-            admin_token = keystone_token.decode() if isinstance(keystone_token, bytes) else keystone_token
+            token_str = unscoped_token.decode() if isinstance(unscoped_token, bytes) else unscoped_token
 
-            # Use the admin token to build a session and request a new scoped token
-            admin_auth = v3.Token(
+            auth = v3.Token(
                 auth_url=settings.OPENSTACK_AUTH_URL,
-                token=admin_token,
+                token=token_str,
                 project_id=target_project_id,
                 project_domain_name=settings.PROJECT_DOMAIN_NAME,
             )
-            sess = ks_session.Session(auth=admin_auth)
-            conn = connection.Connection(session=sess)
+            sess = ks_session.Session(auth=auth)
             scoped_token = sess.get_token()
         except Exception as e:
             return Response({"detail": f"Failed to scope token: {e}"}, status=500)
 
-        # Generate JWT token as impersonated user
+        # Return impersonated JWT
         refresh = RefreshToken.for_user(admin)
         refresh["username"] = target_user.username
         refresh["email"] = target_user.email
         refresh["project_id"] = target_project_id
         refresh["impersonated"] = True
 
-        # Cache impersonated token for OpenStack API usage
-        redis_token_key = f"keystone_token:{target_user.username}:{project_id}"
-        redis_client.set(redis_token_key, scoped_token, ex=3600)
+        # Store scoped impersonated token
+        redis_client.set(
+            f"keystone_token:{target_user.username}:{target_project_id}",
+            scoped_token,
+            ex=3600
+        )
 
         return Response({
             "access_token": str(refresh.access_token),
             "username": target_user.username,
-            "project_id": project_id
+            "project_id": target_project_id
         }, status=200)

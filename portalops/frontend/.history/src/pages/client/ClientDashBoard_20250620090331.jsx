@@ -33,7 +33,7 @@ export default function Home() {
 
   useEffect(() => {
     let retryCount = 0;
-    const maxRetries = 6;
+    const maxRetries = 3;
 
     const fetchInstances = async () => {
       try {
@@ -43,7 +43,7 @@ export default function Home() {
         } else if (retryCount < maxRetries) {
           retryCount++;
           console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
-          setTimeout(fetchInstances, 2000); // retry after 2 seconds
+          setTimeout(fetchInstances, 3500); // retry after 2 seconds
         } else {
           console.warn("Max retries reached, no data available.");
           setInstances([]); 

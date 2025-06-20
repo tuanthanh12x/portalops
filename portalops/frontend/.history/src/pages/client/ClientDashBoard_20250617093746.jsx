@@ -33,7 +33,7 @@ export default function Home() {
 
   useEffect(() => {
     let retryCount = 0;
-    const maxRetries = 6;
+    const maxRetries = 3;
 
     const fetchInstances = async () => {
       try {
