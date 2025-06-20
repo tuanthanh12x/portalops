@@ -65,6 +65,11 @@ class UserProfile(models.Model):
         """
         return self.user
 
+    @property
+    def is_admin(self) -> bool:
+        """Return True if this user has the 'admin' role."""
+        return self.role_mappings.filter(role__name__iexact='admin').exists()
+
     @staticmethod
     def get_user_model_class():
         """

@@ -92,6 +92,22 @@ class LoginView(APIView):
                 redis_client.set(redis_key, keystone_token, ex=3600)
             except Exception as e:
                 print(f"[⚠️ OpenStack Error] {e}")
+            if profile.is_admin():
+                conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=username,
+                    password=password,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version='3',
+                )
+                conn.authorize()
+                keystone_token = conn.session.get_token()
+
+                refresh["keystone_token"] = keystone_token
+
+                redis_key = f"unscope_admin_keystone_token:{username}"
+                redis_client.set(redis_key, keystone_token, ex=36000)
 
         response = JsonResponse({
             "message": "Login successful.",
