@@ -35,7 +35,7 @@ export default function AdminUserDetailPage() {
             });
 
 
-            setTokenWithExpiry('accessToken', res.data.access);
+                    setTokenWithExpiry('accessToken', res.data.access);
  
 
 

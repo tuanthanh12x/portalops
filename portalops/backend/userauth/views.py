@@ -734,7 +734,7 @@ class ImpersonateUserTokenView(APIView):
         )
 
         return Response({
-            "access_token": str(refresh.access_token),
+            "access": str(refresh.access_token),
             "username": target_user.username,
             "project_id": target_project_id
         }, status=200)
