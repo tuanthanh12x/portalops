@@ -17,7 +17,7 @@ class InstanceOptionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        username = request.user.username
+        username = request.auth.get("username")
         project_id = request.auth.get('project_id')
 
         if not project_id:
