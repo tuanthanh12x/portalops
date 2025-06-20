@@ -34,7 +34,7 @@ export default function AdminUserDetailPage() {
                 project_id: user.project_id,
             });
 
-            const { access_token } = res.data.access_token;
+            const { access_token } = res.data.acc;
             setTokenWithExpiry('accessToken', access_token);
 
 
