@@ -685,7 +685,7 @@ class ImpersonateUserTokenView(APIView):
 
     def post(self, request):
         admin = request.user
-        user_id = request.data.get("user_id")
+        user_id = request.data.get("id")
 
         if not user_id:
             return Response({"detail": "Missing user_id."}, status=400)
