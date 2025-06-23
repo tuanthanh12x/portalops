@@ -35,7 +35,7 @@ const SystemOverview = () => {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    axiosInstance.get('/overview/admin/summary/')
+    axiosInstance.get('/admin/summary/')
       .then(response => setStats(response.data))
       .catch(error => {
         console.error('Failed to fetch system summary:', error);
