@@ -27,8 +27,8 @@ const Navbar = () => {
 
  const handleUnimpersonate = async () => {
   try {
-const tokenObj = JSON.parse(localStorage.getItem("accessToken"));
-const token = tokenObj.token;
+    const token = localStorage.getItem("accessToken"); // ✅ Directly get token string (not JSON)
+
     if (!token) {
       console.warn("Access token not found.");
       return;

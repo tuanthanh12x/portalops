@@ -27,8 +27,8 @@ const Navbar = () => {
 
  const handleUnimpersonate = async () => {
   try {
-const tokenObj = JSON.parse(localStorage.getItem("accessToken"));
-const token = tokenObj.token;
+    const token = localStorage.getItem("accessToken"); // ✅ Directly get token string (not JSON)
+
     if (!token) {
       console.warn("Access token not found.");
       return;
@@ -44,12 +44,7 @@ const token = tokenObj.token;
       }
     );
 
-   if (response.data?.token) {
-  localStorage.setItem("accessToken", response.data.token); // just the raw token string
-  window.location.href = "/admin-dashboard";
-} else {
-  console.error("No new access token returned from unimpersonate.");
-}
+   
   } catch (error) {
     console.error("Unimpersonate failed:", error);
   }
