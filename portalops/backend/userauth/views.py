@@ -718,10 +718,18 @@ class ImpersonateUserTokenView(APIView):
             scoped_token = sess.get_token()
         except Exception as e:
             return Response({"detail": f"Failed to scope token: {e}"}, status=500)
-
-        # Return impersonated JWT
+        profile = getattr(admin, 'userprofile', None)
+        admin_access_token = request.auth  # DRF sets this from Authorization header
+        if admin_access_token:
+            redis_client.set(
+                f"admin_access_token:{admin.username}:{profile.project_id}",
+                admin_access_token,
+                ex=3600
+            )
         refresh = RefreshToken.for_user(admin)
         refresh["id"] = user_id
+        refresh["admin_name"]=admin.username
+        refresh["admin_project_id"]=profile.project_id
         refresh["username"] = target_user.username
         refresh["email"] = target_user.email
         refresh["project_id"] = target_project_id
@@ -741,3 +749,34 @@ class ImpersonateUserTokenView(APIView):
             "username": target_user.username,
             "project_id": target_project_id
         }, status=200)
+import jwt
+class UnimpersonateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"detail": "Missing or invalid Authorization header"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_header.split(" ")[1]
+
+        try:
+            # Decode token to extract claims
+            payload = jwt.decode(token, options={"verify_signature": False})
+            admin_username = payload.get("admin_name")
+            admin_project_id = payload.get("admin_project_id")
+        except Exception as e:
+            return Response({"detail": f"Invalid token: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not admin_username or not admin_project_id:
+            return Response({"detail": "Missing admin info in token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        redis_key = f"admin_access_token:{admin_username}:{admin_project_id}"
+        admin_token = redis_client.get(redis_key)
+        if not admin_token:
+            return Response({"detail": "Admin token not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            "message": f"Restored token of admin user '{admin_username}'",
+            "token": admin_token
+        })

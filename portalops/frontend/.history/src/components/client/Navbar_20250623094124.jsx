@@ -15,7 +15,7 @@ const Navbar = () => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       try {
-        const decoded = jwtDecode(token);
+        const decoded = jwt(token);
         if (decoded.impersonated === true) {
           setIsImpersonated(true);
         }
@@ -28,7 +28,7 @@ const Navbar = () => {
   const handleUnimpersonate = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axiosInstance.post("/auth/unimpersonate/", {}, {
+      const response = await axiosInstance.post("/api/auth/unimpersonate/", {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

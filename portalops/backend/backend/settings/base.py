@@ -84,6 +84,8 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
+DYNAMIC_TIMEZONE = config('DYNAMIC_TIMEZONE', default='UTC')
+
 USE_I18N = True
 
 USE_TZ = True

@@ -28,7 +28,7 @@ const Navbar = () => {
   const handleUnimpersonate = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await axiosInstance.post("/auth/unimpersonate/", {}, {
+      const response = await axiosInstance.post("/api/auth/unimpersonate/", {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
