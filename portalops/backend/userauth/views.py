@@ -37,7 +37,7 @@ class LoginView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
 
-        if not usename or not password:
+        if not username or not password:
             return Response({"detail": "Missing credentials"}, status=400)
 
         user = authenticate(request, username=username, password=password)
