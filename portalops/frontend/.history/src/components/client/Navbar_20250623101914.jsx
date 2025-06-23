@@ -25,25 +25,7 @@ const Navbar = () => {
     }
   }, []);
 
- const handleUnimpersonate = async () => {
-  try {
-    const response = await axiosInstance.post("/auth/unimpersonate/");
-
-    if (response.data?.token) {
-      const expiry = Date.now() + 60 * 60 * 1000; // 1 hour
-      const tokenObj = {
-        token: response.data.token,
-        expiry: expiry,
-      };
-      localStorage.setItem("accessToken", JSON.stringify(tokenObj));
-      window.location.href = "/admin-dashboard"; // redirect after unimpersonating
-    } else {
-      console.error("No new access token returned from unimpersonate.");
-    }
-  } catch (error) {
-    console.error("Unimpersonate failed:", error);
-  }
-};
+ 
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
