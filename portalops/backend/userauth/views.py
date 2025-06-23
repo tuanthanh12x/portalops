@@ -723,7 +723,7 @@ class ImpersonateUserTokenView(APIView):
         if admin_access_token:
             redis_client.set(
                 f"admin_access_token:{admin.username}:{profile.project_id}",
-                admin_access_token,
+                str(admin_access_token),
                 ex=3600
             )
         refresh = RefreshToken.for_user(admin)
