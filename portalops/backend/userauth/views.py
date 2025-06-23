@@ -385,7 +385,7 @@ class RoleListAPIView(ListAPIView):
     serializer_class = RoleSerializer
 
 
-from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users
+from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users ,create_openstack_user
 
 
 class ForgotPasswordView(APIView):
