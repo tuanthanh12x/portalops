@@ -1,4 +1,3 @@
-// ...imports
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
@@ -52,6 +51,7 @@ export default function AdminUserDetailPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-base">
+                        {/* Basic Info */}
                         <Card title="Basic Info">
                             <Info label="Username" value={user.username} />
                             <Info label="Email" value={user.email} />
@@ -66,6 +66,7 @@ export default function AdminUserDetailPage() {
                             </div>
                         </Card>
 
+                        {/* Resources */}
                         <Card title="Resources">
                             <Info label="VMs" value={user.resource_summary?.vms} />
                             <Info label="Storage" value={`${user.resource_summary?.storage} GB`} />
@@ -76,6 +77,7 @@ export default function AdminUserDetailPage() {
                             </div>
                         </Card>
 
+                        {/* Billing */}
                         <Card title="Billing">
                             <Info label="Balance" value={`$${user.billing?.balance}`} />
                             <Info label="Last Payment" value={user.billing?.last_payment_date} />
@@ -88,16 +90,12 @@ export default function AdminUserDetailPage() {
                             </div>
                         </Card>
                     </div>
-
-                    {/* 🔽 Recent Activity Section */}
-                    <RecentActions />
                 </div>
             </div>
         </div>
     );
 }
 
-// Reusable components
 function Card({ title, children }) {
     return (
         <div className="bg-white/5 rounded-xl p-5 shadow hover:shadow-lg transition">
@@ -129,41 +127,5 @@ function ActionBtn({ label, color, onClick }) {
         <button onClick={onClick} className={`${base} ${colors[color] || "bg-white/20 hover:bg-white/30"}`}>
             {label}
         </button>
-    );
-}
-
-// 🔽 Mocked Recent Activity Component
-function RecentActions() {
-    const mockActions = [
-        { type: "Login", timestamp: "2025-06-23 08:31", description: "User logged in from IP 192.168.1.12" },
-        { type: "Create VM", timestamp: "2025-06-22 17:45", description: "Created VM `web-server-001`" },
-        { type: "Update Password", timestamp: "2025-06-21 14:10", description: "Password was updated successfully" },
-        { type: "Add Floating IP", timestamp: "2025-06-20 10:25", description: "Associated floating IP 103.56.22.55" },
-    ];
-
-    const tagColors = {
-        Login: "bg-green-600",
-        "Create VM": "bg-indigo-500",
-        "Update Password": "bg-yellow-500 text-black",
-        "Add Floating IP": "bg-cyan-500",
-    };
-
-    return (
-        <div className="mt-10">
-            <h3 className="text-2xl font-semibold text-white/90 mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-                {mockActions.map((action, index) => (
-                    <div key={index} className="bg-white/5 rounded-md px-4 py-3 flex items-start justify-between hover:bg-white/10 transition">
-                        <div>
-                            <span className={`inline-block px-2 py-1 text-xs font-bold rounded ${tagColors[action.type] || "bg-white/20"}`}>
-                                {action.type}
-                            </span>
-                            <p className="mt-1 text-sm text-white/90">{action.description}</p>
-                        </div>
-                        <div className="text-xs text-white/50">{action.timestamp}</div>
-                    </div>
-                ))}
-            </div>
-        </div>
     );
 }

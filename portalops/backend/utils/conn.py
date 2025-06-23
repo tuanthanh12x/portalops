@@ -46,3 +46,14 @@ def connect_with_token_v5(token, project_id):
     )
     sess = session.Session(auth=auth, verify=False)
     return connection.Connection(session=sess)
+
+
+def get_admin_connection():
+    return connection.Connection(
+        auth_url=settings.OPENSTACK_AUTH_URL,
+        project_name=settings.OPENSTACK_ADMIN_PROJECT,
+        username=settings.OPENSTACK_ADMIN_NAME,
+        password=settings.OPENSTACK_ADMIN_PASSWORD,
+        user_domain_name=settings.USER_DOMAIN_NAME,
+        project_domain_name=settings.PROJECT_DOMAIN_NAME,
+    )
