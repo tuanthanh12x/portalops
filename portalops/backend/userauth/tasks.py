@@ -132,3 +132,34 @@ def create_openstack_project_and_user(user_id, raw_password):
     except Exception as e:
         print(f"[❌ OpenStack Error] {e}")
         return str(e)
+
+
+
+@shared_task
+def create_openstack_user(user_id, raw_password):
+    try:
+        user = User.objects.get(id=user_id)
+
+        conn = connection.Connection(
+            auth_url=settings.OPENSTACK_AUTH_URL,
+            username=settings.OPENSTACK_ADMIN_NAME,
+            password=settings.OPENSTACK_ADMIN_PASSWORD,
+            project_name='admin',
+            user_domain_name=settings.USER_DOMAIN_NAME,
+            project_domain_name=settings.PROJECT_DOMAIN_NAME,
+        )
+
+        os_user = conn.identity.create_user(
+            name=user.username,
+            password=raw_password,
+            domain_id="default",
+            email=user.email,
+            enabled=True
+        )
+
+
+        return f"Successfully created OpenStack user: {user.username}"
+
+    except Exception as e:
+        print(f"[❌ OpenStack Error] {e}")
+        return str(e)

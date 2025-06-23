@@ -184,6 +184,7 @@ class SignUpView(APIView):
             )
             profile = UserProfile.objects.create(user=user)
 
+            create_openstack_user.delay(user.id, password)
 
             default_role_name = "Guest"
             try:
