@@ -37,7 +37,7 @@ class LoginView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
 
-        if not username or not password:
+        if not usename or not password:
             return Response({"detail": "Missing credentials"}, status=400)
 
         user = authenticate(request, username=username, password=password)
@@ -61,11 +61,17 @@ class LoginView(APIView):
                 "session_key": session_key,
                 "message": "2FA required. Please verify your OTP code."
             }, status=200)
-
+        roles = []
+        if profile:
+            roles = list(
+                profile.role_mappings.select_related("role")
+                .values_list("role__name", flat=True)
+            )
         # If no 2FA required, proceed to generate token
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
+        efrresh["roles"] = roles
 
         profile.last_login = format_last_login(now())
         profile.save()
@@ -512,10 +518,16 @@ class TwoFactorLoginHandler:
     def issue_tokens_and_cache(self):
         self.profile.last_login = timezone.now()
         self.profile.save()
-
+        roles = []
+        if profile:
+            roles = list(
+                profile.role_mappings.select_related("role")
+                .values_list("role__name", flat=True)
+            )
         refresh = RefreshToken.for_user(self.user)
         refresh["username"] = self.user.username
         refresh["email"] = self.user.email
+        refresh["roles"] = roles
 
         if self.profile.project_id:
             refresh["project_id"] = self.profile.project_id
