@@ -25,36 +25,23 @@ const Navbar = () => {
     }
   }, []);
 
- const handleUnimpersonate = async () => {
-  try {
-    const token = localStorage.getItem("accessToken"); // ✅ Directly get token string (not JSON)
-
-    if (!token) {
-      console.warn("Access token not found.");
-      return;
-    }
-
-    const response = await axiosInstance.post(
-      "/auth/unimpersonate/",
-      {},
-      {
+  const handleUnimpersonate = async () => {
+    try {
+      
+      const response = await axiosInstance.post("/auth/unimpersonate/", {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    if (response.data?.access) {
-      // Update with new token (admin one)
-      localStorage.setItem("accessToken", response.data.access);
-      window.location.href = "/admin-dashboard"; // redirect after unimpersonating
-    } else {
-      console.error("No new access token returned from unimpersonate.");
+      if (response.data?.token) {
+        localStorage.setItem("accessToken", response.data.token);
+        window.location.href = "/admin-dashboard"; // Redirect to admin view
+      }
+    } catch (error) {
+      console.error("Unimpersonate failed", error);
     }
-  } catch (error) {
-    console.error("Unimpersonate failed:", error);
-  }
-};
+  };
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
