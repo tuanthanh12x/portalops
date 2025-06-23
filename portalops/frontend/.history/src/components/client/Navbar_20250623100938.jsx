@@ -44,9 +44,9 @@ const Navbar = () => {
       }
     );
 
-    if (response.data?.token) {
+    if (response.data?.access) {
       // Update with new token (admin one)
-      localStorage.setItem("accessToken", response.data.token);
+      localStorage.setItem("accessToken", response.data.);
       window.location.href = "/admin-dashboard"; // redirect after unimpersonating
     } else {
       console.error("No new access token returned from unimpersonate.");

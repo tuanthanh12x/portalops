@@ -44,7 +44,7 @@ const Navbar = () => {
       }
     );
 
-    if (response.data?.token) {
+    if (response.data?.acce) {
       // Update with new token (admin one)
       localStorage.setItem("accessToken", response.data.token);
       window.location.href = "/admin-dashboard"; // redirect after unimpersonating
