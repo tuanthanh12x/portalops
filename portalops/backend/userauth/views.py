@@ -71,7 +71,7 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
-        efrresh["roles"] = roles
+        refresh["roles"] = roles
 
         profile.last_login = format_last_login(now())
         profile.save()
