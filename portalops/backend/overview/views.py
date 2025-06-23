@@ -15,7 +15,7 @@ from openstack_portal.tasks import fetch_and_cache_instance_options
 from .tasks import cache_user_instances
 from utils.conn import connect_with_token_v5
 
-from ..userauth.permissions import IsAdmin
+from userauth.permissions import IsAdmin
 
 # Redis connection
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
@@ -154,7 +154,8 @@ class SystemSummaryView(APIView):
 
     def get(self, request):
         try:
-            conn = get_admin_connection()
+            project_id = request.auth.get("project_id")
+            conn = get_admin_connection(project_id=project_id)
 
             # 1. Active users trong hệ thống Portal (Django)
             active_users = User.objects.filter(is_active=True).count()

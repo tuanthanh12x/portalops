@@ -48,10 +48,10 @@ def connect_with_token_v5(token, project_id):
     return connection.Connection(session=sess)
 
 
-def get_admin_connection():
+def get_admin_connection(project_id=None):
     return connection.Connection(
         auth_url=settings.OPENSTACK_AUTH_URL,
-        project_name=settings.OPENSTACK_ADMIN_PROJECT,
+        project_id=project_id or settings.OPENSTACK_ADMIN_PROJECT_ID,
         username=settings.OPENSTACK_ADMIN_NAME,
         password=settings.OPENSTACK_ADMIN_PASSWORD,
         user_domain_name=settings.USER_DOMAIN_NAME,
