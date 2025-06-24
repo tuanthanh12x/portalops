@@ -33,12 +33,11 @@ from .serializers import CreateUserSerializer, RoleSerializer, UserListSerialize
 from project.models import ProjectUserMapping
 
 
-
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
-        selected_project_id = request.data.get("project_id")
+        selected_project_id = request.data.get("openstack_id")
 
         if not username or not password:
             return Response({"detail": "Missing credentials"}, status=400)
@@ -69,37 +68,30 @@ class LoginView(APIView):
         # Get user's active project mappings
         project_mappings = ProjectUserMapping.objects.filter(user=user, is_active=True)
         project_count = project_mappings.count()
-
-        # Determine project to use
         project = None
+
         if project_count > 1:
-            # No project selected yet → return list
             if not selected_project_id:
                 return Response({
                     "require_project_selection": True,
                     "projects": [
                         {
-                            "project_id": pm.project.id,
                             "project_name": pm.project.name,
                             "openstack_id": pm.project.openstack_id,
-                            "type": pm.project.type.name if pm.project.type else None,
-                            "role": pm.role
                         } for pm in project_mappings
                     ],
                     "message": "Multiple projects found. Please select one."
                 })
-
-            # Project was selected → validate
             try:
-                project = project_mappings.get(project__id=selected_project_id).project
+                project = project_mappings.get(project__openstack_id=selected_project_id).project
             except ProjectUserMapping.DoesNotExist:
                 return Response({"detail": "Invalid or unauthorized project selected."}, status=403)
         elif project_count == 1:
             project = project_mappings.first().project
+            redis_client.set(f"current_project:{username}", f"{project.openstack_id}", ex=30000)
+
         else:
             return Response({"detail": "No active projects assigned to this user."}, status=403)
-
-        # Connect to OpenStack
         try:
             conn = connection.Connection(
                 auth_url=settings.OPENSTACK_AUTH["auth_url"],
@@ -125,7 +117,6 @@ class LoginView(APIView):
             unscoped_conn.authorize()
             unscoped_token = unscoped_conn.session.get_token()
 
-            # Set tokens in Redis
             redis_client.set(f"keystone_token:{username}:{project.openstack_id}", scoped_token, ex=3600)
             redis_client.set(f"unscope_user_keystone_token:{username}", unscoped_token, ex=36000)
 
@@ -143,7 +134,6 @@ class LoginView(APIView):
         refresh["email"] = user.email
         refresh["roles"] = roles
         refresh["project_id"] = project.openstack_id
-        refresh["keystone_token"] = scoped_token
 
         response = JsonResponse({
             "message": "Login successful.",
@@ -154,8 +144,15 @@ class LoginView(APIView):
             value=str(refresh),
             httponly=True,
             secure=False,
-            samesite="Strict",
-            path="/api/auth/token/refresh/"
+
+
+            #for prod:
+            # samesite="Strict",
+            # path="/api/auth/token/refresh/",
+
+            #for dev:
+            samesite="Lax",       # Cho phép gửi cookie khi POST từ trang khác
+            path="/"
         )
         return response
 
@@ -267,7 +264,7 @@ class UserProfileInfoView(APIView):
             "credits": str(profile.credits) if profile else "0.00",
             "customer_id": profile.customer_id if profile else "",
             "openstack_user_id": profile.openstack_user_id if profile else "",
-            "project_id": profile.project_id if profile else "",
+            # "project_id": profile.project_id if profile else "",
         })
 class UpdateUserProfileView(APIView):
     permission_classes = [IsAuthenticated]

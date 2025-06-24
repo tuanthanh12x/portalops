@@ -8,6 +8,8 @@ function LoginPage() {
   const [otpCode, setOtpCode] = useState('');
   const [require2FA, setRequire2FA] = useState(false);
   const [sessionKey, setSessionKey] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -22,30 +24,47 @@ function LoginPage() {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const response = await axiosInstance.post('/auth/login/', {
-        username,
-        password,
-      });
+  e.preventDefault();
+  setError('');
+  try {
+    const response = await axiosInstance.post('/auth/login/', {
+      username,
+      password,
+    });
 
-      if (response.data.require_2fa) {
-        setRequire2FA(true);
-        setSessionKey(response.data.session_key); // Save session_key from backend
-      } else {
-        setTokenWithExpiry('accessToken', response.data.access);
-        window.location.href = '/';
-      }
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
+    // Step 1: Require 2FA
+    if (response.data.require_2fa) {
+      setRequire2FA(true);
+      setSessionKey(response.data.session_key);
+      return;
     }
-  };
+
+    // Step 2: Require project selection
+    if (response.data.require_project_selection) {
+      // The backend has already verified that the user has multiple projects
+      setProjects(response.data.projects);
+      return;
+    }
+
+    // Step 3: Access token is returned directly if only one project or no selection needed
+    if (response.data.access) {
+      setTokenWithExpiry('accessToken', response.data.access);
+      window.location.href = '/';
+    } else {
+      setError('Unexpected response. Please try again.');
+    }
+
+  } catch (err) {
+    console.error(err);
+    setError('Login failed. Please check your credentials.');
+  }
+};
+
 
   const handle2FAVerify = async () => {
     setError('');
     if (!sessionKey) {
-      setError("Session expired. Please login again.");
+      setError('Session expired. Please login again.');
       return;
     }
 
@@ -62,6 +81,29 @@ function LoginPage() {
     }
   };
 
+  const handleProjectConfirm = async () => {
+    if (!selectedProject) {
+      setError('Please select a project.');
+      return;
+    }
+
+    try {
+      const responseX = await axiosInstance.post('/auth/login/', {
+        username,
+        password,
+        openstack_id: selectedProject,
+      });
+          if (responseX.data.access ) {
+      setTokenWithExpiry('accessToken', responseX.data.access);
+      window.location.href = '/';}
+      else{
+          setError('Unexpected response. Please try again.');
+      }
+    } catch (err) {
+      setError('Failed to confirm project. Try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 flex items-center justify-center px-4 py-8 relative overflow-hidden">
       <div className="absolute inset-0 bg-green-500/20 rounded-full filter blur-3xl animate-pulse-slow"></div>
@@ -71,7 +113,8 @@ function LoginPage() {
           Login
         </h1>
 
-        {!require2FA ? (
+        {/* Step 1: Username/Password */}
+        {!require2FA && projects.length === 0 && (
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-green-300 font-orbitron">
@@ -116,7 +159,10 @@ function LoginPage() {
               Initiate Login
             </button>
           </form>
-        ) : (
+        )}
+
+        {/* Step 2: 2FA */}
+        {require2FA && (
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-green-300 font-orbitron">
@@ -137,6 +183,36 @@ function LoginPage() {
               className="w-full bg-gradient-to-r from-green-600 to-green-400 text-white py-3 rounded-lg hover:from-green-700 hover:to-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-300 font-orbitron font-semibold tracking-wide"
             >
               Verify 2FA Code
+            </button>
+          </div>
+        )}
+
+        {/* Step 3: Project Selection */}
+        {projects.length > 0 && !require2FA && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-green-300 font-orbitron">
+                Select Project
+              </label>
+              <select
+                className="w-full px-4 py-3 bg-gray-800/50 text-white border border-green-600/50 rounded-lg font-orbitron"
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+              >
+                <option value="">-- Choose a project --</option>
+                {projects.map((project) => (
+                  <option key={project.openstack_id} value={project.openstack_id}>
+                    {project.project_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleProjectConfirm}
+              className="w-full bg-gradient-to-r from-green-600 to-green-400 text-white py-3 rounded-lg hover:from-green-700 hover:to-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-300 font-orbitron font-semibold tracking-wide"
+            >
+              Confirm Project
             </button>
           </div>
         )}

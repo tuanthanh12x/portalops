@@ -34,18 +34,6 @@ export default function Home() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await axiosInstance.get("/auth/my-projects/");
-        setProjects(res.data.projects);
-        setCurrentProject(res.data.current_project);
-      } catch (err) {
-        console.error("Failed to load project list", err);
-      }
-    };
-    fetchProjects();
-  }, []);
 
   useEffect(() => {
     let retryCount = 0;
@@ -97,25 +85,6 @@ export default function Home() {
             </div>
 
             <div className="flex justify-end items-center gap-1 md:gap-3">
-              <div className="relative">
-                <select
-                  value={currentProject}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    setCurrentProject(selected);
-                    localStorage.setItem("active_project", selected);
-                    window.location.reload();
-                  }}
-                  className="bg-gray-700 text-gray-100 px-3 py-1.5 rounded-md text-sm shadow-sm focus:outline-none hover:bg-gray-600 transition"
-                >
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">
                   <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>

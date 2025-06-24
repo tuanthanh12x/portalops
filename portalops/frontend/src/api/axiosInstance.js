@@ -1,53 +1,48 @@
 import axios from "axios";
 
-// Create an Axios instance
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
-  timeout: process.env.NODE_ENV === 'production' ? 10000 : 5000,
-  withCredentials: true, // Important: send HttpOnly cookie (refresh_token)
+  timeout: 15000,
+  withCredentials: true,
 });
 
-// Helper: Get access token from localStorage with expiry check
+// === Token Helpers ===
 function getTokenWithExpiry() {
-  const itemStr = localStorage.getItem("accessToken");
-  if (!itemStr) return null;
-
+  const tokenStr = localStorage.getItem("accessToken");
+  if (!tokenStr) return null;
   try {
-    const item = JSON.parse(itemStr);
-    const now = new Date().getTime();
-
-    if (now > item.expiry) {
+    const { token, expiry } = JSON.parse(tokenStr);
+    if (Date.now() > expiry) {
       localStorage.removeItem("accessToken");
       return null;
     }
-    return item.token;
+    return token;
   } catch {
     localStorage.removeItem("accessToken");
     return null;
   }
 }
 
-// Helper: Set access token with expiry (default: 1h)
 function setAccessToken(token, expiresInSeconds = 3600) {
-  const expiry = new Date().getTime() + expiresInSeconds * 1000;
-  localStorage.setItem("accessToken", JSON.stringify({ token, expiry }));
+  const expiry = Date.now() + expiresInSeconds * 1000;
+  const item = { token, expiry };
+  localStorage.setItem("accessToken", JSON.stringify(item));
 }
 
-// Request Interceptor
+// === Request Interceptor ===
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getTokenWithExpiry();
-    if (token) {
+    if (token && !config.skipAuth) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    config.headers['X-Requested-With'] = 'XMLHttpRequest';
+    config.headers["X-Requested-With"] = "XMLHttpRequest";
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor with refresh fallback
+// === Response Interceptor (refresh if needed) ===
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -55,29 +50,23 @@ axiosInstance.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !originalRequest.skipAuth
     ) {
       originalRequest._retry = true;
-
       try {
-        // Request to refresh token using HttpOnly cookie
         const res = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/auth/token/refresh/`,
           {},
           { withCredentials: true }
         );
-
         const newAccessToken = res.data.access;
-        setAccessToken(newAccessToken); // ✅ Only access token in localStorage
-
-        // Retry original request with new access token
+        setAccessToken(newAccessToken);
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosInstance(originalRequest);
-      } catch (err) {
-        console.error("🔒 Refresh failed:", err);
+      } catch (refreshError) {
         localStorage.removeItem("accessToken");
-        // Optional: redirect to login page or show modal
-        return Promise.reject(err);
+        return Promise.reject(refreshError);
       }
     }
 
