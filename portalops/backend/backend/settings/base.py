@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'shared',
+    'project',
     'drf_spectacular',
     'userauth',
     'openstack_portal',

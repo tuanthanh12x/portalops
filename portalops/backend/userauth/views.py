@@ -30,12 +30,15 @@ from rest_framework.response import Response
 from rest_framework import status, serializers
 from .models import UserProfile
 from .serializers import CreateUserSerializer, RoleSerializer, UserListSerializer
+from project.models import ProjectUserMapping
+
 
 
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
+        selected_project_id = request.data.get("project_id")
 
         if not username or not password:
             return Response({"detail": "Missing credentials"}, status=400)
@@ -49,78 +52,103 @@ class LoginView(APIView):
         except UserProfile.DoesNotExist:
             return Response({"detail": "User profile not found."}, status=500)
 
-        # Two-Factor Authentication required
+        # 2FA logic
         if profile.two_factor_enabled:
-            # Generate session_key and store temporarily (in Redis or DB)
             session_key = str(uuid.uuid4())
-            redis_key = f"2fa_session:{session_key}"
-            redis_client.set(redis_key, f"{username}:{password}", ex=300)  # 5-minute expiry
-
+            redis_client.set(f"2fa_session:{session_key}", f"{username}:{password}", ex=300)
             return Response({
                 "require_2fa": True,
                 "session_key": session_key,
                 "message": "2FA required. Please verify your OTP code."
-            }, status=200)
-        roles = []
-        if profile:
-            roles = list(
-                profile.role_mappings.select_related("role")
-                .values_list("role__name", flat=True)
+            })
+
+        # Roles
+        roles = list(profile.role_mappings.select_related("role")
+                     .values_list("role__name", flat=True))
+
+        # Get user's active project mappings
+        project_mappings = ProjectUserMapping.objects.filter(user=user, is_active=True)
+        project_count = project_mappings.count()
+
+        # Determine project to use
+        project = None
+        if project_count > 1:
+            # No project selected yet → return list
+            if not selected_project_id:
+                return Response({
+                    "require_project_selection": True,
+                    "projects": [
+                        {
+                            "project_id": pm.project.id,
+                            "project_name": pm.project.name,
+                            "openstack_id": pm.project.openstack_id,
+                            "type": pm.project.type.name if pm.project.type else None,
+                            "role": pm.role
+                        } for pm in project_mappings
+                    ],
+                    "message": "Multiple projects found. Please select one."
+                })
+
+            # Project was selected → validate
+            try:
+                project = project_mappings.get(project__id=selected_project_id).project
+            except ProjectUserMapping.DoesNotExist:
+                return Response({"detail": "Invalid or unauthorized project selected."}, status=403)
+        elif project_count == 1:
+            project = project_mappings.first().project
+        else:
+            return Response({"detail": "No active projects assigned to this user."}, status=403)
+
+        # Connect to OpenStack
+        try:
+            conn = connection.Connection(
+                auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                username=username,
+                password=password,
+                project_id=project.openstack_id,
+                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                identity_api_version='3',
             )
-        # If no 2FA required, proceed to generate token
+            conn.authorize()
+            scoped_token = conn.session.get_token()
+
+            # Optional: unscoped token
+            unscoped_conn = connection.Connection(
+                auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                username=username,
+                password=password,
+                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                identity_api_version='3',
+            )
+            unscoped_conn.authorize()
+            unscoped_token = unscoped_conn.session.get_token()
+
+            # Set tokens in Redis
+            redis_client.set(f"keystone_token:{username}:{project.openstack_id}", scoped_token, ex=3600)
+            redis_client.set(f"unscope_user_keystone_token:{username}", unscoped_token, ex=36000)
+
+        except Exception as e:
+            print(f"[⚠️ OpenStack Error] {e}")
+            return Response({"detail": "Failed to authenticate with OpenStack."}, status=502)
+
+        # Update last login
+        profile.last_login = format_last_login(now())
+        profile.save()
+
+        # JWT
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
         refresh["roles"] = roles
-
-        profile.last_login = format_last_login(now())
-        profile.save()
-
-        # Keystone Token for OpenStack
-        if profile.project_id:
-            try:
-                conn = connection.Connection(
-                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                    username=username,
-                    password=password,
-                    project_id=profile.project_id,
-                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                    identity_api_version='3',
-                )
-                conn.authorize()
-                keystone_token = conn.session.get_token()
-
-                # refresh["keystone_token"] = keystone_token
-                refresh["project_id"] = profile.project_id
-
-                redis_key = f"keystone_token:{username}:{profile.project_id}"
-                redis_client.set(redis_key, keystone_token, ex=3600)
-                if profile.is_admin:
-                    conn = connection.Connection(
-                        auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                        username=username,
-                        password=password,
-                        user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                        project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                        identity_api_version='3',
-                    )
-                    conn.authorize()
-                    keystone_token = conn.session.get_token()
-
-                    refresh["keystone_token"] = keystone_token
-
-                    redis_key = f"unscope_admin_keystone_token:{username}"
-                    redis_client.set(redis_key, keystone_token, ex=36000)
-            except Exception as e:
-                print(f"[⚠️ OpenStack Error] {e}")
-
+        refresh["project_id"] = project.openstack_id
+        refresh["keystone_token"] = scoped_token
 
         response = JsonResponse({
             "message": "Login successful.",
             "access": str(refresh.access_token),
         })
-
         response.set_cookie(
             key="refresh_token",
             value=str(refresh),
@@ -129,8 +157,9 @@ class LoginView(APIView):
             samesite="Strict",
             path="/api/auth/token/refresh/"
         )
-
         return response
+
+
 
 class RefreshTokenView(APIView):
     def post(self, request):
@@ -385,7 +414,7 @@ class RoleListAPIView(ListAPIView):
     serializer_class = RoleSerializer
 
 
-from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users ,create_openstack_user
+from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users ,create_openstack_user, create_openstack_project
 
 
 class ForgotPasswordView(APIView):
@@ -607,7 +636,6 @@ class TwoFactorLoginHandler:
         redis_client.delete(f"2fa_session:{session_key}")
 
         return self.issue_tokens_and_cache()
-
 
 class TWOFALoginView(APIView):
     """

@@ -55,7 +55,7 @@ export default function AdminUserDetailPage() {
                         <Card title="Basic Info">
                             <Info label="Username" value={user.username} />
                             <Info label="Email" value={user.email} />
-                            <Info label="Project ID" value={user.project_id} />
+                            <Info label="Email" value={user.email} />
                             <Info label="Joined" value={new Date(user.date_joined).toLocaleDateString()} />
                             <Info label="Status" value={user.is_active ? "Active" : "Suspended"} valueClass={user.is_active ? "text-green-400" : "text-red-400"} />
                             <div className="flex flex-wrap gap-2 mt-4">

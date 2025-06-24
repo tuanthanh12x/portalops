@@ -1,4 +1,3 @@
-// Home.jsx
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/client/Navbar';
 import AccountCard from '../../components/client/AccountCard';
@@ -23,8 +22,6 @@ export default function Home() {
     ram: { used: 0, limit: 1 },
     storage: { used: 0, limit: 1 },
   });
-  const [projects, setProjects] = useState([]);
-  const [currentProject, setCurrentProject] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -32,19 +29,6 @@ export default function Home() {
       const user = getUserInfoFromToken(token);
       setUserInfo(user);
     }
-  }, []);
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await axiosInstance.get("/auth/my-projects/");
-        setProjects(res.data.projects);
-        setCurrentProject(res.data.current_project);
-      } catch (err) {
-        console.error("Failed to load project list", err);
-      }
-    };
-    fetchProjects();
   }, []);
 
   useEffect(() => {
@@ -59,7 +43,7 @@ export default function Home() {
         } else if (retryCount < maxRetries) {
           retryCount++;
           console.log(`Empty data, retrying ${retryCount}/${maxRetries}...`);
-          setTimeout(fetchInstances, 2000);
+          setTimeout(fetchInstances, 2000); // retry after 2 seconds
         } else {
           console.warn("Max retries reached, no data available.");
           setInstances([]);
@@ -68,8 +52,10 @@ export default function Home() {
         console.error("Failed to fetch instances", error);
       }
     };
+
     fetchInstances();
   }, []);
+
 
   useEffect(() => {
     const fetchLimits = async () => {
@@ -97,25 +83,6 @@ export default function Home() {
             </div>
 
             <div className="flex justify-end items-center gap-1 md:gap-3">
-              <div className="relative">
-                <select
-                  value={currentProject}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    setCurrentProject(selected);
-                    localStorage.setItem("active_project", selected);
-                    window.location.reload();
-                  }}
-                  className="bg-gray-700 text-gray-100 px-3 py-1.5 rounded-md text-sm shadow-sm focus:outline-none hover:bg-gray-600 transition"
-                >
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 group transition-all duration-200 ease-in-out cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 text-gray-300 group-hover:text-white transition" viewBox="0 0 16 16">
                   <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
@@ -134,7 +101,8 @@ export default function Home() {
                   <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"></path>
                 </svg>
                 <button
-                  className="hidden md:inline-block whitespace-nowrap px-4 py-2 text-sm text-white bg-gray-800 rounded-md hover:bg-red-600 hover:text-white transition-all duration-200 ease-in-out shadow-sm"
+                  className="hidden md:inline-block whitespace-nowrap px-4 py-2 text-sm text-white bg-gray-800 rounded-md 
+  hover:bg-red-600 hover:text-white transition-all duration-200 ease-in-out shadow-sm"
                   onClick={(e) => {
                     e.preventDefault();
                     logout();
@@ -142,6 +110,7 @@ export default function Home() {
                 >
                   Logout
                 </button>
+
               </div>
             </div>
           </div>

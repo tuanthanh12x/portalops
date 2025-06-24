@@ -33,7 +33,6 @@ class UserProfile(models.Model):
     # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     openstack_user_id = models.CharField(max_length=128, blank=True, null=True)
-    project_id = models.CharField(max_length=128, blank=True, null=True)
 
     # Business-related
     customer_id = models.CharField(max_length=128, blank=True, null=True)

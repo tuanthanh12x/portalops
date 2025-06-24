@@ -1,8 +1,11 @@
 from rest_framework.permissions import BasePermission
 
+from userauth.models import UserProfile
+
+
 class IsAdmin(BasePermission):
     """
-    Cho phép truy cập nếu user có role 'admin' (không phân biệt hoa thường).
+    Only allow users who are administrators.
     """
 
     def has_permission(self, request, view):
@@ -19,3 +22,18 @@ class IsAdmin(BasePermission):
 
         # Kiểm tra profile có role admin không
         return profile.role_mappings.filter(role__name__iexact='admin').exists()
+
+
+class HasProjectID(BasePermission):
+    """
+    ✅ Only allows access to users who have a project_id in their profile.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        try:
+            return bool(request.user.userprofile.project_id)
+        except UserProfile.DoesNotExist:
+            return False
