@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from ..tasks import fetch_and_cache_instance_options
 from project.models import ProjectType
 
-from ...userauth.permissions import IsAdmin
+from userauth.permissions import IsAdmin
 
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
