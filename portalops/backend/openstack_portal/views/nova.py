@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from ..tasks import fetch_and_cache_instance_options
+from project.models import ProjectType
 
+from ...userauth.permissions import IsAdmin
 
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
@@ -559,5 +561,67 @@ class InstanceSnapshotView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+class CreateFlavorAndProjectTypeView(APIView):
+    permission_classes = [IsAdmin]
 
+    class CreateFlavorSerializer(serializers.Serializer):
+        name = serializers.CharField(max_length=100)
+        ram = serializers.IntegerField(min_value=1)
+        vcpus = serializers.IntegerField(min_value=1)
+        disk = serializers.IntegerField(min_value=0)
+        swap = serializers.IntegerField(required=False, default=0)
+        ephemeral = serializers.IntegerField(required=False, default=0)
+        price_per_month = serializers.DecimalField(max_digits=10, decimal_places=4)
+        description = serializers.CharField(required=False, allow_blank=True)
+
+    def post(self, request):
+        serializer = self.CreateFlavorSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        username = request.auth.get("username")
+        project_id = request.auth.get("project_id")
+        if not project_id:
+            return Response({"error": "Missing project_id in token"}, status=400)
+
+        token_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(token_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+        if isinstance(token, bytes):
+            token = token.decode()
+
+        try:
+            conn = vl_connect_with_token(token, project_id)
+
+            # Step 1: Create OpenStack Flavor
+            flavor = conn.compute.create_flavor(
+                name=data["name"],
+                ram=data["ram"],
+                vcpus=data["vcpus"],
+                disk=data["disk"],
+                swap=data["swap"],
+                ephemeral=data["ephemeral"],
+            )
+
+            # Step 2: Save ProjectType (local DB)
+            project_type = ProjectType.objects.create(
+                name=data["name"],
+                description=data.get("description", ""),
+                flavor_id=flavor.id,
+                price_per_month=data["price_per_month"]
+            )
+
+            return Response({
+                "message": "✅ Flavor and Project Type created successfully.",
+                "flavor_id": flavor.id,
+                "project_type_id": project_type.id
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {"error": f"❌ Failed to create flavor: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 

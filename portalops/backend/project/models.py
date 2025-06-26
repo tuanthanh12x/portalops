@@ -4,15 +4,29 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+
 class ProjectType(models.Model):
     """
-    Represents the type/category of a project, e.g., Development, Production.
+    Represents a VM flavor or instance type available for users/projects.
+    Stores the OpenStack flavor ID and pricing metadata.
     """
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
 
+    flavor_id = models.CharField(max_length=100, unique=True)
+    price_per_month = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Project Type"
+        verbose_name_plural = "Project Types"
+
     def __str__(self):
-        return self.name
+        return f"{self.name} (Flavor ID: {self.flavor_id})"
 
 
 class Project(models.Model):
