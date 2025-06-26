@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 from userauth.models import UserProfile
-
+from django.contrib.auth.models import User
 
 class IsAdmin(BasePermission):
     """
@@ -9,18 +9,16 @@ class IsAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        user = request.user
+        username = request.auth.get("username")
+        user=User.objects.get(username=username)
 
-        # Không đăng nhập thì không cho qua
         if not user or not user.is_authenticated:
             return False
 
-        # Đảm bảo có profile
         profile = getattr(user, 'userprofile', None)
         if not profile:
             return False
 
-        # Kiểm tra profile có role admin không
         return profile.role_mappings.filter(role__name__iexact='admin').exists()
 
 

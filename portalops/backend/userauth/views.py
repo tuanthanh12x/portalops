@@ -29,6 +29,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
 from .models import UserProfile
+from .permissions import IsAdmin
 from .serializers import CreateUserSerializer, RoleSerializer, UserListSerializer
 from project.models import ProjectUserMapping
 
@@ -469,6 +470,7 @@ class ChangePasswordView(APIView):
             status=status.HTTP_200_OK
         )
 class CreateUserAPIView(APIView):
+    permission_classes = [IsAdmin]
     def post(self, request):
         serializer = CreateUserSerializer(data=request.data)
         if serializer.is_valid():
@@ -730,8 +732,7 @@ class TWOFALoginView(APIView):
 
 
 class UserListView(APIView):
-    # permission_classes = [IsAdminUser]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
     def get(self, request):
         queryset = UserProfile.objects.select_related("user").all()
@@ -750,8 +751,7 @@ def trigger_vm_sync(request):
 
 
 class AdminUserDetailView(APIView):
-    # permission_classes = [IsAdminUser]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
     def get(self, request, id):
         try:
             user = User.objects.get(id=id)

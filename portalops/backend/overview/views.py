@@ -150,7 +150,7 @@ from utils.conn import get_admin_connection
 
 User = get_user_model()
 class SystemSummaryView(APIView):
-    permission_classes = [IsAdmin]  # áp dụng tại đây
+    permission_classes = [IsAdmin]
 
     def get(self, request):
         try:
