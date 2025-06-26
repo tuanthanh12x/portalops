@@ -9,7 +9,7 @@ ChartJS.register(...registerables);
 
 // --- Dữ liệu biểu đồ (giữ nguyên như bạn cung cấp) ---
 const cpuData = {
-  labels: ['Core 1', 'Core 2', 'Core 3', 'Core 4'],
+  labels: ['Node 1', 'Node 2', 'Node 3', 'Node 4'],
   datasets: [{
     label: 'CPU Usage (%)',
     data: [65, 59, 80, 81],
