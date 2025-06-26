@@ -4,7 +4,7 @@ from .views.cinder import VolumeAPI
 from .views.glance import ListImagesView, SnapshotListAPIView
 from .views.neutron import PortListView, FloatingIPListView, AttachFloatingIPView, NetworkListView, CreateNetworkView
 from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, InstanceActionAPI, \
-    VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView
+    VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView, CreateFlavorAndProjectTypeView
 
 urlpatterns = [
     path('instance-option/', InstanceOptionsView.as_view(), name='instance-option'),
@@ -25,5 +25,6 @@ urlpatterns = [
     path("network/network-list/", NetworkListView.as_view(), name="network-list"),
 
     path("network/create-network/", CreateNetworkView.as_view(), name="network-list"),
+    path("compute/create-flavor/", CreateFlavorAndProjectTypeView.as_view(), name="create-flavor"),
 
 ]
