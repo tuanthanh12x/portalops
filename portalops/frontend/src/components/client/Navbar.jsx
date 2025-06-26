@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import axiosInstance from '../../api/axiosInstance'; // Adjust if your path is different
+import axiosInstance from '../../api/axiosInstance';
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [computeDropdownOpen, setComputeDropdownOpen] = useState(false);
   const [storageDropdownOpen, setStorageDropdownOpen] = useState(false);
+  const [networkDropdownOpen, setNetworkDropdownOpen] = useState(false);
   const [isImpersonated, setIsImpersonated] = useState(false);
 
   const computeRef = useRef(null);
   const storageRef = useRef(null);
+  const networkRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -25,25 +27,24 @@ const Navbar = () => {
     }
   }, []);
 
- const handleUnimpersonate = async () => {
-  try {
-    const response = await axiosInstance.post("/auth/unimpersonate/");
-
-    if (response.data?.token) {
-      const expiry = Date.now() + 60 * 60 * 1000; // 1 hour
-      const tokenObj = {
-        token: response.data.token,
-        expiry: expiry,
-      };
-      localStorage.setItem("accessToken", JSON.stringify(tokenObj));
-      window.location.href = "/admin-dashboard"; // redirect after unimpersonating
-    } else {
-      console.error("No new access token returned from unimpersonate.");
-    }
-  } catch (error) {
-    console.error("Unimpersonate failed:", error);
-  }
-};
+  // const handleUnimpersonate = async () => {
+  //   try {
+  //     const response = await axiosInstance.post("/auth/unimpersonate/");
+  //     if (response.data?.token) {
+  //       const expiry = Date.now() + 60 * 60 * 1000;
+  //       const tokenObj = {
+  //         token: response.data.token,
+  //         expiry: expiry,
+  //       };
+  //       localStorage.setItem("accessToken", JSON.stringify(tokenObj));
+  //       window.location.href = "/admin-dashboard";
+  //     } else {
+  //       console.error("No new access token returned from unimpersonate.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Unimpersonate failed:", error);
+  //   }
+  // };
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -51,11 +52,13 @@ const Navbar = () => {
         !e.target.closest('#mobile-menu') &&
         !e.target.closest('#hamburger-btn') &&
         !computeRef.current?.contains(e.target) &&
-        !storageRef.current?.contains(e.target)
+        !storageRef.current?.contains(e.target) &&
+        !networkRef.current?.contains(e.target)
       ) {
         setMenuOpen(false);
         setComputeDropdownOpen(false);
         setStorageDropdownOpen(false);
+        setNetworkDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
@@ -65,12 +68,26 @@ const Navbar = () => {
   const toggleDropdown = (dropdown) => {
     if (dropdown === 'compute') {
       setComputeDropdownOpen((prev) => {
-        if (!prev) setStorageDropdownOpen(false);
+        if (!prev) {
+          setStorageDropdownOpen(false);
+          setNetworkDropdownOpen(false);
+        }
         return !prev;
       });
     } else if (dropdown === 'storage') {
       setStorageDropdownOpen((prev) => {
-        if (!prev) setComputeDropdownOpen(false);
+        if (!prev) {
+          setComputeDropdownOpen(false);
+          setNetworkDropdownOpen(false);
+        }
+        return !prev;
+      });
+    } else if (dropdown === 'network') {
+      setNetworkDropdownOpen((prev) => {
+        if (!prev) {
+          setComputeDropdownOpen(false);
+          setStorageDropdownOpen(false);
+        }
         return !prev;
       });
     }
@@ -144,16 +161,33 @@ const Navbar = () => {
               <ul className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30">
                 <li><a href="/volumes" className="block px-5 py-3 hover:bg-gray-700">Volumes</a></li>
                 <li><a href="/volume-backup" className="block px-5 py-3 hover:bg-gray-700">Backups</a></li>
-                <li><a href="/buckets" className="block px-5 py-3 hover:bg-gray-700">Buckets</a></li>
               </ul>
             )}
           </li>
 
-          <li><a href="/network" className="hover:text-emerald-400 transition font-medium">Network</a></li>
+          {/* Network Dropdown */}
+          <li className="relative" ref={networkRef}>
+            <button
+              onClick={() => toggleDropdown('network')}
+              className="flex items-center space-x-1 hover:text-emerald-400 transition focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
+            >
+              <span>Network</span>
+              <svg className={`h-4 w-4 transform transition-transform ${networkDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {networkDropdownOpen && (
+              <ul className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30">
+                <li><a href="/networks" className="block px-5 py-3 hover:bg-gray-700">Networks</a></li>
+                <li><a href="/floating-ips" className="block px-5 py-3 hover:bg-gray-700">Floating IPs</a></li>
+              </ul>
+            )}
+          </li>
+
           <li><a href="/billing" className="hover:text-emerald-400 transition font-medium">Billing</a></li>
           <li><a href="/support" className="hover:text-emerald-400 transition font-medium">Support</a></li>
 
-          {isImpersonated && (
+          {/* {isImpersonated && (
             <li>
               <button
                 onClick={handleUnimpersonate}
@@ -162,11 +196,10 @@ const Navbar = () => {
                 Return to Admin Dashboard
               </button>
             </li>
-          )}
+          )} */}
         </ul>
       </div>
 
-      {/* Mobile Overlay */}
       {menuOpen && (
         <div
           onClick={() => setMenuOpen(false)}

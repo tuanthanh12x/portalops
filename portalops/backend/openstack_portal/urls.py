@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views.cinder import VolumeAPI
 from .views.glance import ListImagesView, SnapshotListAPIView
+from .views.neutron import PortListView, FloatingIPListView, AttachFloatingIPView, NetworkListView, CreateNetworkView
 from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, InstanceActionAPI, \
     VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView
 
@@ -18,4 +19,11 @@ urlpatterns = [
     path('compute/instances/<str:instance_id>/snapshot/', InstanceSnapshotView.as_view(), name='instance-snapshot'),
     path("image/images/", ListImagesView.as_view(), name="list-images"),
     path('image/instance-snapshots/', SnapshotListAPIView.as_view(), name='snapshot-list'),
+    path('network/<str:network_id>/ports/', PortListView.as_view(), name='network-port-list'),
+    path('network/floatingip-list/', FloatingIPListView.as_view(), name='floating-ip-list'),
+    path('network/attach-floating-ip/', AttachFloatingIPView.as_view(), name='action-list'),
+    path("network/network-list/", NetworkListView.as_view(), name="network-list"),
+
+    path("network/create-network/", CreateNetworkView.as_view(), name="network-list"),
+
 ]

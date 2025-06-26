@@ -4,7 +4,8 @@ from .serializers import CreateUserSerializer
 from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfoView, ResetPasswordConfirmView, \
     ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, \
     UserProfileInfoView, UpdateUserProfileView, TWOFALoginView, CreateUserAPIView, RoleListAPIView, UserListView, \
-    trigger_vm_sync, AdminUserDetailView, ImpersonateUserTokenView, UnimpersonateView
+    trigger_vm_sync, AdminUserDetailView, ImpersonateUserTokenView, UnimpersonateView, UserProjectListView, \
+    SwitchProjectView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -22,6 +23,8 @@ urlpatterns = [
     path('profile/update/', UpdateUserProfileView.as_view()),
     path("token/refresh/", RefreshTokenView.as_view(), name="token-refresh"),
     path('two-fa-login/', TWOFALoginView.as_view(), name='2falog'),
+    path('switch-project/', SwitchProjectView.as_view(), name='switch-project'),
+    path('user-projects/', UserProjectListView.as_view(), name='user-project-list'),
 
 
 

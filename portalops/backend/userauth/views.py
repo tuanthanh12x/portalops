@@ -155,8 +155,91 @@ class LoginView(APIView):
             path="/"
         )
         return response
+class SwitchProjectView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        username = request.auth.get("username")
+        new_project_id = request.data.get("project_id")
+        try:
+           user = get_user_model().objects.get(username=username)
+        except get_user_model().DoesNotExist:
+            return Response({"detail": "User not found."}, status=404)
+
+        if not new_project_id:
+            return Response({"detail": "Missing project_id."}, status=400)
+
+        try:
+            mapping = ProjectUserMapping.objects.get(
+                user=user, project__openstack_id=new_project_id, is_active=True
+            )
+        except ProjectUserMapping.DoesNotExist:
+            return Response({"detail": "Unauthorized project access."}, status=403)
+
+        unscoped_token = redis_client.get(f"unscope_user_keystone_token:{username}")
+        if not unscoped_token:
+            return Response({"detail": "Unscoped token not found. Please log in again."}, status=401)
+
+        try:
+            auth = v3.Token(
+                auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                token=unscoped_token,
+                project_id=new_project_id,
+            )
+            sess = session.Session(auth=auth)
+            scoped_token = sess.get_token()
+
+            # Save the scoped token to Redis
+            redis_client.set(f"keystone_token:{username}:{new_project_id}", scoped_token, ex=3600)
+            redis_client.set(f"current_project:{username}", new_project_id, ex=30000)
+
+        except Exception as e:
+            print(f"[⚠️ Switch Project Error] {e}")
+            return Response({"detail": "Failed to scope token to selected project."}, status=502)
+
+        # Attach roles into JWT
+        roles = list(user.userprofile.role_mappings.select_related("role")
+                     .values_list("role__name", flat=True))
+        refresh = RefreshToken.for_user(user)
+        refresh["username"] = username
+        refresh["email"] = user.email
+        refresh["roles"] = roles
+        refresh["project_id"] = new_project_id
+
+        response = JsonResponse({
+            "message": "Project switched successfully.",
+            "access": str(refresh.access_token),
+        })
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            path="/"
+        )
+        return response
 
 
+
+class UserProjectListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        mappings = ProjectUserMapping.objects.filter(user=user, is_active=True).select_related("project")
+        if not mappings.exists():
+            return Response({"detail": "No active projects assigned to this user."}, status=404)
+
+        project_list = [
+            {
+                "project_name": m.project.name,
+                "openstack_id": m.project.openstack_id,
+            }
+            for m in mappings
+        ]
+        return Response(project_list)
 
 class RefreshTokenView(APIView):
     def post(self, request):
@@ -681,7 +764,8 @@ class AdminUserDetailView(APIView):
         # Try get Role if exists
         role_mapping = profile.role_mappings.first() if profile else None
         role_name = role_mapping.role.name if role_mapping else "No Role Assigned"
-
+        redis_key = f"current_project:{user.username}"
+        cached_data = redis_client.get(redis_key)
         return Response({
             "id": user.id,
             "username": user.username,
@@ -689,7 +773,7 @@ class AdminUserDetailView(APIView):
             "phone_number": profile.phone_number if profile else "",
             "is_active": user.is_active,
             "is_2fa_enabled": profile.two_factor_enabled if profile else False,
-            "project_id": profile.project_id,
+            "project_id": cached_data,
             "role": {
                 "name": role_name
             },
@@ -715,7 +799,7 @@ class AdminUserDetailView(APIView):
         })
 
 from keystoneauth1.identity import v3
-from keystoneauth1 import session as ks_session
+from keystoneauth1 import session as ks_session, session
 
 from keystoneauth1.identity import v3
 from keystoneauth1 import session as ks_session

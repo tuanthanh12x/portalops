@@ -24,6 +24,10 @@ import TwoFactorSetupPage from "../pages/client/TwoFactorSetupPage";
 import EditProfilePage from './../pages/client/EditProfilePage';
 import CreateUserPage from "../pages/admin/CreateUserPage";
 import AdminUserDetailPage from "../pages/admin/UserDetailPage";
+import NetworkListPage from "../pages/client/Network";
+import { CreateFloatingIPPage, CreateNetworkPage } from "../pages/client/CreateNetworkPage";
+import FloatingIPListPage from "../pages/client/FloatingIPPage";
+
 function AppRoutes() {
   return (
     <Router>
@@ -46,8 +50,9 @@ function AppRoutes() {
           <Route path="/volumes" element={<VolumeListPage />} />
           <Route path="/keypairs" element={<KeypairListPage />} />
           <Route path="/create-volume" element={<CreateVolumePage />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-
+          <Route path="/networks" element={<NetworkListPage />} />
+          <Route path="/floating-ips" element={<FloatingIPListPage />} />
+          <Route path="/create-network" element={<CreateNetworkPage />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
           <Route path="/vps-backup" element={<SnapshotListPage />} />
@@ -60,7 +65,7 @@ function AppRoutes() {
 
         {/* Staff routes */}
 
-
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/create-user" element={<CreateUserPage />} />
         <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/users-manager" element={<UserManagementPage />} />
