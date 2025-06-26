@@ -12,10 +12,7 @@ class IsAdmin(BasePermission):
         username = request.auth.get("username")
         user=User.objects.get(username=username)
 
-        if not user or not user.is_authenticated:
-            return False
-
-        profile = getattr(user, 'userprofile', None)
+        profile = user.userprofile
         if not profile:
             return False
 
