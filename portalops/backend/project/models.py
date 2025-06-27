@@ -4,29 +4,33 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-
 class ProjectType(models.Model):
-    """
-    Represents a VM flavor or instance type available for users/projects.
-    Stores the OpenStack flavor ID and pricing metadata.
-    """
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=100)
+    price_per_month = models.DecimalField(max_digits=10, decimal_places=4)
+    description = models.TextField(blank=True)
 
-    flavor_id = models.CharField(max_length=100, unique=True)
-    price_per_month = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Project Type"
-        verbose_name_plural = "Project Types"
+    instances = models.IntegerField()
+    vcpus = models.IntegerField()
+    ram = models.IntegerField()  # in MB
+    metadata_items = models.IntegerField()
+    key_pairs = models.IntegerField()
+    server_groups = models.IntegerField()
+    server_group_members = models.IntegerField()
+    injected_files = models.IntegerField()
+    injected_file_content_bytes = models.IntegerField()
+    volumes = models.IntegerField()
+    volume_snapshots = models.IntegerField()
+    total_volume_gb = models.IntegerField()
+    networks = models.IntegerField()
+    subnets = models.IntegerField()
+    ports = models.IntegerField()
+    routers = models.IntegerField()
+    floating_ips = models.IntegerField()
+    security_groups = models.IntegerField()
+    security_group_rules = models.IntegerField()
 
     def __str__(self):
-        return f"{self.name} (Flavor ID: {self.flavor_id})"
+        return self.name
 
 
 class Project(models.Model):
