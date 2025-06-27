@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.contrib.auth.models import User
+from django.shortcuts import render, get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -164,3 +165,74 @@ class AllProjectsOverview(APIView):
             })
 
         return Response(result)
+
+class CreateProjectView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+
+        token_bytes = redis_client.get(token_key)
+        if not token_bytes:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        token = token_bytes.decode()
+        conn = connect_with_token_v5(token, project_id)
+
+        # Step 1: Parse input
+        name = request.data.get("name")
+        description = request.data.get("description", "")
+        type_id = request.data.get("project_type_id")
+        assign_user_id = request.data.get("user_id", None)  # Optional
+
+        if not name or not type_id:
+            return Response({"error": "Missing required fields: name or project_type_id"}, status=400)
+
+        project_type = get_object_or_404(ProjectType, id=type_id)
+
+        try:
+            # Step 2: Create OpenStack project
+            os_project = conn.identity.create_project(
+                name=name,
+                description=description,
+                is_enabled=True,
+                domain_id="default"
+            )
+
+            # Step 3: Create local project
+            new_project = Project.objects.create(
+                name=name,
+                description=description,
+                type=project_type,
+                openstack_id=os_project.id,
+            )
+
+            mapped_user_id = None
+
+            # Step 4 (optional): assign project owner
+            if assign_user_id:
+                user_obj = get_object_or_404(User, id=assign_user_id)
+                ProjectUserMapping.objects.create(
+                    user=user_obj,
+                    project=new_project,
+                    role="admin",
+                    is_active=True
+                )
+                mapped_user_id = user_obj.id
+
+            return Response({
+                "project_id": new_project.id,
+                "project_name": new_project.name,
+                "openstack_id": new_project.openstack_id,
+                "project_type": {
+                    "id": project_type.id,
+                    "name": project_type.name
+                },
+                "user_id": mapped_user_id,
+                "status": "enabled"
+            }, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

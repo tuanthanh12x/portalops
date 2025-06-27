@@ -31,6 +31,7 @@ import InstancesPage from "../pages/admin/InstancesPage";
 import CreateProjectTypePage from "../pages/admin/CreateProjectType";
 import ProjectTypeListPage from "../pages/admin/PackagePage";
 import ProjectListPage from "../pages/admin/ProjectListPage";
+import CreateProjectPage from "../pages/admin/CreateProjectPage";
 function AppRoutes() {
   return (
     <Router>
@@ -77,6 +78,7 @@ function AppRoutes() {
        <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
        <Route path="/admin/packages" element={< ProjectTypeListPage />} />
   <Route path="/admin/projects" element={< ProjectListPage />} />
+    <Route path="/admin/create-project" element={< CreateProjectPage />} />
   </Route>
 
         {/* Redirect unknown routes to Home */}
