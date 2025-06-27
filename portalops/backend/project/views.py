@@ -115,23 +115,27 @@ class ListProjectTypeView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 class AllProjectsOverview(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
         projects = Project.objects.select_related("type").all()
 
-        # Preload user mappings into a dict: {project_id: mapping}
-        mappings = {
-            m.project_id: m for m in ProjectUserMapping.objects
-        }
+        # Preload mappings: list of mappings per project
+        mappings = (
+            ProjectUserMapping.objects.select_related("user")
+            .order_by("joined_at")  # optional: get first joined user
+        )
+
+        # Build {project_id: first_user_id}
+        project_to_user = {}
+        for mapping in mappings:
+            if mapping.project_id not in project_to_user:
+                project_to_user[mapping.project_id] = mapping.user.id
 
         result = []
         for project in projects:
             project_type = project.type
-            mapping = mappings.get(project.id)
-
             result.append({
                 "project_id": project.id,
                 "project_name": project.name,
@@ -140,7 +144,7 @@ class AllProjectsOverview(APIView):
                     "id": project_type.id if project_type else None,
                     "name": project_type.name if project_type else None,
                 },
-                "user_id": mapping.user.id if mapping else None
+                "user_id": project_to_user.get(project.id)  # None if not assigned
             })
 
         return Response(result)
