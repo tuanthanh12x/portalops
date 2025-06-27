@@ -36,6 +36,8 @@ class CreateProjectTypeView(APIView):
 
         networks = serializers.IntegerField(min_value=0, default=100)  # ✅ Add this line
         routers = serializers.IntegerField(min_value=0, default=10)
+        ports = serializers.IntegerField(min_value=0, default=500)
+        subnets = serializers.IntegerField(min_value=0, default=50)
         floating_ips = serializers.IntegerField(min_value=0, default=50)
         security_groups = serializers.IntegerField(min_value=0, default=10)
         security_group_rules = serializers.IntegerField(min_value=0, default=100)
@@ -65,6 +67,8 @@ class CreateProjectTypeView(APIView):
                 volume_snapshots=data["volume_snapshots"],
                 total_volume_gb=data["total_volume_gb"],
                 networks=data["networks"],  # ✅ Add this line
+                ports=data["ports"],
+                subnets=data["subnets"],
                 routers=data["routers"],
                 floating_ips=data["floating_ips"],
                 security_groups=data["security_groups"],
