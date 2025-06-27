@@ -97,8 +97,7 @@ class ProjectTypeSerializer(serializers.ModelSerializer):
             "injected_files", "injected_file_content_bytes",
             "volumes", "volume_snapshots", "total_volume_gb",
             "networks", "routers", "ports", "subnets",
-            "floating_ips", "security_groups", "security_group_rules",
-            "created_at", "updated_at"  # if your model has these fields
+            "floating_ips", "security_groups", "security_group_rules"
         ]
 
 
