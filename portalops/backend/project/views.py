@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from userauth.permissions import IsAdmin
 
 from overview.tasks import redis_client
-from .models import ProjectType
+from .models import ProjectType, ProjectUserMapping, Project
 from utils.conn import vl_connect_with_token
 
 
@@ -114,3 +114,33 @@ class ListProjectTypeView(APIView):
                 {"error": f"❌ Failed to fetch Project Types: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class AllProjectsOverview(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        projects = Project.objects.select_related("type").all()
+
+        # Preload user mappings into a dict: {project_id: mapping}
+        mappings = {
+            m.project_id: m for m in ProjectUserMapping.objects
+        }
+
+        result = []
+        for project in projects:
+            project_type = project.type
+            mapping = mappings.get(project.id)
+
+            result.append({
+                "project_id": project.id,
+                "project_name": project.name,
+                "openstack_id": project.openstack_id,
+                "project_type": {
+                    "id": project_type.id if project_type else None,
+                    "name": project_type.name if project_type else None,
+                },
+                "user_id": mapping.user.id if mapping else None
+            })
+
+        return Response(result)

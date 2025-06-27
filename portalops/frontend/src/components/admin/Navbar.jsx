@@ -188,34 +188,34 @@ const Navbar = () => {
               >
                 <li>
                   <a
-                    href="/volumes"
+                    href="/admin/products"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
-                    Project
+                    Projects
                   </a>
                 </li>
                  <li>
                   <a
-                    href="/packages"
+                    href="/admin/packages"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
-                    Package
+                    Packages
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/volumes"
+                    href="/admin/vms"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >
-                    Volumes
+                    VMs
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/snapshots"
+                    href="/"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >

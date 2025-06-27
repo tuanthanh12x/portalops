@@ -28,13 +28,13 @@ const ProjectTypeListPage = () => {
 
       <header className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-between mb-1 mt-8">
         <h2 className="text-4xl font-bold tracking-tight text-indigo-400 drop-shadow-md font-fantasy">
-          🧩 Project Types
+          🧩 Project Packages
         </h2>
         <Link
-          to="/create-project-type"
+          to="/admin/create-package"
           className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold shadow-lg transition focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
-          + Create Project Type
+          + Create Project Package
         </Link>
       </header>
 
@@ -42,7 +42,7 @@ const ProjectTypeListPage = () => {
         <table className="min-w-full divide-y divide-gray-700 text-sm">
           <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
             <tr>
-              {["Name", "Price ($/mo)", "RAM (MB)", "vCPUs", "Instances", "Volumes", "Total GB", "Floating IPs", "Created", "ID"].map(
+              {["Name", "Price ($/mo)", "RAM (MB)", "vCPUs", "Instances", "Volumes", "Total GB", "Floating IPs", "ID"].map(
                 (header) => (
                   <th key={header} className="px-6 py-4 text-left font-semibold">
                     {header}
@@ -55,13 +55,13 @@ const ProjectTypeListPage = () => {
             {loading ? (
               <tr>
                 <td colSpan="10" className="text-center py-10 text-gray-500 font-medium">
-                  ⏳ Loading project types...
+                  ⏳ Loading project packages...
                 </td>
               </tr>
             ) : projectTypes.length === 0 ? (
               <tr>
                 <td colSpan="10" className="text-center py-10 text-gray-500 font-medium">
-                  🚫 No project types found.
+                  🚫 No project packages found.
                 </td>
               </tr>
             ) : (
@@ -75,12 +75,6 @@ const ProjectTypeListPage = () => {
                   <td className="px-6 py-4">{pt.volumes}</td>
                   <td className="px-6 py-4">{pt.total_volume_gb}</td>
                   <td className="px-6 py-4">{pt.floating_ips}</td>
-                  <td
-                    className="px-6 py-4"
-                    title={new Date(pt.created_at).toLocaleString()}
-                  >
-                    {new Date(pt.created_at).toLocaleDateString()}
-                  </td>
                   <td className="px-6 py-4 text-xs break-words">{pt.id}</td>
                 </tr>
               ))

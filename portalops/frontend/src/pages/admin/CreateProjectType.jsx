@@ -43,7 +43,7 @@ export default function CreateProjectTypePage() {
     try {
       await axiosInstance.post('/project/project-package/', formData);
       setPopup({ message: '✅ Project Package created successfully.' });
-      navigate('/admin-dashboard');
+      navigate('/admin/packages');
     } catch (err) {
       setError(err.response?.data?.error || '❌ Failed to create project type.');
     }
