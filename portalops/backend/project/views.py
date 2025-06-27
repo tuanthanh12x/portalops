@@ -9,6 +9,7 @@ from overview.tasks import redis_client
 from .models import ProjectType, ProjectUserMapping, Project
 from utils.conn import vl_connect_with_token
 
+from utils.conn import connect_with_token_v5
 
 
 class CreateProjectTypeView(APIView):
@@ -103,6 +104,7 @@ class ProjectTypeSerializer(serializers.ModelSerializer):
 
 class ListProjectTypeView(APIView):
     permission_classes = [IsAdmin]
+    user=
 
     def get(self, request):
         try:
@@ -116,26 +118,40 @@ class ListProjectTypeView(APIView):
             )
 
 class AllProjectsOverview(APIView):
-    permission_classes = [ IsAdmin]
+    permission_classes = [IsAdmin]
 
     def get(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+
+        token_bytes = redis_client.get(token_key)
+        if not token_bytes:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        token = token_bytes.decode()
+        conn = connect_with_token_v5(token, project_id)
+
         projects = Project.objects.select_related("type").all()
 
-        # Preload mappings: list of mappings per project
-        mappings = (
-            ProjectUserMapping.objects.select_related("user")
-            .order_by("joined_at")  # optional: get first joined user
-        )
-
-        # Build {project_id: first_user_id}
-        project_to_user = {}
-        for mapping in mappings:
-            if mapping.project_id not in project_to_user:
-                project_to_user[mapping.project_id] = mapping.user.id
+        # Build project_id -> user_id mapping
+        user_map = {}
+        for mapping in ProjectUserMapping.objects.select_related("user").order_by("joined_at"):
+            if mapping.project_id not in user_map:
+                user_map[mapping.project_id] = mapping.user.id
 
         result = []
         for project in projects:
             project_type = project.type
+            openstack_status = None
+
+            # Get OpenStack project status (if project exists in Keystone)
+            try:
+                os_project = conn.identity.get_project(project.openstack_id)
+                openstack_status = "enabled" if os_project.is_enabled else "disabled"
+            except Exception as e:
+                openstack_status = f"❌ error: {str(e)}"
+
             result.append({
                 "project_id": project.id,
                 "project_name": project.name,
@@ -144,7 +160,8 @@ class AllProjectsOverview(APIView):
                     "id": project_type.id if project_type else None,
                     "name": project_type.name if project_type else None,
                 },
-                "user_id": project_to_user.get(project.id)  # None if not assigned
+                "user_id": user_map.get(project.id),
+                "status": openstack_status,
             })
 
         return Response(result)

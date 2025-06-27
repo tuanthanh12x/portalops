@@ -30,6 +30,7 @@ import FloatingIPListPage from "../pages/client/FloatingIPPage";
 import InstancesPage from "../pages/admin/InstancesPage";
 import CreateProjectTypePage from "../pages/admin/CreateProjectType";
 import ProjectTypeListPage from "../pages/admin/PackagePage";
+import ProjectListPage from "../pages/admin/ProjectListPage";
 function AppRoutes() {
   return (
     <Router>
@@ -62,7 +63,7 @@ function AppRoutes() {
           <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
           <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
           <Route path="/" element={<VolumeSnapshotListPage />} />
-        </Route>
+      
 
 
 
@@ -75,6 +76,8 @@ function AppRoutes() {
        <Route path="/admin/instances" element={< InstancesPage />} />
        <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
        <Route path="/admin/packages" element={< ProjectTypeListPage />} />
+  <Route path="/admin/projects" element={< ProjectListPage />} />
+  </Route>
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />

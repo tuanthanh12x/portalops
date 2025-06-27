@@ -188,7 +188,7 @@ const Navbar = () => {
               >
                 <li>
                   <a
-                    href="/admin/products"
+                    href="/admin/projects"
                     className="block px-5 py-3 hover:bg-gray-700 transition-colors"
                     role="menuitem"
                   >

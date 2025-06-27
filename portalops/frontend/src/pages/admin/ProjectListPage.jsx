@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/admin/Navbar";
-
+import { Link } from "react-router-dom";
 const ProjectListPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,13 +29,19 @@ const ProjectListPage = () => {
         <h2 className="text-4xl font-bold tracking-tight text-indigo-400 drop-shadow-md font-fantasy">
           🏗️ Project List
         </h2>
+         <Link
+          to="/admin/create-project"
+          className="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold shadow-lg transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          + Create Project Package
+        </Link>
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-7xl overflow-x-auto rounded-xl bg-black/30 backdrop-blur-lg shadow-xl border border-gray-700">
         <table className="min-w-full divide-y divide-gray-700 text-sm">
           <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
             <tr>
-              {["Name", "OpenStack ID", "Type ID", "Type Name", "User ID"].map((header) => (
+              {["Name", "OpenStack ID", "Type ID", "Type Name", "Owned User ID","Status"].map((header) => (
                 <th key={header} className="px-6 py-4 text-left font-semibold">
                   {header}
                 </th>
@@ -63,6 +69,7 @@ const ProjectListPage = () => {
                   <td className="px-6 py-4">{proj.project_type?.id ?? "—"}</td>
                   <td className="px-6 py-4">{proj.project_type?.name ?? "—"}</td>
                   <td className="px-6 py-4">{proj.user_id ?? "—"}</td>
+                   <td className="px-6 py-4">{proj.status ?? "—"}</td>
                 </tr>
               ))
             )}
