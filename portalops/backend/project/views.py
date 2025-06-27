@@ -167,6 +167,7 @@ class AllProjectsOverview(APIView):
 
         return Response(result)
 
+    
 class CreateProjectView(APIView):
     permission_classes = [IsAdmin]
 
@@ -179,7 +180,7 @@ class CreateProjectView(APIView):
         if not token_bytes:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        token = token_bytes
+        token = token_bytes.decode()
         conn = connect_with_token_v5(token, project_id)
 
         # Step 1: Parse input
@@ -204,7 +205,7 @@ class CreateProjectView(APIView):
 
             # Step 3: Apply quotas from ProjectType
             try:
-                conn.compute.update_quota(os_project.id, **{
+                conn.set_compute_quotas(project_id=os_project.id, quotas={
                     "instances": project_type.instances,
                     "cores": project_type.vcpus,
                     "ram": project_type.ram,
@@ -216,7 +217,7 @@ class CreateProjectView(APIView):
                     "injected_file_content_bytes": project_type.injected_file_content_bytes,
                 })
 
-                conn.network.update_quota(os_project.id, **{
+                conn.set_network_quotas(project_id=os_project.id, quotas={
                     "floatingip": project_type.floating_ips,
                     "network": project_type.networks,
                     "port": project_type.ports,
@@ -226,14 +227,14 @@ class CreateProjectView(APIView):
                     "subnet": project_type.subnets,
                 })
 
-                conn.set_compute_quotas(os_project.id, **{
+                conn.set_volume_quotas(project_id=os_project.id, quotas={
                     "volumes": project_type.volumes,
                     "snapshots": project_type.volume_snapshots,
                     "gigabytes": project_type.total_volume_gb,
                 })
             except SDKException as quota_error:
                 return Response({
-                    "error": f"OpenStack project created, but failed to apply quotas: {quota_error}"
+                    "error": f"OpenStack project created, but failed to apply quotas: {str(quota_error)}"
                 }, status=500)
 
             # Step 4: Create local project record
