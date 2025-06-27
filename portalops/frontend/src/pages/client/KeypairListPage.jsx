@@ -23,14 +23,18 @@ const KeypairListPage = () => {
   }, []);
 
   const handleCopy = async (key, name) => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(key);
       setCopiedKey(name);
       setTimeout(() => setCopiedKey(null), 1500);
     } catch (err) {
-      console.error("Copy failed:", err);
+      console.error("Clipboard write failed:", err);
     }
-  };
+  } else {
+    alert("❌ Clipboard API is not supported in this browser or environment.");
+  }
+};
 
   return (
     <section className="min-h-screen text-white">
