@@ -28,7 +28,7 @@ import NetworkListPage from "../pages/client/Network";
 import { CreateFloatingIPPage, CreateNetworkPage } from "../pages/client/CreateNetworkPage";
 import FloatingIPListPage from "../pages/client/FloatingIPPage";
 import InstancesPage from "../pages/admin/InstancesPage";
-import CreateFlavorPage from "../pages/admin/CreateProjectType";
+import CreateProjectTypePage from "../pages/admin/CreateProjectType";
 function AppRoutes() {
   return (
     <Router>
@@ -72,7 +72,7 @@ function AppRoutes() {
         <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/users-manager" element={<UserManagementPage />} />
        <Route path="/admin/instances" element={< InstancesPage />} />
-       <Route path="/admin/create-flavor" element={< CreateFlavorPage />} />
+       <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
 
 
         {/* Redirect unknown routes to Home */}
