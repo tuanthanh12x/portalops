@@ -226,7 +226,7 @@ class CreateProjectView(APIView):
                     "subnet": project_type.subnets,
                 })
 
-                conn.volume.update_quota(os_project.id, **{
+                conn.set_compute_quotas(os_project.id, **{
                     "volumes": project_type.volumes,
                     "snapshots": project_type.volume_snapshots,
                     "gigabytes": project_type.total_volume_gb,
