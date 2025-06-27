@@ -104,7 +104,6 @@ class ProjectTypeSerializer(serializers.ModelSerializer):
 
 class ListProjectTypeView(APIView):
     permission_classes = [IsAdmin]
-    user=
 
     def get(self, request):
         try:
