@@ -41,7 +41,7 @@ const ProjectListPage = () => {
         <table className="min-w-full divide-y divide-gray-700 text-sm">
           <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
             <tr>
-              {["Name", "OpenStack ID", "Type ID", "Type Name", "Owned User ID","Status"].map((header) => (
+              {["Name", "OpenStack ID", "Type Name", "Owned User ID","Status"].map((header) => (
                 <th key={header} className="px-6 py-4 text-left font-semibold">
                   {header}
                 </th>
@@ -66,7 +66,7 @@ const ProjectListPage = () => {
                 <tr key={proj.project_id} className="hover:bg-gray-900/30 transition">
                   <td className="px-6 py-4 font-medium">{proj.project_name}</td>
                   <td className="px-6 py-4 text-xs break-all">{proj.openstack_id}</td>
-                  <td className="px-6 py-4">{proj.project_type?.id ?? "—"}</td>
+                  {/* <td className="px-6 py-4">{proj.project_type?.id ?? "—"}</td> */}
                   <td className="px-6 py-4">{proj.project_type?.name ?? "—"}</td>
                   <td className="px-6 py-4">{proj.user_id ?? "—"}</td>
                    <td className="px-6 py-4">{proj.status ?? "—"}</td>

@@ -201,7 +201,41 @@ class CreateProjectView(APIView):
                 domain_id="default"
             )
 
-            # Step 3: Create local project
+            # Step 3: Apply quotas from ProjectType
+            try:
+                conn.compute.update_quota(os_project.id, **{
+                    "instances": project_type.instances,
+                    "cores": project_type.vcpus,
+                    "ram": project_type.ram,
+                    "key_pairs": project_type.key_pairs,
+                    "server_groups": project_type.server_groups,
+                    "server_group_members": project_type.server_group_members,
+                    "metadata_items": project_type.metadata_items,
+                    "injected_files": project_type.injected_files,
+                    "injected_file_content_bytes": project_type.injected_file_content_bytes,
+                })
+
+                conn.network.update_quota(os_project.id, **{
+                    "floatingip": project_type.floating_ips,
+                    "network": project_type.networks,
+                    "port": project_type.ports,
+                    "router": project_type.routers,
+                    "security_group": project_type.security_groups,
+                    "security_group_rule": project_type.security_group_rules,
+                    "subnet": project_type.subnets,
+                })
+
+                conn.volume.update_quota(os_project.id, **{
+                    "volumes": project_type.volumes,
+                    "snapshots": project_type.volume_snapshots,
+                    "gigabytes": project_type.total_volume_gb,
+                })
+            except SDKException as quota_error:
+                return Response({
+                    "error": f"OpenStack project created, but failed to apply quotas: {quota_error}"
+                }, status=500)
+
+            # Step 4: Create local project record
             new_project = Project.objects.create(
                 name=name,
                 description=description,
@@ -211,7 +245,7 @@ class CreateProjectView(APIView):
 
             mapped_user_id = None
 
-            # Step 4 (optional): assign project owner
+            # Step 5 (optional): assign project owner
             if assign_user_id:
                 user_obj = get_object_or_404(User, id=assign_user_id)
                 ProjectUserMapping.objects.create(
