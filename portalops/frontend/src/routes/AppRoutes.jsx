@@ -74,7 +74,7 @@ function AppRoutes() {
         <Route path="/users-manager" element={<UserManagementPage />} />
        <Route path="/admin/instances" element={< InstancesPage />} />
        <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
-       <Route path="/admin/package-list" element={< ProjectTypeListPage />} />
+       <Route path="/admin/packages" element={< ProjectTypeListPage />} />
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />
