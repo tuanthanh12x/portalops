@@ -205,7 +205,7 @@ class CreateProjectView(APIView):
 
             # Step 3: Apply quotas from ProjectType
             try:
-                conn.set_compute_quotas(project_id=os_project.id, quotas={
+                conn.set_compute_quotas(os_project.id, quotas={
                     "instances": project_type.instances,
                     "cores": project_type.vcpus,
                     "ram": project_type.ram,
