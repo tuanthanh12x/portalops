@@ -128,7 +128,7 @@ class AllProjectsOverview(APIView):
         if not token_bytes:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        token = token_bytes.decode()
+        token = token_bytes
         conn = connect_with_token_v5(token, project_id)
 
         projects = Project.objects.select_related("type").all()
