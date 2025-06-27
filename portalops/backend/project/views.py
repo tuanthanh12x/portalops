@@ -116,7 +116,7 @@ class ListProjectTypeView(APIView):
             )
 
 class AllProjectsOverview(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [ IsAdmin]
 
     def get(self, request):
         projects = Project.objects.select_related("type").all()
