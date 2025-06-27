@@ -205,33 +205,40 @@ class CreateProjectView(APIView):
 
             # Step 3: Apply quotas from ProjectType
             try:
-                conn.set_compute_quotas(os_project.id, quotas={
-                    "instances": project_type.instances,
-                    "cores": project_type.vcpus,
-                    "ram": project_type.ram,
-                    "key_pairs": project_type.key_pairs,
-                    "server_groups": project_type.server_groups,
-                    "server_group_members": project_type.server_group_members,
-                    "metadata_items": project_type.metadata_items,
-                    "injected_files": project_type.injected_files,
-                    "injected_file_content_bytes": project_type.injected_file_content_bytes,
-                })
+                # ✅ Compute quotas
+                conn.set_compute_quotas(
+                    os_project.id,
+                    instances=project_type.instances,
+                    cores=project_type.vcpus,
+                    ram=project_type.ram,
+                    key_pairs=project_type.key_pairs,
+                    server_groups=project_type.server_groups,
+                    server_group_members=project_type.server_group_members,
+                    metadata_items=project_type.metadata_items,
+                    injected_files=project_type.injected_files,
+                    injected_file_content_bytes=project_type.injected_file_content_bytes
+                )
 
-                conn.set_network_quotas(project_id=os_project.id, quotas={
-                    "floatingip": project_type.floating_ips,
-                    "network": project_type.networks,
-                    "port": project_type.ports,
-                    "router": project_type.routers,
-                    "security_group": project_type.security_groups,
-                    "security_group_rule": project_type.security_group_rules,
-                    "subnet": project_type.subnets,
-                })
+                # ✅ Network quotas
+                conn.set_network_quotas(
+                    os_project.id,
+                    floatingip=project_type.floating_ips,
+                    network=project_type.networks,
+                    port=project_type.ports,
+                    router=project_type.routers,
+                    security_group=project_type.security_groups,
+                    security_group_rule=project_type.security_group_rules,
+                    subnet=project_type.subnets
+                )
 
-                conn.set_volume_quotas(project_id=os_project.id, quotas={
-                    "volumes": project_type.volumes,
-                    "snapshots": project_type.volume_snapshots,
-                    "gigabytes": project_type.total_volume_gb,
-                })
+                # ✅ Volume quotas
+                conn.set_volume_quotas(
+                    os_project.id,
+                    volumes=project_type.volumes,
+                    snapshots=project_type.volume_snapshots,
+                    gigabytes=project_type.total_volume_gb
+                )
+
             except SDKException as quota_error:
                 return Response({
                     "error": f"OpenStack project created, but failed to apply quotas: {str(quota_error)}"
