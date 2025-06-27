@@ -85,3 +85,33 @@ class CreateProjectTypeView(APIView):
                 {"error": f"❌ Failed to create Project Type: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ProjectTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectType
+        fields = [
+            "id", "name", "price_per_month", "description",
+            "instances", "vcpus", "ram",
+            "metadata_items", "key_pairs", "server_groups", "server_group_members",
+            "injected_files", "injected_file_content_bytes",
+            "volumes", "volume_snapshots", "total_volume_gb",
+            "networks", "routers", "ports", "subnets",
+            "floating_ips", "security_groups", "security_group_rules",
+            "created_at", "updated_at"  # if your model has these fields
+        ]
+
+
+class ListProjectTypeView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            project_types = ProjectType.objects.all().order_by("-id")
+            serializer = ProjectTypeSerializer(project_types, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"❌ Failed to fetch Project Types: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

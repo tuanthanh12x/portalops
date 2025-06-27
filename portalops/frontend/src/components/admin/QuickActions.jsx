@@ -29,12 +29,12 @@ const QuickActions = () => {
   const actions = [
     { id: 'launchInstance', text: 'Launch Instance', to: '/create-user' },
     { id: 'createProject', text: 'Create Project', to: '/create-user' },
+        { id: 'createFlavor', text: 'Create Package', to: '/admin/create-package' },
     { id: 'createUser', text: 'Create User', to: '/create-user' },
     { id: 'createVolume', text: 'Create Volume', to: '/volumes/create' },
     { id: 'createNetwork', text: 'Create Network', to: '/networks/create' },
     { id: 'securityGroups', text: 'Security Groups', to: '/security-groups' },
     { id: 'uploadImage', text: 'Upload Image', to: '/images/upload' },
-    { id: 'createFlavor', text: 'Create Flavor', to: '/admin/create-flavor' },
     { id: 'serviceStatus', text: 'Service Status', to: '/admin/services' },
     { id: 'manageRoles', text: 'Manage Roles', to: '/admin/roles' },
     { id: 'createRouter', text: 'Create Router', to: '/routers/create' },

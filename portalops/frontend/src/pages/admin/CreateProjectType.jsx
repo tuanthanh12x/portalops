@@ -42,8 +42,8 @@ export default function CreateProjectTypePage() {
     e.preventDefault();
     try {
       await axiosInstance.post('/project/project-package/', formData);
-      setPopup({ message: '✅ Project Type created successfully.' });
-      navigate('/project-types');
+      setPopup({ message: '✅ Project Package created successfully.' });
+      navigate('/admin-dashboard');
     } catch (err) {
       setError(err.response?.data?.error || '❌ Failed to create project type.');
     }
@@ -62,7 +62,7 @@ export default function CreateProjectTypePage() {
       <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in">
         <div className="backdrop-blur-lg bg-black/40 border border-gray-700 rounded-2xl shadow-2xl p-8 space-y-6">
           <h2 className="text-3xl font-bold text-indigo-400 text-center tracking-wide drop-shadow">
-            🛠️ Create New Project Type
+            🛠️ Create New Project Package
           </h2>
 
           {error && (
@@ -99,7 +99,7 @@ export default function CreateProjectTypePage() {
                 type="submit"
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all shadow-md"
               >
-                ➕ Create Project Type
+                ➕ Create Project Package
               </button>
             </div>
           </form>

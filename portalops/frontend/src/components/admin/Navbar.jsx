@@ -161,7 +161,6 @@ const Navbar = () => {
             )}
           </li>
 
-          {/* Storage Dropdown */}
           <li className="relative" ref={storageRef}>
             <button
               onClick={() => toggleDropdown('storage')}
@@ -187,6 +186,24 @@ const Navbar = () => {
                 role="menu"
                 aria-label="Storage submenu"
               >
+                <li>
+                  <a
+                    href="/volumes"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
+                  >
+                    Project
+                  </a>
+                </li>
+                 <li>
+                  <a
+                    href="/packages"
+                    className="block px-5 py-3 hover:bg-gray-700 transition-colors"
+                    role="menuitem"
+                  >
+                    Package
+                  </a>
+                </li>
                 <li>
                   <a
                     href="/volumes"
