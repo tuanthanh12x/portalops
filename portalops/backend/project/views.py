@@ -21,7 +21,7 @@ class CreateProjectTypeView(APIView):
 
         instances = serializers.IntegerField(min_value=0)
         vcpus = serializers.IntegerField(min_value=0)
-        ram = serializers.IntegerField(min_value=0)  # in MB
+        ram = serializers.IntegerField(min_value=0)
 
         metadata_items = serializers.IntegerField(min_value=0, default=128)
         key_pairs = serializers.IntegerField(min_value=0, default=100)
@@ -34,6 +34,7 @@ class CreateProjectTypeView(APIView):
         volume_snapshots = serializers.IntegerField(min_value=0)
         total_volume_gb = serializers.IntegerField(min_value=0)
 
+        networks = serializers.IntegerField(min_value=0, default=100)  # ✅ Add this line
         routers = serializers.IntegerField(min_value=0, default=10)
         floating_ips = serializers.IntegerField(min_value=0, default=50)
         security_groups = serializers.IntegerField(min_value=0, default=10)
@@ -63,6 +64,7 @@ class CreateProjectTypeView(APIView):
                 volumes=data["volumes"],
                 volume_snapshots=data["volume_snapshots"],
                 total_volume_gb=data["total_volume_gb"],
+                networks=data["networks"],  # ✅ Add this line
                 routers=data["routers"],
                 floating_ips=data["floating_ips"],
                 security_groups=data["security_groups"],
