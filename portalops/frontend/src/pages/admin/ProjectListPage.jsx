@@ -48,7 +48,7 @@ const ProjectListPage = () => {
 
     const handleAssign = async () => {
         try {
-            await axiosInstance.post("/project/assign-user/", {
+            await axiosInstance.post("/project/assign-user-to-project/", {
                 project_id: selectedProjectId,
                 user_id: selectedUserId,
             });
