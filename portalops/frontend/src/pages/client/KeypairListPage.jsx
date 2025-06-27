@@ -22,19 +22,41 @@ const KeypairListPage = () => {
     fetchKeypairs();
   }, []);
 
-  const handleCopy = async (key, name) => {
+ const handleCopy = (key, name) => {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(key);
-      setCopiedKey(name);
-      setTimeout(() => setCopiedKey(null), 1500);
-    } catch (err) {
-      console.error("Clipboard write failed:", err);
-    }
+    navigator.clipboard.writeText(key)
+      .then(() => {
+        setCopiedKey(name);
+        setTimeout(() => setCopiedKey(null), 1500);
+      })
+      .catch((err) => {
+        console.error("Clipboard write failed:", err);
+      });
   } else {
-    alert("❌ Clipboard API is not supported in this browser or environment.");
+    // Fallback for unsupported environments
+    const textarea = document.createElement("textarea");
+    textarea.value = key;
+    textarea.style.position = "fixed"; // Prevent scrolling to bottom
+    textarea.style.opacity = 0;
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        setCopiedKey(name);
+        setTimeout(() => setCopiedKey(null), 1500);
+      } else {
+        alert("❌ Copy failed. Please copy manually.");
+      }
+    } catch (err) {
+      console.error("Fallback copy failed:", err);
+      alert("❌ Copy not supported.");
+    }
+    document.body.removeChild(textarea);
   }
 };
+
 
   return (
     <section className="min-h-screen text-white">
