@@ -33,7 +33,6 @@ from .permissions import IsAdmin
 from .serializers import CreateUserSerializer, RoleSerializer, UserListSerializer
 from project.models import ProjectUserMapping
 
-
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
@@ -52,7 +51,7 @@ class LoginView(APIView):
         except UserProfile.DoesNotExist:
             return Response({"detail": "User profile not found."}, status=500)
 
-        # 2FA logic
+        # 2FA check
         if profile.two_factor_enabled:
             session_key = str(uuid.uuid4())
             redis_client.set(f"2fa_session:{session_key}", f"{username}:{password}", ex=300)
@@ -62,11 +61,11 @@ class LoginView(APIView):
                 "message": "2FA required. Please verify your OTP code."
             })
 
-        # Roles
+        # User roles
         roles = list(profile.role_mappings.select_related("role")
                      .values_list("role__name", flat=True))
 
-        # Get user's active project mappings
+        # Project assignment check
         project_mappings = ProjectUserMapping.objects.filter(user=user, is_active=True)
         project_count = project_mappings.count()
         project = None
@@ -87,54 +86,56 @@ class LoginView(APIView):
                 project = project_mappings.get(project__openstack_id=selected_project_id).project
             except ProjectUserMapping.DoesNotExist:
                 return Response({"detail": "Invalid or unauthorized project selected."}, status=403)
+
         elif project_count == 1:
             project = project_mappings.first().project
             redis_client.set(f"current_project:{username}", f"{project.openstack_id}", ex=30000)
 
-        else:
-            return Response({"detail": "No active projects assigned to this user."}, status=403)
-        try:
-            conn = connection.Connection(
-                auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                username=username,
-                password=password,
-                project_id=project.openstack_id,
-                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                identity_api_version='3',
-            )
-            conn.authorize()
-            scoped_token = conn.session.get_token()
+        # If project is available, connect to OpenStack
+        if project:
+            try:
+                conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=username,
+                    password=password,
+                    project_id=project.openstack_id,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version='3',
+                )
+                conn.authorize()
+                scoped_token = conn.session.get_token()
 
-            # Optional: unscoped token
-            unscoped_conn = connection.Connection(
-                auth_url=settings.OPENSTACK_AUTH["auth_url"],
-                username=username,
-                password=password,
-                user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
-                project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
-                identity_api_version='3',
-            )
-            unscoped_conn.authorize()
-            unscoped_token = unscoped_conn.session.get_token()
+                # Optional: unscoped token
+                unscoped_conn = connection.Connection(
+                    auth_url=settings.OPENSTACK_AUTH["auth_url"],
+                    username=username,
+                    password=password,
+                    user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
+                    project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
+                    identity_api_version='3',
+                )
+                unscoped_conn.authorize()
+                unscoped_token = unscoped_conn.session.get_token()
 
-            redis_client.set(f"keystone_token:{username}:{project.openstack_id}", scoped_token, ex=3600)
-            redis_client.set(f"unscope_user_keystone_token:{username}", unscoped_token, ex=36000)
+                redis_client.set(f"keystone_token:{username}:{project.openstack_id}", scoped_token, ex=3600)
+                redis_client.set(f"unscope_user_keystone_token:{username}", unscoped_token, ex=36000)
 
-        except Exception as e:
-            print(f"[⚠️ OpenStack Error] {e}")
-            return Response({"detail": "Failed to authenticate with OpenStack."}, status=502)
+            except Exception as e:
+                print(f"[⚠️ OpenStack Error] {e}")
+                return Response({"detail": "Failed to authenticate with OpenStack."}, status=502)
 
         # Update last login
         profile.last_login = format_last_login(now())
         profile.save()
 
-        # JWT
+        # Generate JWT
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
         refresh["email"] = user.email
         refresh["roles"] = roles
-        refresh["project_id"] = project.openstack_id
+        if project:
+            refresh["project_id"] = project.openstack_id
 
         response = JsonResponse({
             "message": "Login successful.",
@@ -145,17 +146,13 @@ class LoginView(APIView):
             value=str(refresh),
             httponly=True,
             secure=False,
-
-
-            #for prod:
-            # samesite="Strict",
-            # path="/api/auth/token/refresh/",
-
-            #for dev:
-            samesite="Lax",       # Cho phép gửi cookie khi POST từ trang khác
+            samesite="Lax",
             path="/"
         )
         return response
+
+
+
 class SwitchProjectView(APIView):
     # permission_classes = [IsAuthenticated]
 
