@@ -1,7 +1,6 @@
 from django.urls import path
 
-from .views import CreateProjectTypeView, ListProjectTypeView, AllProjectsOverviewForUser
-
+from .views import CreateProjectTypeView, ListProjectTypeView, AllProjectsOverview
 urlpatterns = [
     path("project-package/", CreateProjectTypeView.as_view(), name="create-project-package"),
     path("project-packages/list/", ListProjectTypeView.as_view()),
