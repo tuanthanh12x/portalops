@@ -167,7 +167,7 @@ class AllProjectsOverview(APIView):
 
         return Response(result)
 
-    
+
 class CreateProjectView(APIView):
     permission_classes = [IsAdmin]
 
@@ -180,7 +180,7 @@ class CreateProjectView(APIView):
         if not token_bytes:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        token = token_bytes.decode()
+        token = token_bytes
         conn = connect_with_token_v5(token, project_id)
 
         # Step 1: Parse input
