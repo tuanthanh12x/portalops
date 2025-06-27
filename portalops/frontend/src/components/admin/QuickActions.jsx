@@ -28,7 +28,7 @@ const ActionLinkButton = ({ icon, text, to }) => (
 const QuickActions = () => {
   const actions = [
     { id: 'launchInstance', text: 'Launch Instance', to: '/create-user' },
-    { id: 'createProject', text: 'Create Project', to: '/create-user' },
+    { id: 'createProject', text: 'Create Project', to: '/admin/create-project' },
         { id: 'createFlavor', text: 'Create Package', to: '/admin/create-package' },
     { id: 'createUser', text: 'Create User', to: '/create-user' },
     { id: 'createVolume', text: 'Create Volume', to: '/volumes/create' },

@@ -5,7 +5,7 @@ from .views import LoginView, SignUpView, RefreshTokenView, LogoutView, UserInfo
     ChangePasswordView, ForgotPasswordView, Verify2FASetupView, Generate2FAView, \
     UserProfileInfoView, UpdateUserProfileView, TWOFALoginView, CreateUserAPIView, RoleListAPIView, UserListView, \
     trigger_vm_sync, AdminUserDetailView, ImpersonateUserTokenView, UnimpersonateView, UserProjectListView, \
-    SwitchProjectView
+    SwitchProjectView, AListUserView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -33,6 +33,7 @@ urlpatterns = [
     path('create-user/', CreateUserAPIView.as_view(), name='create-user'),
     path('roles-list/', RoleListAPIView.as_view(), name='role-list'),
     path("users-list/", UserListView.as_view(), name="user-list"),
+    path("ausers-list/", AListUserView.as_view(), name="auser-list"),
     path("sync-vm-count/", trigger_vm_sync, name="sync-vm-count"),
     path('admin/users/<int:id>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
     path("impersonate-usertoken/", ImpersonateUserTokenView.as_view(), name="get-impersonate-user-token"),

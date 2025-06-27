@@ -401,12 +401,17 @@ class AccountOverviewView(APIView):
         return Response(serialize_user_profile(request.user))
 
 class ListUserView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
     def get(self, request):
         return Response(serialize_user_profile(request.user))
 
+class AListUserView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
 
+    def get(self, request):
+        users = User.objects.filter(is_active=True).values("id", "username")
+        return Response(list(users))
 
 class ResetPasswordConfirmView(APIView):
     permission_classes = [AllowAny]

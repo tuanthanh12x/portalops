@@ -13,6 +13,8 @@ from utils.conn import vl_connect_with_token
 
 from utils.conn import connect_with_token_v5
 
+from .serializers import AssignUserToProjectSerializer
+
 
 class CreateProjectTypeView(APIView):
     permission_classes = [IsAdmin]
@@ -279,3 +281,56 @@ class CreateProjectView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+
+class AssignUserToProjectView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+
+        token_bytes = redis_client.get(token_key)
+        if not token_bytes:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        token = token_bytes
+        serializer = AssignUserToProjectSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        user = serializer.validated_data["user"]
+        project = serializer.validated_data["project"]
+
+        # Save to local mapping
+        mapping = ProjectUserMapping.objects.create(user=user, project=project)
+
+        # Get OpenStack connection with admin credentials
+        conn =connect_with_token_v5(token, project_id)
+
+        try:
+            # Get OpenStack user & project by ID
+            openstack_user = conn.identity.find_user(user.username)
+            openstack_project = conn.identity.find_project(project.openstack_id)
+
+            if not openstack_user or not openstack_project:
+                return Response({"error": "OpenStack user or project not found."}, status=404)
+
+            # Find 'member' role
+            member_role = conn.identity.find_role("member")
+            if not member_role:
+                return Response({"error": "OpenStack role 'member' not found."}, status=404)
+
+            # Assign role to user on project
+            conn.identity.assign_project_role_to_user(
+                project=openstack_project,
+                user=openstack_user,
+                role=member_role
+            )
+
+        except Exception as e:
+            mapping.delete()  # rollback local DB
+            return Response({"error": f"OpenStack error: {str(e)}"}, status=500)
+
+        return Response({"message": "✅ User assigned to project successfully."}, status=200)
