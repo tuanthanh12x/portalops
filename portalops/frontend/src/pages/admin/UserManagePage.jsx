@@ -81,7 +81,6 @@ export default function UserManagementPage() {
                 <th className="px-6 py-4 text-left">Email</th>
                 <th className="px-6 py-4 text-left">Role</th>
                 <th className="px-6 py-4 text-left">Status</th>
-                <th className="px-6 py-4 text-left">Resources</th>
                 <th className="px-6 py-4 text-left">Credits</th>
                 <th className="px-6 py-4 text-left">Date Joined</th>
                 <th className="px-6 py-4 text-left">Actions</th>
@@ -103,7 +102,6 @@ export default function UserManagementPage() {
                     <td className={`px-6 py-4 font-semibold ${user.status === "Active" ? "text-green-400" : "text-yellow-400"}`}>
                       {user.status}
                     </td>
-                    <td className="px-6 py-4">{user.resources}</td>
                     <td className="px-6 py-4">{user.credits}</td>
                     <td className="px-6 py-4">{new Date(user.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
