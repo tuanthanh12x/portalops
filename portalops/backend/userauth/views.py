@@ -129,6 +129,9 @@ class LoginView(APIView):
         profile.last_login = format_last_login(now())
         profile.save()
 
+        user.last_login = format_last_login(now())
+        user.save()
+
         # Generate JWT
         refresh = RefreshToken.for_user(user)
         refresh["username"] = user.username
