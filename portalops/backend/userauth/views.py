@@ -508,8 +508,8 @@ class ForgotPasswordView(APIView):
     def post(self, request):
         email = request.data.get("email")
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = get_user_model().objects.get(email=email)
+        except get_user_model().DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -520,8 +520,6 @@ class ForgotPasswordView(APIView):
 import pyotp
 import qrcode
 import io
-
-
 class Generate2FAView(APIView):
     permission_classes = [IsAuthenticated]
 

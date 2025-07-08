@@ -12,7 +12,7 @@ function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     try {
-      await axiosInstance.post('/forgot-password/', { email });
+      await axiosInstance.post('/auth/forgot-password/', { email });
       setSubmitted(true);
     } catch (err) {
       setError('An error occurred. Please try again.');
