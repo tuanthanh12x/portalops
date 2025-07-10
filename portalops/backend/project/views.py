@@ -422,7 +422,7 @@ class AdminProjectDetailView(APIView):
 
     def get(self, request, openstack_id):
         # 1. Fetch project from DB
-        project = get_object_or_404(Project, id=openstack_id)
+        project = get_object_or_404(Project, openstack_id=openstack_id)
         owner_mapping = ProjectUserMapping.objects.filter(project=project, role="admin", is_active=True).first()
         owner = owner_mapping.user if owner_mapping else None
 
