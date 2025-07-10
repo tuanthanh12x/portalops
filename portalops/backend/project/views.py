@@ -423,12 +423,13 @@ class AdminProjectDetailView(APIView):
     def get(self, request, openstack_id):
         # 1. Fetch project from DB
         project = get_object_or_404(Project, openstack_id=openstack_id)
+        project_id = request.auth.get("project_id")
         owner_mapping = ProjectUserMapping.objects.filter(project=project, role="admin", is_active=True).first()
         owner = owner_mapping.user if owner_mapping else None
 
         # 2. Get token from Redis
         username = request.user.username
-        token_key = f"keystone_token:{username}:{project.openstack_id}"
+        token_key = f"keystone_token:{username}:{project_id}"
         token = redis_client.get(token_key)
 
         if not token:
@@ -436,21 +437,23 @@ class AdminProjectDetailView(APIView):
 
         # 3. Connect to OpenStack
         try:
-            conn = connect_with_token_v5(token, project.openstack_id)
+            conn = connect_with_token_v5(token, project_id)
         except Exception as e:
             return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
 
         # 4. Query project usage and VM list
-        try:
-            # Usage
             compute_quota = conn.get_compute_usage(project.openstack_id)
+
+            def safe_get(quota_dict, key, field, default=0):
+                return quota_dict.get(key, {}).get(field, default)
+
             usage = {
-                "vcpus_used": compute_quota["vcpus"]["in_use"],
-                "vcpus_total": compute_quota["vcpus"]["limit"],
-                "ram_used": compute_quota["ram"]["in_use"],
-                "ram_total": compute_quota["ram"]["limit"],
-                "storage_used": compute_quota["disk"]["in_use"],
-                "storage_total": compute_quota["disk"]["limit"],
+                "vcpus_used": safe_get(compute_quota, "vcpus", "in_use"),
+                "vcpus_total": safe_get(compute_quota, "vcpus", "limit"),
+                "ram_used": safe_get(compute_quota, "ram", "in_use"),
+                "ram_total": safe_get(compute_quota, "ram", "limit"),
+                "storage_used": safe_get(compute_quota, "disk", "in_use"),
+                "storage_total": safe_get(compute_quota, "disk", "limit"),
             }
 
             # VMs
