@@ -450,7 +450,6 @@ class AdminProjectDetailView(APIView):
         # 4. Query resource limits and VM list
         compute_url = settings.OPENSTACK_COMPUTE_URL
         block_storage_url = settings.OPENSTACK_BLOCK_STORAGE_URL
-        admin_project_id=settings.OPENSTACK_BLOCK_STORAGE_URL
         try:
             # --- Compute limits ---
             nova_response = requests.get(
@@ -460,10 +459,7 @@ class AdminProjectDetailView(APIView):
             nova_response.raise_for_status()
             absolute = nova_response.json().get("limits", {}).get("absolute", {})
 
-            cpu_used = absolute.get("totalCoresUsed", 0)
-            cpu_limit = absolute.get("maxTotalCores", 0)
-            ram_used = absolute.get("totalRAMUsed", 0)
-            ram_limit = absolute.get("maxTotalRAMSize", 0)
+
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
@@ -474,7 +470,10 @@ class AdminProjectDetailView(APIView):
             )
             cinder_response.raise_for_status()
             quota = cinder_response.json().get("quota_set", {})
-
+            cpu_used = quota.get("gigabytes", {}).get("in_use", 0)
+            cpu_limit = quota.get("gigabytes", {}).get("limit", 0)
+            ram_used =quota.get("gigabytes", {}).get("in_use", 0)
+            ram_limit = quota.get("gigabytes", {}).get("limit", 0)
             storage_used = quota.get("gigabytes", {}).get("in_use", 0)
             storage_limit = quota.get("gigabytes", {}).get("limit", 0)
 
