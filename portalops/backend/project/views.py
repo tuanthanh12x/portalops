@@ -17,7 +17,7 @@ from utils.conn import vl_connect_with_token
 from utils.conn import connect_with_token_v5
 
 from .serializers import AssignUserToProjectSerializer
-from utils.conn import get_admin_token
+from utils.token import get_admin_token
 
 
 class CreateProjectTypeView(APIView):
