@@ -1,3 +1,5 @@
+import requests
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
 from openstack.exceptions import SDKException, ResourceNotFound
@@ -416,6 +418,7 @@ class AssignUserToProjectView(APIView):
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
 
 
+
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
 
@@ -437,28 +440,52 @@ class AdminProjectDetailView(APIView):
         if not token:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        # 3. Connect to OpenStack
+        # 3. Connect to OpenStack (for listing VMs only)
         try:
             conn = connect_with_token_v5(token, project_id)
         except Exception as e:
             return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
 
-        # 4. Query project usage and VM list
-        def safe_get(quota_dict, key, field, default=0):
-            return quota_dict.get(key, {}).get(field, default)
+        # 4. Query resource limits and VM list
+        compute_url = settings.OPENSTACK_COMPUTE_URL
+        block_storage_url = settings.OPENSTACK_BLOCK_STORAGE_URL
 
         try:
-            compute_quota = conn.get_compute_usage(project.openstack_id)
+            # --- Compute limits ---
+            nova_response = requests.get(
+                f"{compute_url}/limits",
+                headers={"X-Auth-Token": token}
+            )
+            nova_response.raise_for_status()
+            absolute = nova_response.json().get("limits", {}).get("absolute", {})
+
+            cpu_used = absolute.get("totalCoresUsed", 0)
+            cpu_limit = absolute.get("maxTotalCores", 0)
+            ram_used = absolute.get("totalRAMUsed", 0)
+            ram_limit = absolute.get("maxTotalRAMSize", 0)
+
+            # --- Block storage limits ---
+            cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{project_id}?usage=True"
+            cinder_response = requests.get(
+                cinder_url,
+                headers={"X-Auth-Token": token}
+            )
+            cinder_response.raise_for_status()
+            quota = cinder_response.json().get("quota_set", {})
+
+            storage_used = quota.get("gigabytes", {}).get("in_use", 0)
+            storage_limit = quota.get("gigabytes", {}).get("limit", 0)
+
             usage = {
-                "vcpus_used": safe_get(compute_quota, "vcpus", "in_use"),
-                "vcpus_total": safe_get(compute_quota, "vcpus", "limit"),
-                "ram_used": safe_get(compute_quota, "ram", "in_use"),
-                "ram_total": safe_get(compute_quota, "ram", "limit"),
-                "storage_used": safe_get(compute_quota, "disk", "in_use"),
-                "storage_total": safe_get(compute_quota, "disk", "limit"),
+                "vcpus_used": cpu_used,
+                "vcpus_total": cpu_limit,
+                "ram_used": ram_used,
+                "ram_total": ram_limit,
+                "storage_used": storage_used,
+                "storage_total": storage_limit,
             }
 
-            # ⚠️ list_servers() doesn't take project_id directly → filter manually
+            # --- VM list ---
             servers = conn.list_servers()
             vms = [
                 {
@@ -471,6 +498,7 @@ class AdminProjectDetailView(APIView):
                 for server in servers
                 if getattr(server, "project_id", None) == project.openstack_id
             ]
+
         except Exception as e:
             return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
 
