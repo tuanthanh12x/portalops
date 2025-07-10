@@ -471,6 +471,7 @@ class AdminProjectDetailView(APIView):
                     "created": server.created_at[:10] if server.created_at else "",
                 }
                 for server in servers
+                if getattr(server, "project_id", None) == project.openstack_id
             ]
 
         except Exception as e:
