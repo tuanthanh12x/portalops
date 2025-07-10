@@ -416,7 +416,6 @@ class AssignUserToProjectView(APIView):
 
 
 
-
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
 
@@ -424,7 +423,10 @@ class AdminProjectDetailView(APIView):
         # 1. Fetch project from DB
         project = get_object_or_404(Project, openstack_id=openstack_id)
         project_id = request.auth.get("project_id")
-        owner_mapping = ProjectUserMapping.objects.filter(project=project, role="admin", is_active=True).first()
+
+        owner_mapping = ProjectUserMapping.objects.filter(
+            project=project, role="admin", is_active=True
+        ).first()
         owner = owner_mapping.user if owner_mapping else None
 
         # 2. Get token from Redis
@@ -442,11 +444,14 @@ class AdminProjectDetailView(APIView):
             return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
 
         # 4. Query project usage and VM list
+        usage = {}
+        vms = []
+
+        def safe_get(quota_dict, key, field, default=0):
+            return quota_dict.get(key, {}).get(field, default)
+
+        try:
             compute_quota = conn.get_compute_usage(project.openstack_id)
-
-            def safe_get(quota_dict, key, field, default=0):
-                return quota_dict.get(key, {}).get(field, default)
-
             usage = {
                 "vcpus_used": safe_get(compute_quota, "vcpus", "in_use"),
                 "vcpus_total": safe_get(compute_quota, "vcpus", "limit"),
@@ -456,20 +461,20 @@ class AdminProjectDetailView(APIView):
                 "storage_total": safe_get(compute_quota, "disk", "limit"),
             }
 
-            # VMs
             servers = conn.list_servers(project_id=project.openstack_id)
-            vms = []
-            for server in servers:
-                vms.append({
+            vms = [
+                {
                     "id": server.id,
                     "name": server.name,
                     "status": server.status,
                     "ip": server.addresses.get("private", [{}])[0].get("addr", "N/A"),
                     "created": server.created_at[:10] if server.created_at else "",
-                })
+                }
+                for server in servers
+            ]
 
-        except ResourceNotFound:
-            return Response({"error": "Failed to fetch usage or VM list."}, status=404)
+        except Exception as e:
+            return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
 
         # 5. Compose response
         return Response({
@@ -480,7 +485,7 @@ class AdminProjectDetailView(APIView):
             "created_at": project.created_at.isoformat(),
             "owner": {
                 "name": owner.full_name if owner else "—",
-                "email": owner.email if owner else "—"
+                "email": owner.email if owner else "—",
             },
             "usage": usage,
             "vms": vms,
@@ -494,5 +499,5 @@ class AdminProjectDetailView(APIView):
                 "total_volume_gb": project.type.total_volume_gb,
                 "floating_ips": project.type.floating_ips,
                 "instances": project.type.instances,
-            }
+            } if project.type else None
         })
