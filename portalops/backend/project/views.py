@@ -510,7 +510,7 @@ class AdminProjectDetailView(APIView):
             "status": "Active",
             "created_at": project.created_at.isoformat(),
             "owner": {
-                "name": owner.full_name if owner else "—",
+                "name": owner.username if owner else "—",
                 "email": owner.email if owner else "—",
             },
             "usage": usage,
