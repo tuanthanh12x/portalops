@@ -464,9 +464,20 @@ class AdminProjectDetailView(APIView):
             )
             nova_response.raise_for_status()
             nova_quota = nova_response.json().get("quota_set", {})
-            cpu_used, cpu_limit = self.safe_quota_get(nova_quota, "cores")
-            ram_used, ram_limit = self.safe_quota_get(nova_quota, "ram")
+            # Use limits as usual
+            _, cpu_limit = self.safe_quota_get(nova_quota, "cores")
+            _, ram_limit = self.safe_quota_get(nova_quota, "ram")
 
+            # Calculate used from running servers
+            cpu_used = 0
+            ram_used = 0
+            servers = conn.list_servers()
+
+            for server in servers:
+                if getattr(server, "project_id", None) == project.openstack_id:
+                    flavor = conn.get_flavor_by_id(server.flavor["id"])
+                    cpu_used += flavor.vcpus
+                    ram_used += flavor.ram
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/os-quota-sets/{openstack_id}?usage=True"
