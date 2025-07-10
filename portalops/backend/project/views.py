@@ -454,16 +454,16 @@ class AdminProjectDetailView(APIView):
             atoken = get_admin_token()
             # --- Compute limits ---
             nova_response = requests.get(
-                f"{compute_url}/limits",
+                f"{compute_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True",
                 headers={"X-Auth-Token": atoken}
             )
             nova_response.raise_for_status()
-            absolute = nova_response.json().get("limits", {}).get("absolute", {})
+            nova_quota = nova_response.json().get("quota_set", {})
 
-            cpu_used = absolute.get("totalCoresUsed", 0)
-            cpu_limit = absolute.get("maxTotalCores", 0)
-            ram_used = absolute.get("totalRAMUsed", 0)
-            ram_limit = absolute.get("maxTotalRAMSize", 0)
+            cpu_used = nova_quota.get("cores", {}).get("in_use", 0)
+            cpu_limit = nova_quota.get("cores", {}).get("limit", 0)
+            ram_used = nova_quota.get("ram", {}).get("in_use", 0)
+            ram_limit = nova_quota.get("ram", {}).get("limit", 0)
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
