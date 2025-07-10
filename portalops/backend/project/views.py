@@ -428,7 +428,7 @@ class AdminProjectDetailView(APIView):
         project_id = request.auth.get("project_id")
 
         owner_mapping = ProjectUserMapping.objects.filter(
-            project=project, role="admin", is_active=True
+            project=project, is_active=True
         ).first()
         owner = owner_mapping.user if owner_mapping else None
 

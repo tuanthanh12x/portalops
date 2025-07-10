@@ -25,17 +25,18 @@ export default function AdminProjectDetailPage() {
   }, [showModal]);
 
   const handleChangePackage = async () => {
-    try {
-      await axiosInstance.patch(`/project/${id}/change-package/`, {
-        package_id: selectedPackageId,
-      });
-      alert("Package updated successfully");
-      setShowModal(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update package");
-    }
-  };
+  try {
+    await axiosInstance.post("/project/change-vps-package/", {
+      project_id: parseInt(id),
+      project_type_id: selectedPackageId,
+    });
+    alert("✅ Package updated successfully");
+    setShowModal(false);
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to update package");
+  }
+};
 
   const usagePercent = (used, total) =>
     total > 0 ? Math.round((used / total) * 100) : 0;
