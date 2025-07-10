@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/admin/Navbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Popup from './../../components/client/Popup';
 
 const ProjectListPage = () => {
@@ -14,6 +14,8 @@ const ProjectListPage = () => {
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [popup, setPopUp] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -31,7 +33,6 @@ const ProjectListPage = () => {
 
         fetchProjects();
     }, []);
-
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -60,6 +61,10 @@ const ProjectListPage = () => {
         }
     };
 
+    const handleRowClick = (projectId) => {
+        navigate(`/admin/project-detail/${projectId}`);
+    };
+
     return (
         <section className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
             <Navbar />
@@ -83,7 +88,6 @@ const ProjectListPage = () => {
                     </button>
                 </div>
             </header>
-
 
             <div className="container mx-auto max-w-7xl px-6 pb-12">
                 <div className="bg-black/40 backdrop-blur-lg border border-gray-700 rounded-2xl shadow-2xl overflow-x-auto">
@@ -114,7 +118,8 @@ const ProjectListPage = () => {
                                 projects.map((proj) => (
                                     <tr
                                         key={proj.project_id}
-                                        className="hover:bg-white/5 hover:backdrop-blur-sm transition duration-200"
+                                        onClick={() => handleRowClick(proj.openstack_id)}
+                                        className="hover:bg-white/5 hover:backdrop-blur-sm transition duration-200 cursor-pointer"
                                     >
                                         <td className="px-6 py-4 font-medium text-indigo-300">
                                             {proj.project_name}
@@ -147,6 +152,8 @@ const ProjectListPage = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Popup for assigning user */}
             {showAssignPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl">
@@ -228,8 +235,6 @@ const ProjectListPage = () => {
                     </div>
                 </div>
             )}
-
-
         </section>
     );
 };

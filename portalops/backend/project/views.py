@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
-from openstack.exceptions import SDKException
+from openstack.exceptions import SDKException, ResourceNotFound
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -137,7 +137,6 @@ class AllProjectsOverview(APIView):
 
         projects = Project.objects.select_related("type").all()
 
-        # Build project_id -> user_id mapping
         user_map = {}
         for mapping in ProjectUserMapping.objects.select_related("user").order_by("joined_at"):
             if mapping.project_id not in user_map:
@@ -283,6 +282,86 @@ class CreateProjectView(APIView):
             return Response({"error": str(e)}, status=500)
 
 
+class ChangeVPSTypeView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+
+        token_bytes = redis_client.get(token_key)
+        if not token_bytes:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        token = token_bytes
+        conn = connect_with_token_v5(token, project_id)
+
+        # Input validation
+        project_id = request.data.get("project_id")
+        new_type_id = request.data.get("project_type_id")
+
+        if not project_id or not new_type_id:
+            return Response({"error": "Missing project_id or project_type_id."}, status=400)
+
+        # Get project and new type
+        project = get_object_or_404(Project, id=project_id)
+        new_type = get_object_or_404(ProjectType, id=new_type_id)
+
+        try:
+            # Update quotas in OpenStack
+            conn.set_compute_quotas(
+                project.openstack_id,
+                instances=new_type.instances,
+                cores=new_type.vcpus,
+                ram=new_type.ram,
+                key_pairs=new_type.key_pairs,
+                server_groups=new_type.server_groups,
+                server_group_members=new_type.server_group_members,
+                metadata_items=new_type.metadata_items,
+                injected_files=new_type.injected_files,
+                injected_file_content_bytes=new_type.injected_file_content_bytes
+            )
+
+            conn.set_network_quotas(
+                project.openstack_id,
+                floatingip=new_type.floating_ips,
+                network=new_type.networks,
+                port=new_type.ports,
+                router=new_type.routers,
+                security_group=new_type.security_groups,
+                security_group_rule=new_type.security_group_rules,
+                subnet=new_type.subnets
+            )
+
+            conn.set_volume_quotas(
+                project.openstack_id,
+                volumes=new_type.volumes,
+                snapshots=new_type.volume_snapshots,
+                gigabytes=new_type.total_volume_gb
+            )
+
+            # Update in local DB
+            project.type = new_type
+            project.save()
+
+            return Response({
+                "message": "VPS type updated successfully.",
+                "project_id": project.id,
+                "new_type": {
+                    "id": new_type.id,
+                    "name": new_type.name
+                }
+            }, status=200)
+
+        except SDKException as e:
+            return Response({"error": f"Failed to apply new quotas: {str(e)}"}, status=500)
+
+        except Exception as ex:
+            return Response({"error": str(ex)}, status=500)
+
+
+
 class AssignUserToProjectView(APIView):
     permission_classes = [IsAdmin]
 
@@ -334,3 +413,83 @@ class AssignUserToProjectView(APIView):
             return Response({"error": f"OpenStack error: {str(e)}"}, status=500)
 
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
+
+
+
+
+class AdminProjectDetailView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, openstack_id):
+        # 1. Fetch project from DB
+        project = get_object_or_404(Project, id=openstack_id)
+        owner_mapping = ProjectUserMapping.objects.filter(project=project, role="admin", is_active=True).first()
+        owner = owner_mapping.user if owner_mapping else None
+
+        # 2. Get token from Redis
+        username = request.user.username
+        token_key = f"keystone_token:{username}:{project.openstack_id}"
+        token = redis_client.get(token_key)
+
+        if not token:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        # 3. Connect to OpenStack
+        try:
+            conn = connect_with_token_v5(token, project.openstack_id)
+        except Exception as e:
+            return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
+
+        # 4. Query project usage and VM list
+        try:
+            # Usage
+            compute_quota = conn.get_compute_usage(project.openstack_id)
+            usage = {
+                "vcpus_used": compute_quota["vcpus"]["in_use"],
+                "vcpus_total": compute_quota["vcpus"]["limit"],
+                "ram_used": compute_quota["ram"]["in_use"],
+                "ram_total": compute_quota["ram"]["limit"],
+                "storage_used": compute_quota["disk"]["in_use"],
+                "storage_total": compute_quota["disk"]["limit"],
+            }
+
+            # VMs
+            servers = conn.list_servers(project_id=project.openstack_id)
+            vms = []
+            for server in servers:
+                vms.append({
+                    "id": server.id,
+                    "name": server.name,
+                    "status": server.status,
+                    "ip": server.addresses.get("private", [{}])[0].get("addr", "N/A"),
+                    "created": server.created_at[:10] if server.created_at else "",
+                })
+
+        except ResourceNotFound:
+            return Response({"error": "Failed to fetch usage or VM list."}, status=404)
+
+        # 5. Compose response
+        return Response({
+            "id": str(project.id),
+            "name": project.name,
+            "description": project.description,
+            "status": "Active",
+            "created_at": project.created_at.isoformat(),
+            "owner": {
+                "name": owner.full_name if owner else "—",
+                "email": owner.email if owner else "—"
+            },
+            "usage": usage,
+            "vms": vms,
+            "product_type": {
+                "id": project.type.id,
+                "name": project.type.name,
+                "price_per_month": project.type.price_per_month,
+                "description": project.type.description,
+                "vcpus": project.type.vcpus,
+                "ram": project.type.ram,
+                "total_volume_gb": project.type.total_volume_gb,
+                "floating_ips": project.type.floating_ips,
+                "instances": project.type.instances,
+            }
+        })

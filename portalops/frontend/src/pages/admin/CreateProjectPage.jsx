@@ -84,14 +84,14 @@ const CreateProjectPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1 text-indigo-300">Project Type *</label>
+            <label className="block text-sm font-semibold mb-1 text-indigo-300">Project Package *</label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               className="w-full px-4 py-2 bg-gray-900/80 border border-gray-700 rounded-xl focus:ring-2 ring-indigo-500 outline-none"
               required
             >
-              <option value="">Select a project type...</option>
+              <option value="">Select a project package...</option>
               {projectTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name} – ${type.price_per_month}/mo

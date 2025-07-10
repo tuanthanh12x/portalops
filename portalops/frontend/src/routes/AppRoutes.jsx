@@ -32,6 +32,7 @@ import CreateProjectTypePage from "../pages/admin/CreateProjectType";
 import ProjectTypeListPage from "../pages/admin/PackagePage";
 import ProjectListPage from "../pages/admin/ProjectListPage";
 import CreateProjectPage from "../pages/admin/CreateProjectPage";
+import ProjectDetail from "../pages/admin/ProjectDetailsPage";
 function AppRoutes() {
   return (
     <Router>
@@ -56,7 +57,7 @@ function AppRoutes() {
           <Route path="/create-volume" element={<CreateVolumePage />} />
           <Route path="/networks" element={<NetworkListPage />} />
           <Route path="/floating-ips" element={<FloatingIPListPage />} />
-   
+
           <Route path="/create-network" element={<CreateNetworkPage />} />
           <Route path="/create-image" element={<CreateImageForm />} />
           <Route path="/create-keypair" element={<CreateKeypairForm />} />
@@ -64,22 +65,23 @@ function AppRoutes() {
           <Route path="/volume-backup" element={<VolumeSnapshotListPage />} />
           <Route path="/setup-2fa" element={<TwoFactorSetupPage />} />
           <Route path="/" element={<VolumeSnapshotListPage />} />
-      
 
 
 
-        {/* Staff routes */}
+
+          {/* Staff routes */}
 
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/create-user" element={<CreateUserPage />} />
-        <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
-        <Route path="/users-manager" element={<UserManagementPage />} />
-       <Route path="/admin/instances" element={< InstancesPage />} />
-       <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
-       <Route path="/admin/packages" element={< ProjectTypeListPage />} />
-  <Route path="/admin/projects" element={< ProjectListPage />} />
-    <Route path="/admin/create-project" element={< CreateProjectPage />} />
-  </Route>
+          <Route path="/create-user" element={<CreateUserPage />} />
+          <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
+          <Route path="/users-manager" element={<UserManagementPage />} />
+          <Route path="/admin/instances" element={< InstancesPage />} />
+          <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
+          <Route path="/admin/packages" element={< ProjectTypeListPage />} />
+          <Route path="/admin/project-detail/:id" element={< ProjectDetail />} />
+          <Route path="/admin/projects" element={< ProjectListPage />} />
+          <Route path="/admin/create-project" element={< CreateProjectPage />} />
+        </Route>
 
         {/* Redirect unknown routes to Home */}
         <Route path="*" element={<Navigate to="/" />} />
