@@ -415,7 +415,6 @@ class AssignUserToProjectView(APIView):
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
 
 
-
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
 
@@ -444,9 +443,6 @@ class AdminProjectDetailView(APIView):
             return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
 
         # 4. Query project usage and VM list
-        usage = {}
-        vms = []
-
         def safe_get(quota_dict, key, field, default=0):
             return quota_dict.get(key, {}).get(field, default)
 
@@ -461,7 +457,8 @@ class AdminProjectDetailView(APIView):
                 "storage_total": safe_get(compute_quota, "disk", "limit"),
             }
 
-            servers = conn.list_servers(project_id=project.openstack_id)
+            # ⚠️ list_servers() doesn't take project_id directly → filter manually
+            servers = conn.list_servers()
             vms = [
                 {
                     "id": server.id,
@@ -473,7 +470,6 @@ class AdminProjectDetailView(APIView):
                 for server in servers
                 if getattr(server, "project_id", None) == project.openstack_id
             ]
-
         except Exception as e:
             return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
 
