@@ -459,7 +459,7 @@ class AdminProjectDetailView(APIView):
             atoken = get_admin_token()
             # --- Compute limits ---
             nova_response = requests.get(
-                f"{compute_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True",
+                f"{compute_url}/{openstack_id}/os-quota-sets/{openstack_id}?usage=True",
                 headers={"X-Auth-Token": atoken}
             )
             nova_response.raise_for_status()
@@ -469,7 +469,7 @@ class AdminProjectDetailView(APIView):
 
 
             # --- Block storage limits ---
-            cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
+            cinder_url = f"{block_storage_url}/{openstack_id}/os-quota-sets/{openstack_id}?usage=True"
 
             cinder_response = requests.get(
                 cinder_url,
