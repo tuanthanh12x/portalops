@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
 from openstack.exceptions import SDKException, ResourceNotFound
 from rest_framework import serializers, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -107,7 +108,7 @@ class ProjectTypeSerializer(serializers.ModelSerializer):
 
 
 class ListProjectTypeView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:

@@ -1,50 +1,20 @@
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "../../components/admin/Navbar";
 import { useParams } from "react-router-dom";
-import axiosInstance from "../../api/axiosInstance"; 
-
-// ✅ Mocked data
-const mockProject = {
-  id: "proj-001",
-  name: "AI Compute Cluster",
-  description: "Production environment for scalable AI inference workloads.",
-  status: "Active",
-  created_at: "2024-10-12T08:30:00Z",
-  owner: {
-    name: "Jane Nguyen",
-    email: "jane.nguyen@example.com",
-  },
-  usage: {
-    vcpus_used: 24,
-    vcpus_total: 32,
-    ram_used: 48128,
-    ram_total: 65536,
-    storage_used: 680,
-    storage_total: 1000,
-  },
-  vms: [
-    { id: "vm-01", name: "inference-node-01", status: "Running", ip: "10.0.0.15", created: "2024-11-01" },
-    { id: "vm-02", name: "api-server", status: "Stopped", ip: "10.0.0.18", created: "2024-11-03" },
-  ],
-  product_type: {
-    name: "Enterprise AI Plan",
-    price_per_month: 199.99,
-    description: "Optimized for GPU workloads and high IOPS",
-    vcpus: 32,
-    ram: 65536,
-    total_volume_gb: 1000,
-    floating_ips: 8,
-    instances: 20,
-  },
-};
+import axiosInstance from "../../api/axiosInstance";
 
 export default function AdminProjectDetailPage() {
-  const { owner, usage, vms, product_type } = mockProject;
   const { id } = useParams();
-
+  const [project, setProject] = useState(null);
   const [packages, setPackages] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState(null);
+
+  useEffect(() => {
+    axiosInstance.get(`/project/${id}/project-detail/`)
+      .then((res) => setProject(res.data))
+      .catch((err) => console.error("Failed to fetch project detail:", err));
+  }, [id]);
 
   useEffect(() => {
     if (showModal) {
@@ -67,7 +37,18 @@ export default function AdminProjectDetailPage() {
     }
   };
 
-  const usagePercent = (used, total) => Math.round((used / total) * 100);
+  const usagePercent = (used, total) =>
+    total > 0 ? Math.round((used / total) * 100) : 0;
+
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        <p>Loading project details...</p>
+      </div>
+    );
+  }
+
+  const { owner, usage, vms, product_type } = project;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
@@ -76,27 +57,27 @@ export default function AdminProjectDetailPage() {
         <div className="bg-white/10 rounded-2xl shadow-2xl p-8 space-y-10">
           <div className="flex justify-between items-center">
             <h2 className="text-4xl font-extrabold text-green-400 tracking-wide">Project Details</h2>
-            <div className="text-sm text-gray-300">ID: {mockProject.id}</div>
+            <div className="text-sm text-gray-300">ID: {project.id}</div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-base">
             <Card title="Project Info">
-              <Info label="Name" value={mockProject.name} />
-              <Info label="Status" value={mockProject.status} valueClass="text-green-400" />
-              <Info label="Created At" value={new Date(mockProject.created_at).toLocaleDateString()} />
-              <Info label="Description" value={mockProject.description} />
+              <Info label="Name" value={project.name} />
+              <Info label="Status" value={project.status} valueClass="text-green-400" />
+              <Info label="Created At" value={new Date(project.created_at).toLocaleDateString()} />
+              <Info label="Description" value={project.description} />
             </Card>
             <Card title="Owner">
-              <Info label="Name" value={owner.name} />
-              <Info label="Email" value={owner.email} />
+              <Info label="Name" value={owner?.name} />
+              <Info label="Email" value={owner?.email} />
             </Card>
             <Card title="Service Package">
-              <Info label="Plan" value={product_type.name} />
-              <Info label="Price" value={`$${product_type.price_per_month}/month`} />
-              <Info label="vCPUs" value={product_type.vcpus} />
-              <Info label="RAM" value={`${product_type.ram / 1024} GB`} />
-              <Info label="Storage" value={`${product_type.total_volume_gb} GB`} />
-              <Info label="Instances" value={product_type.instances} />
+              <Info label="Plan" value={product_type?.name} />
+              <Info label="Price" value={`$${product_type?.price_per_month}/month`} />
+              <Info label="vCPUs" value={product_type?.vcpus} />
+             <Info label="RAM" value={`${(product_type?.ram / 1024).toFixed(2)} GB`} />
+              <Info label="Storage" value={`${product_type?.total_volume_gb} GB`} />
+              <Info label="Instances" value={product_type?.instances} />
             </Card>
           </div>
 
@@ -206,7 +187,7 @@ function Info({ label, value, valueClass = "text-white/90" }) {
 }
 
 function UsageStat({ label, used, total, unit = "" }) {
-  const percent = Math.round((used / total) * 100);
+  const percent = total > 0 ? Math.round((used / total) * 100) : 0;
   const barColor = percent > 85 ? "bg-red-500" : percent > 60 ? "bg-yellow-400" : "bg-green-500";
 
   return (
