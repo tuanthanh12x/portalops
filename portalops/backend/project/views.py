@@ -422,7 +422,12 @@ class AssignUserToProjectView(APIView):
 
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
-
+    @staticmethod
+    def safe_quota_get(quota, key):
+        value = quota.get(key)
+        if isinstance(value, dict):
+            return value.get("in_use", 0), value.get("limit", 0)
+        return 0, value or 0  # fallback if only limit is returned as int
     def get(self, request, openstack_id):
         # 1. Fetch project from DB
         project = get_object_or_404(Project, openstack_id=openstack_id)
@@ -459,11 +464,9 @@ class AdminProjectDetailView(APIView):
             )
             nova_response.raise_for_status()
             nova_quota = nova_response.json().get("quota_set", {})
+            cpu_used, cpu_limit = self.safe_quota_get(nova_quota, "cores")
+            ram_used, ram_limit = self.safe_quota_get(nova_quota, "ram")
 
-            cpu_used = nova_quota.get("cores", {}).get("in_use", 0)
-            cpu_limit = nova_quota.get("cores", {}).get("limit", 0)
-            ram_used = nova_quota.get("ram", {}).get("in_use", 0)
-            ram_limit = nova_quota.get("ram", {}).get("limit", 0)
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
