@@ -449,7 +449,7 @@ class AdminProjectDetailView(APIView):
         # 4. Query resource limits and VM list
         compute_url = settings.OPENSTACK_COMPUTE_URL
         block_storage_url = settings.OPENSTACK_BLOCK_STORAGE_URL
-
+        admin_project_id=settings.OPENSTACK_BLOCK_STORAGE_URL
         try:
             # --- Compute limits ---
             nova_response = requests.get(
@@ -465,7 +465,7 @@ class AdminProjectDetailView(APIView):
             ram_limit = absolute.get("maxTotalRAMSize", 0)
 
             # --- Block storage limits ---
-            cinder_url = f"{block_storage_url}/{openstack_id}/os-quota-sets/{project_id}?usage=True"
+            cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
             cinder_response = requests.get(
                 cinder_url,
                 headers={"X-Auth-Token": token}
