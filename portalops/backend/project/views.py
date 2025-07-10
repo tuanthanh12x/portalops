@@ -17,6 +17,7 @@ from utils.conn import vl_connect_with_token
 from utils.conn import connect_with_token_v5
 
 from .serializers import AssignUserToProjectSerializer
+from utils.conn import get_admin_token
 
 
 class CreateProjectTypeView(APIView):
@@ -466,9 +467,10 @@ class AdminProjectDetailView(APIView):
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/{project_id}/os-quota-sets/{openstack_id}?usage=True"
+            atoken = get_admin_token()
             cinder_response = requests.get(
                 cinder_url,
-                headers={"X-Auth-Token": token}
+                headers={"X-Auth-Token": atoken}
             )
             cinder_response.raise_for_status()
             quota = cinder_response.json().get("quota_set", {})
