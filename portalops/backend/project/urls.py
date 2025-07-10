@@ -10,5 +10,5 @@ urlpatterns = [
     path('create-project/', CreateProjectView.as_view(), name='create-project'),
     path("assign-user-to-project/", AssignUserToProjectView.as_view(),name="assign-user-to-project"),
     path("change-vps-package/", ChangeVPSTypeView.as_view(), name="change-vps-package"),
-    path("project-detail/", AdminProjectDetailView.as_view(), name="admin-project-detail"),
+    path("<uuid:openstack_id>/project-detail/", AdminProjectDetailView.as_view(), name="admin-project-detail"),
 ]

@@ -17,7 +17,7 @@ services:
       REDIS_PORT: 6379
       DJANGO_SETTINGS_MODULE: backend.settings.base
       CELERY_BROKER_URL: redis://redis:6379/0
-  
+
   celery:
     build:
       context: ./backend
