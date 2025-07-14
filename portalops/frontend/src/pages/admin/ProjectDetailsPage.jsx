@@ -85,7 +85,7 @@ export default function AdminProjectDetailPage() {
               <Info label="Plan" value={product_type?.name} />
               <Info label="Price" value={`$${product_type?.price_per_month}/month`} />
               <Info label="vCPUs" value={product_type?.vcpus} />
-             <Info label="RAM" value={`${(product_type?.ram ).toFixed(2)} MB`} />
+             <Info label="RAM" value={`${(product_type?.ram )} MB`} />
               <Info label="Storage" value={`${product_type?.total_volume_gb} GB`} />
               <Info label="Instances" value={product_type?.instances} />
             </Card>

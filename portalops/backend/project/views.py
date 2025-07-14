@@ -516,12 +516,20 @@ class AdminProjectDetailView(APIView):
                 flavor_id_raw = str(server.flavor.get("id"))
                 flavor = flavor_map.get(flavor_id_raw)
                 flavor_id = str(flavor.id) if flavor else flavor_id_raw
+                ip = ""
+                for net in server.get("addresses", {}).values():
+                    if isinstance(net, list) and net:
+                        ip = next(
+                            (addr["addr"] for addr in net if addr.get("version") == 4),
+                            net[0].get("addr", "")
+                        )
+                        break
 
                 vms.append({
                     "id": server.id,
                     "name": server.name,
                     "status": server.status,
-                    "ip": server.addresses.get("private", [{}])[0].get("addr", "N/A"),
+                    "ip":ip,
                     "created": server.created_at[:10] if server.created_at else "",
                     "flavor": {
                         "id": flavor_id,
