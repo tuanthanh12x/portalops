@@ -309,7 +309,7 @@ class ChangeVPSTypeView(APIView):
             return Response({"error": "Missing project_id or project_type_id."}, status=400)
 
         # Get project and new type
-        project = get_object_or_404(Project, id=project_id)
+        project = get_object_or_404(Project, openstack_id=project_id)
         new_type = get_object_or_404(ProjectType, id=new_type_id)
 
         try:
