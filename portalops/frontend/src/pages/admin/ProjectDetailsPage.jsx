@@ -25,18 +25,27 @@ export default function AdminProjectDetailPage() {
   }, [showModal]);
 
   const handleChangePackage = async () => {
+  const projectId = parseInt(id);
+  const packageId = selectedPackageId;
+
+  if (!projectId || !packageId) {
+    alert("❗Please select a valid package before submitting.");
+    return;
+  }
+
   try {
-    await axiosInstance.post("/project/change-vps-package/", {
-      project_id: parseInt(id),
-      project_type_id: selectedPackageId,
+    const response = await axiosInstance.post("/project/change-vps-package/", {
+      project_id: projectId,
+      project_type_id: packageId,
     });
     alert("✅ Package updated successfully");
     setShowModal(false);
   } catch (err) {
-    console.error(err);
-    alert("❌ Failed to update package");
+    console.error("❌ Failed to update package:", err.response?.data || err.message);
+    alert(err.response?.data?.error || "❌ Failed to update package");
   }
 };
+
 
   const usagePercent = (used, total) =>
     total > 0 ? Math.round((used / total) * 100) : 0;
