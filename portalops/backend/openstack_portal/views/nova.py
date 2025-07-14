@@ -342,7 +342,8 @@ class InstanceActionAPI(APIView):
                 conn.compute.delete_server(server, ignore_missing=True)
             else:
                 return Response({"error": f"Unsupported action: {action}"}, status=400)
-
+            time.sleep(7)
+            cache_user_instances(username, token, project_id)
             return Response({"message": f"Action '{action}' executed successfully on instance {id}"})
 
         except Exception as e:
