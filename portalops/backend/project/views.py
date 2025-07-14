@@ -511,17 +511,29 @@ class AdminProjectDetailView(APIView):
 
             # --- VM list ---
             servers = conn.list_servers()
-            vms = [
-                {
+            vms = []
+            for server in servers:
+                if getattr(server, "project_id", None) != project.openstack_id:
+                    continue
+
+                flavor_id = str(server.flavor.get("id"))
+                flavor = flavor_map.get(flavor_id)
+
+                vms.append({
                     "id": server.id,
                     "name": server.name,
                     "status": server.status,
                     "ip": server.addresses.get("private", [{}])[0].get("addr", "N/A"),
                     "created": server.created_at[:10] if server.created_at else "",
-                }
-                for server in servers
-                if getattr(server, "project_id", None) == project.openstack_id
-            ]
+                    "flavor": {
+                        "id": flavor_id,
+                        "name": flavor.name if flavor else "Unknown",
+                        "vcpus": flavor.vcpus if flavor else 0,
+                        "ram": flavor.ram if flavor else 0,
+                        "disk": flavor.disk if flavor else 0,
+                    }
+                })
+
 
         except Exception as e:
             return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
