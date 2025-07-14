@@ -422,12 +422,14 @@ class AssignUserToProjectView(APIView):
 
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
+
     @staticmethod
     def safe_quota_get(quota, key):
         value = quota.get(key)
         if isinstance(value, dict):
             return value.get("in_use", 0), value.get("limit", 0)
         return 0, value or 0  # fallback if only limit is returned as int
+
     def get(self, request, openstack_id):
         # 1. Fetch project from DB
         project = get_object_or_404(Project, openstack_id=openstack_id)
@@ -473,9 +475,15 @@ class AdminProjectDetailView(APIView):
             ram_used = 0
             servers = conn.list_servers()
 
+            # Map all flavors to avoid get_flavor_by_id issues
+            flavor_map = {str(f.id): f for f in conn.list_flavors()}
+
             for server in servers:
                 if getattr(server, "project_id", None) == project.openstack_id:
-                    flavor = conn.get_flavor_by_id(server.flavor["name"])
+                    flavor_id = str(server.flavor.get("id"))
+                    flavor = flavor_map.get(flavor_id)
+                    if not flavor:
+                        continue
                     cpu_used += flavor.vcpus
                     ram_used += flavor.ram
 
