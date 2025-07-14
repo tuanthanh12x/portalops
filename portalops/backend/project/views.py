@@ -419,7 +419,6 @@ class AssignUserToProjectView(APIView):
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
 
 
-
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
 
@@ -428,7 +427,7 @@ class AdminProjectDetailView(APIView):
         value = quota.get(key)
         if isinstance(value, dict):
             return value.get("in_use", 0), value.get("limit", 0)
-        return 0, value or 0  # fallback if only limit is returned as int
+        return 0, value or 0
 
     def get(self, request, openstack_id):
         # 1. Fetch project from DB
@@ -448,55 +447,54 @@ class AdminProjectDetailView(APIView):
         if not token:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        # 3. Connect to OpenStack (for listing VMs only)
+        # 3. Connect to OpenStack
         try:
             conn = connect_with_token_v5(token, project_id)
         except Exception as e:
             return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
 
-        # 4. Query resource limits and VM list
+        # 4. Query resource limits and VMs
         compute_url = settings.OPENSTACK_COMPUTE_URL
         block_storage_url = settings.OPENSTACK_BLOCK_STORAGE_URL
         try:
             atoken = get_admin_token()
-            # --- Compute limits ---
+
+            # --- Compute Quota ---
             nova_response = requests.get(
                 f"{compute_url}/os-quota-sets/{openstack_id}?usage=True",
                 headers={"X-Auth-Token": atoken}
             )
             nova_response.raise_for_status()
             nova_quota = nova_response.json().get("quota_set", {})
-            # Use limits as usual
             _, cpu_limit = self.safe_quota_get(nova_quota, "cores")
             _, ram_limit = self.safe_quota_get(nova_quota, "ram")
 
-            # Calculate used from running servers
+            # --- Flavor Map ---
+            flavor_map = {}
+            for f in conn.list_flavors():
+                flavor_map[str(f.id)] = f
+                flavor_map[str(f.name)] = f  # allow lookup by name as well
+
+            # --- Calculate resource usage ---
             cpu_used = 0
             ram_used = 0
             servers = conn.list_servers()
-
-            # Map all flavors to avoid get_flavor_by_id issues
-            flavor_map = {str(f.id): f for f in conn.list_flavors()}
-
             for server in servers:
                 if getattr(server, "project_id", None) == project.openstack_id:
-                    flavor_id = str(server.flavor.get("id"))
-                    flavor = flavor_map.get(flavor_id)
-                    if not flavor:
-                        continue
-                    cpu_used += flavor.vcpus
-                    ram_used += flavor.ram
+                    flavor_id_raw = str(server.flavor.get("id"))
+                    flavor = flavor_map.get(flavor_id_raw)
+                    if flavor:
+                        cpu_used += flavor.vcpus
+                        ram_used += flavor.ram
 
             # --- Block storage limits ---
             cinder_url = f"{block_storage_url}/os-quota-sets/{openstack_id}?usage=True"
-
             cinder_response = requests.get(
                 cinder_url,
                 headers={"X-Auth-Token": atoken}
             )
             cinder_response.raise_for_status()
             quota = cinder_response.json().get("quota_set", {})
-
             storage_used = quota.get("gigabytes", {}).get("in_use", 0)
             storage_limit = quota.get("gigabytes", {}).get("limit", 0)
 
@@ -510,14 +508,14 @@ class AdminProjectDetailView(APIView):
             }
 
             # --- VM list ---
-            servers = conn.list_servers()
             vms = []
             for server in servers:
                 if getattr(server, "project_id", None) != project.openstack_id:
                     continue
 
-                flavor_id = str(server.flavor.get("id"))
-                flavor = flavor_map.get(flavor_id)
+                flavor_id_raw = str(server.flavor.get("id"))
+                flavor = flavor_map.get(flavor_id_raw)
+                flavor_id = str(flavor.id) if flavor else flavor_id_raw
 
                 vms.append({
                     "id": server.id,
@@ -533,7 +531,6 @@ class AdminProjectDetailView(APIView):
                         "disk": flavor.disk if flavor else 0,
                     }
                 })
-
 
         except Exception as e:
             return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
