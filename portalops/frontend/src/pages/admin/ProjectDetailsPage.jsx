@@ -85,7 +85,7 @@ export default function AdminProjectDetailPage() {
               <Info label="Plan" value={product_type?.name} />
               <Info label="Price" value={`$${product_type?.price_per_month}/month`} />
               <Info label="vCPUs" value={product_type?.vcpus} />
-             <Info label="RAM" value={`${(product_type?.ram / 1024).toFixed(2)} GB`} />
+             <Info label="RAM" value={`${(product_type?.ram ).toFixed(2)} MB`} />
               <Info label="Storage" value={`${product_type?.total_volume_gb} GB`} />
               <Info label="Instances" value={product_type?.instances} />
             </Card>
@@ -103,7 +103,7 @@ export default function AdminProjectDetailPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <UsageStat label="vCPUs" used={usage.vcpus_used} total={usage.vcpus_total} />
-            <UsageStat label="RAM" used={usage.ram_used / 1024} total={usage.ram_total / 1024} unit="GB" />
+            <UsageStat label="RAM" used={usage.ram_used } total={usage.ram_total } unit="MB" />
             <UsageStat label="Storage" used={usage.storage_used} total={usage.storage_total} unit="GB" />
           </div>
 
