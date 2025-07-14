@@ -131,7 +131,7 @@ const ProjectListPage = () => {
                                             {proj.project_type?.name ?? "—"}
                                         </td>
                                         <td className="px-6 py-4 text-gray-300">
-                                            {proj.user_id ?? "—"}
+                                            {proj.username ?? "—"}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span
