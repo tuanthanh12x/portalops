@@ -7,11 +7,13 @@ from rest_framework import serializers, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
+import time
 from ..tasks import fetch_and_cache_instance_options
 from project.models import ProjectType
 
 from userauth.permissions import IsAdmin
+
+from overview.tasks import cache_user_instances
 
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
@@ -204,6 +206,8 @@ class CreateInstanceAPI(APIView):
                 networks=[{"uuid": network_id}],
                 availability_zone="nova"
             )
+            time.sleep(12)
+            cache_user_instances(username, token, project_id)
             return Response({"instance": server.to_dict()}, status=201)
 
         except Exception as e:
