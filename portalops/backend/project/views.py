@@ -475,7 +475,7 @@ class AdminProjectDetailView(APIView):
 
             for server in servers:
                 if getattr(server, "project_id", None) == project.openstack_id:
-                    flavor = conn.get_flavor_by_id(server.flavor["id"])
+                    flavor = conn.get_flavor_by_id(server.flavor["name"])
                     cpu_used += flavor.vcpus
                     ram_used += flavor.ram
 

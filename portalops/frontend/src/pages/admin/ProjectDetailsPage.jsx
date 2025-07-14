@@ -25,7 +25,7 @@ export default function AdminProjectDetailPage() {
   }, [showModal]);
 
   const handleChangePackage = async () => {
-  const projectId = parseInt(id);
+  const projectId = id;
   const packageId = selectedPackageId;
 
   if (!projectId || !packageId) {
@@ -148,6 +148,7 @@ export default function AdminProjectDetailPage() {
                     selectedPackageId === pkg.id ? "border-green-500 bg-white/10" : "border-white/10"
                   }`}
                 >
+                                    {/* <div className="text-white font-semibold">{pkg.id}</div> */}
                   <div className="text-white font-semibold">{pkg.name}</div>
                   <div className="text-sm text-white/60">{pkg.description}</div>
                   <div className="text-green-400 font-bold mt-1">${pkg.price_per_month}/mo</div>
