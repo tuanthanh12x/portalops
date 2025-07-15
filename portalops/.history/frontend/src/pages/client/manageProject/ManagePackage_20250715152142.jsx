@@ -4,7 +4,7 @@ import { Server, Package, Activity, CreditCard, Plus } from "lucide-react";
 import Navbar from "../../../components/client/Navbar";
 import ProjectCard from "./ProjectCard";
 import PackageChangeModal from "./PackageChangeModal";
-import ProjectDetailsModal from "./ProjectDetails";
+import ProjectDetailsModal from "./ProjectDetailsModal";
 import { mockProjects, packageOptions } from "./mockData";
 
 function ProjectDashboard() {

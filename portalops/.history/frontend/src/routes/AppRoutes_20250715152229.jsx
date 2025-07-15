@@ -33,7 +33,7 @@ import ProjectTypeListPage from "../pages/admin/PackagePage";
 import ProjectListPage from "../pages/admin/ProjectListPage";
 import CreateProjectPage from "../pages/admin/CreateProjectPage";
 import ProjectDetail from "../pages/admin/ProjectDetailsPage";
-import ProjectDashboard from  '../pages/client/manageProject/ManagePackage';
+import  OpenStackProjectDashboard from  '../pages/client/manageProject/ManagePackage';
 function AppRoutes() {
   return (
     <Router>

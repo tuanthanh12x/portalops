@@ -16,7 +16,7 @@ from utils.conn import vl_connect_with_token
 
 from utils.conn import connect_with_token_v5
 
-from .serializers import AssignUserToProjectSerializer
+from .serializers import AssignUserToProjectSerializer, ProjectSerializer
 from utils.token import get_admin_token
 
 
@@ -624,3 +624,27 @@ class ChangeOwnerProjectView(APIView):
 
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
 
+
+
+class PackageManagementView(APIView):
+    permission_classes = [IsAuthenticated]
+    # def post(self, request):
+
+
+
+class UserProjectListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get all project-user mappings for this user
+        mappings = ProjectUserMapping.objects.select_related("project", "project__type").filter(user=user)
+
+        # Extract project objects
+        projects = [mapping.project for mapping in mappings]
+
+        # Serialize the projects
+        serializer = ProjectSerializer(projects, many=True)
+
+        return Response(serializer.data)

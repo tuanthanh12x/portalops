@@ -2,7 +2,6 @@
 from rest_framework import serializers
 from .models import ProjectUserMapping
 from django.contrib.auth import get_user_model
-from .models import Project
 
 User = get_user_model()
 
@@ -27,3 +26,19 @@ class AssignUserToProjectSerializer(serializers.Serializer):
         data["user"] = user
         data["project"] = project
         return data
+
+
+from rest_framework import serializers
+from .models import Project, ProjectType
+
+class ProjectTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectType
+        exclude = ['id']
+
+class ProjectSerializer(serializers.ModelSerializer):
+    type = ProjectTypeSerializer()
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'type', 'openstack_id', 'created_at']
