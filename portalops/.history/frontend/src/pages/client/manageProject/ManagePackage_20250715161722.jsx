@@ -7,7 +7,7 @@ import ProjectDetailsModal from "./ProjectDetails";
 import { fetchRealProjects, fetchPackageOptions } from "./mockData";
 
 function ProjectDashboard() {
-    const [projects, setProjects] = useState([]);
+      const [projects, setProjects] = useState([]);
     const [packageOptions, setPackageOptions] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
     const [showDetails, setShowDetails] = useState(false);
@@ -19,21 +19,21 @@ function ProjectDashboard() {
         packageDistribution: {},
     });
 
-    useEffect(() => {
+     useEffect(() => {
         const loadData = async () => {
-            const [projectsData, packages] = await Promise.all([
+            const [projects, packages] = await Promise.all([
                 fetchRealProjects(),
                 fetchPackageOptions(),
             ]);
 
-            setProjects(projectsData);
+            setProjects(projects);
             setPackageOptions(packages);
 
-            // Stats calculations
-            const totalProjects = projectsData.length;
-            const activeProjects = projectsData.filter(p => p.status === "Active").length;
-            const totalCost = projectsData.reduce((sum, p) => sum + p.pricing.monthly, 0);
-            const packageDistribution = projectsData.reduce((acc, project) => {
+            // Stats
+            const totalProjects = projects.length;
+            const activeProjects = projects.filter(p => p.status === "Active").length;
+            const totalCost = projects.reduce((sum, p) => sum + p.pricing.monthly, 0);
+            const packageDistribution = projects.reduce((acc, project) => {
                 acc[project.package] = (acc[project.package] || 0) + 1;
                 return acc;
             }, {});
@@ -48,6 +48,7 @@ function ProjectDashboard() {
 
         loadData();
     }, []);
+
 
     const handleViewDetails = (project) => {
         setSelectedProject(project);
@@ -133,7 +134,6 @@ function ProjectDashboard() {
                                 project={project}
                                 onViewDetails={handleViewDetails}
                                 onChangePackage={handleChangePackage}
-                                packageOptions={packageOptions} // Pass packageOptions here
                             />
                         ))}
                     </div>
@@ -145,7 +145,6 @@ function ProjectDashboard() {
                 <ProjectDetailsModal
                     project={selectedProject}
                     onClose={closeModals}
-                    packageOptions={packageOptions} // Pass packageOptions here
                 />
             )}
             {showPackageChange && (
@@ -153,7 +152,6 @@ function ProjectDashboard() {
                     project={selectedProject}
                     onClose={closeModals}
                     onConfirm={handlePackageConfirm}
-                    packageOptions={packageOptions} // Pass packageOptions here
                 />
             )}
         </div>

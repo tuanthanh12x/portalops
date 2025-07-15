@@ -1,8 +1,7 @@
 import React from "react";
 import { Server, Package, Eye } from "lucide-react";
-import { packageOptions } from "./mockData";
 
-function ProjectCard({ project, onChangePackage, onViewDetails }) {
+function ProjectCard({ project, onChangePackage, onViewDetails, packageOptions }) {
     const getStatusColor = (status) => {
         switch (status) {
             case "Active": return "bg-green-500";
@@ -19,9 +18,7 @@ function ProjectCard({ project, onChangePackage, onViewDetails }) {
 
     return (
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-lg min-h-[360px] flex flex-col justify-between">
-            {/* Content area */}
             <div className="flex-1 space-y-6">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 overflow-hidden">
                         <div className="p-2 bg-blue-600 rounded-lg shrink-0">
@@ -49,7 +46,6 @@ function ProjectCard({ project, onChangePackage, onViewDetails }) {
                     </div>
                 </div>
 
-                {/* Package Info */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <Package className="w-4 h-4 text-gray-400" />
@@ -63,7 +59,6 @@ function ProjectCard({ project, onChangePackage, onViewDetails }) {
                     </div>
                 </div>
 
-                {/* Project Info */}
                 <div className="space-y-2">
                     <div className="flex justify-between">
                         <span className="text-sm text-gray-400">Created:</span>
@@ -76,7 +71,6 @@ function ProjectCard({ project, onChangePackage, onViewDetails }) {
                 </div>
             </div>
 
-            {/* Action buttons */}
             <div className="flex space-x-2 pt-6 mt-auto">
                 <button
                     onClick={() => onViewDetails(project)}

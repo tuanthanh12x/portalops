@@ -1,12 +1,10 @@
-// PackageChangeModal.js
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
-import { packageOptions } from "./mockData";
 
-function PackageChangeModal({ project, onClose, onConfirm }) {
+function PackageChangeModal({ project, onClose, onConfirm, packageOptions }) {
     const [selectedPackage, setSelectedPackage] = useState(project?.package || "");
 
-    if (!project) return null;
+    if (!project || !packageOptions?.length) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

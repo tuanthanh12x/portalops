@@ -1,9 +1,7 @@
-// ProjectDetailsModal.js
 import React from "react";
 import { Plus, Package, CreditCard, MapPin, Calendar } from "lucide-react";
-import { packageOptions } from "./mockData";
 
-function ProjectDetailsModal({ project, onClose }) {
+function ProjectDetailsModal({ project, onClose, packageOptions }) {
     if (!project) return null;
 
     const currentPackage = packageOptions.find(pkg => pkg.name === project.package);
@@ -34,7 +32,7 @@ function ProjectDetailsModal({ project, onClose }) {
                                         <p className="text-white font-medium">{project.id}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-4 h-4 rounded-full ${
                                         project.status === 'Active' ? 'bg-green-500' : 
@@ -45,7 +43,7 @@ function ProjectDetailsModal({ project, onClose }) {
                                         <p className="text-white font-medium">{project.status}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center space-x-3">
                                     <Calendar className="w-4 h-4 text-purple-400" />
                                     <div className="flex-1">
@@ -53,7 +51,7 @@ function ProjectDetailsModal({ project, onClose }) {
                                         <p className="text-white font-medium">{project.created}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center space-x-3">
                                     <MapPin className="w-4 h-4 text-orange-400" />
                                     <div className="flex-1">
@@ -69,7 +67,7 @@ function ProjectDetailsModal({ project, onClose }) {
                     <div className="space-y-4">
                         <div className="bg-gray-700 rounded-lg p-4">
                             <h3 className="text-lg font-semibold text-white mb-3">Package Information</h3>
-                            {currentPackage && (
+                            {currentPackage ? (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <span className="text-gray-400">Package:</span>
@@ -78,12 +76,12 @@ function ProjectDetailsModal({ project, onClose }) {
                                             <span className="text-white font-medium">{currentPackage.name}</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between">
                                         <span className="text-gray-400">Monthly Cost:</span>
                                         <span className="text-white font-bold text-lg">${currentPackage.price}</span>
                                     </div>
-                                    
+
                                     <div className="mt-4 p-3 bg-gray-600 rounded-lg">
                                         <p className="text-sm text-gray-300 mb-2">Package includes:</p>
                                         <div className="space-y-1 text-sm">
@@ -102,6 +100,8 @@ function ProjectDetailsModal({ project, onClose }) {
                                         </div>
                                     </div>
                                 </div>
+                            ) : (
+                                <p className="text-gray-400 italic">No package information available.</p>
                             )}
                         </div>
                     </div>
