@@ -48,10 +48,10 @@ const QuickActions = () => {
           className={commonButtonClass}
         >
           <Link
-            to="/create-volume"
+            to="/manage-project"
             className="relative z-10 inline-block text-center w-full font-semibold"
           >
-            Add Volume
+            Manage Project
           </Link>
           <div className="absolute inset-0 bg-green-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
         </motion.div>
