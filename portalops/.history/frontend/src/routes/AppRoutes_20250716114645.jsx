@@ -36,7 +36,7 @@ import ProjectDetail from "../pages/admin/ProjectDetailsPage";
 import ProjectDashboard from '../pages/client/manageProject/ManagePackage';
 import NetworkDashboardPage from './../pages/admin/network/NetworkDashboard';
 import SubnetManagement from './../pages/admin/network/SubnetManagement';
-import RouteManagement from './../pages/admin/network/RouteManagement';
+import SubnetManagement from './../pages/admin/network/SubnetManagement';
 function AppRoutes() {
   return (
     <Router>

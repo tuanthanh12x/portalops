@@ -36,7 +36,6 @@ import ProjectDetail from "../pages/admin/ProjectDetailsPage";
 import ProjectDashboard from '../pages/client/manageProject/ManagePackage';
 import NetworkDashboardPage from './../pages/admin/network/NetworkDashboard';
 import SubnetManagement from './../pages/admin/network/SubnetManagement';
-import RouteManagement from './../pages/admin/network/RouteManagement';
 function AppRoutes() {
   return (
     <Router>
@@ -88,9 +87,7 @@ function AppRoutes() {
           <Route path="/admin/create-project" element={< CreateProjectPage />} />
           <Route path="/admin/network" element={< NetworkDashboardPage />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
-          <Route path="/admin/route" element={< RouteManagement />} />
-          <Route path="/admin/subnet" element={< SubnetManagement />} />
-          <Route path="/admin/subnet" element={< SubnetManagement />} />
+                    <Route path="/admin/subnet" element={< SubnetManagement />} />
         </Route>
 
         {/* Redirect unknown routes to Home */}

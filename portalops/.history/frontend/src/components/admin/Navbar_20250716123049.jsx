@@ -13,7 +13,8 @@ const Navbar = () => {
         !e.target.closest('#mobile-menu') &&
         !e.target.closest('#hamburger-btn') &&
         !computeRef.current?.contains(e.target) &&
-        !storageRef.current?.contains(e.target) ) {
+        !storageRef.current?.contains(e.target) &&
+      ) {
         setMenuOpen(false);
         setComputeDropdownOpen(false);
         setStorageDropdownOpen(false);
@@ -157,7 +158,7 @@ const Navbar = () => {
 
           {/* Network Mobile Dropdown */}
       
-          <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Billing</a>
+
           <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Billing</a>
           <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Support</a>
         </nav>

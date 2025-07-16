@@ -163,13 +163,15 @@ class NetworkListView(APIView):
         networks = []
         try:
             for net in conn.network.networks():
+                count_subnet =net.subnet_ids.count()
                 networks.append({
                     "id": net.id,
                     "name": net.name,
                     "status": net.status,
                     "shared": net.is_shared,
                     "admin_state_up": net.is_admin_state_up,
-                    "subnets": net.subnet_ids,
+                    "subnets": count_subnet,
+                    "router_external": net.is_router_external,
                     "tenant_id": net.project_id,
                 })
         except Exception as e:

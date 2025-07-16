@@ -4,8 +4,10 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [computeDropdownOpen, setComputeDropdownOpen] = useState(false);
   const [storageDropdownOpen, setStorageDropdownOpen] = useState(false);
+  const [networkDropdownOpen, setNetworkDropdownOpen] = useState(false);
   const computeRef = useRef(null);
   const storageRef = useRef(null);
+  const networkRef = useRef(null);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -13,11 +15,13 @@ const Navbar = () => {
         !e.target.closest('#mobile-menu') &&
         !e.target.closest('#hamburger-btn') &&
         !computeRef.current?.contains(e.target) &&
-        !storageRef.current?.contains(e.target) ) {
+        !storageRef.current?.contains(e.target) &&
+        !networkRef.current?.contains(e.target)
+      ) {
         setMenuOpen(false);
         setComputeDropdownOpen(false);
         setStorageDropdownOpen(false);
-
+        setNetworkDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
@@ -29,7 +33,7 @@ const Navbar = () => {
       setComputeDropdownOpen((prev) => {
         if (!prev) {
           setStorageDropdownOpen(false);
-
+          setNetworkDropdownOpen(false);
         }
         return !prev;
       });
@@ -37,10 +41,19 @@ const Navbar = () => {
       setStorageDropdownOpen((prev) => {
         if (!prev) {
           setComputeDropdownOpen(false);
+          setNetworkDropdownOpen(false);
         }
         return !prev;
       });
-    } 
+    } else if (dropdown === 'network') {
+      setNetworkDropdownOpen((prev) => {
+        if (!prev) {
+          setComputeDropdownOpen(false);
+          setStorageDropdownOpen(false);
+        }
+        return !prev;
+      });
+    }
   };
 
   return (
@@ -108,8 +121,24 @@ const Navbar = () => {
             )}
           </li>
 
-          
-          <li><a href="/admin/network" className="hover:text-emerald-400 transition-colors duration-300 font-medium">Network</a></li>
+          {/* Network Dropdown */}
+          <li className="relative" ref={networkRef}>
+            <button onClick={() => toggleDropdown('network')} className="flex items-center space-x-1 hover:text-emerald-400 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded">
+              <span>Network</span>
+              <svg className={`h-4 w-4 transform transition-transform duration-300 ${networkDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {networkDropdownOpen && (
+              <ul className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30">
+                <li><a href="/admin/networks" className="block px-5 py-3 hover:bg-gray-700">Networks</a></li>
+                <li><a href="/admin/subnets" className="block px-5 py-3 hover:bg-gray-700">Subnets</a></li>
+                <li><a href="/admin/routers" className="block px-5 py-3 hover:bg-gray-700">Routers</a></li>
+                <li><a href="/admin/floating-ips" className="block px-5 py-3 hover:bg-gray-700">Floating IPs</a></li>
+              </ul>
+            )}
+          </li>
+
           <li><a href="/" className="hover:text-emerald-400 transition-colors duration-300 font-medium">Billing</a></li>
           <li><a href="/" className="hover:text-emerald-400 transition-colors duration-300 font-medium">System</a></li>
           <li><a href="/" className="hover:text-emerald-400 transition-colors duration-300 font-medium">Support</a></li>
@@ -156,8 +185,23 @@ const Navbar = () => {
           </div>
 
           {/* Network Mobile Dropdown */}
-      
-          <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Billing</a>
+          <div>
+            <button onClick={() => toggleDropdown('network')} className="w-full flex justify-between items-center text-gray-100 font-semibold py-3 border-b border-gray-700 hover:text-emerald-400 transition-colors">
+              <span>Network</span>
+              <svg className={`w-5 h-5 transform transition-transform duration-300 ${networkDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {networkDropdownOpen && (
+              <ul className="pl-6 mt-2 space-y-2">
+                <li><a href="/admin/networks" className="block text-gray-300 hover:text-emerald-400" onClick={() => setMenuOpen(false)}>Networks</a></li>
+                <li><a href="/admin/subnets" className="block text-gray-300 hover:text-emerald-400" onClick={() => setMenuOpen(false)}>Subnets</a></li>
+                <li><a href="/admin/routers" className="block text-gray-300 hover:text-emerald-400" onClick={() => setMenuOpen(false)}>Routers</a></li>
+                <li><a href="/admin/floating-ips" className="block text-gray-300 hover:text-emerald-400" onClick={() => setMenuOpen(false)}>Floating IPs</a></li>
+              </ul>
+            )}
+          </div>
+
           <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Billing</a>
           <a href="/" className="text-gray-100 font-semibold border-b border-gray-700 py-3 hover:text-emerald-400 transition-colors" onClick={() => setMenuOpen(false)}>Support</a>
         </nav>

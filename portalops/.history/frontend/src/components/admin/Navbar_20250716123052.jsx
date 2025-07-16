@@ -13,7 +13,8 @@ const Navbar = () => {
         !e.target.closest('#mobile-menu') &&
         !e.target.closest('#hamburger-btn') &&
         !computeRef.current?.contains(e.target) &&
-        !storageRef.current?.contains(e.target) ) {
+        !storageRef.current?.contains(e.target) &&
+      ) {
         setMenuOpen(false);
         setComputeDropdownOpen(false);
         setStorageDropdownOpen(false);

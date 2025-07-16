@@ -195,23 +195,17 @@ function LoginPage() {
                 Select Project
               </label>
               <select
-  className="mt-2 w-full px-4 py-3 bg-gray-800/50 text-green-200 border border-green-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 hover:shadow-glow focus:shadow-glow font-orbitron transition-all duration-300"
-  value={selectedProject}
-  onChange={(e) => setSelectedProject(e.target.value)}
->
-  <option value="" className="bg-gray-900 text-gray-400">
-    -- Choose a project --
-  </option>
-  {projects.map((project) => (
-    <option
-      key={project.openstack_id}
-      value={project.openstack_id}
-      className="bg-gray-900 text-white"
-    >
-      {project.project_name}
-    </option>
-  ))}
-</select>
+                className="w-full px-4 py-3 bg-gray-800/50 text-white border border-green-600/50 rounded-lg font-orbitron"
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+              >
+                <option value="">-- Choose a project --</option>
+                {projects.map((project) => (
+                  <option key={project.openstack_id} value={project.openstack_id}>
+                    {project.project_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button
