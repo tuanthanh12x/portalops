@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Import hook để điều hướng
 import Header from '../../../components/admin/Navbar';
-
+import axiosInstance from "../../../api/axiosInstance";
 // Button Component
 function Button({ variant = "default", children, className = "", ...props }) {
     const base = "px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2";
@@ -19,6 +19,19 @@ function Card({ children, className = "" }) {
     return (
         <div className={`bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 ${className}`}>
             {children}
+        </div>
+    );
+}
+
+function CardContent({ children }) {
+    return <div className="space-y-3">{children}</div>;
+}
+
+function CardTitle({ children, icon }) {
+    return (
+        <div className="flex items-center gap-3">
+            {icon && <span className="text-2xl">{icon}</span>}
+            <h3 className="text-lg font-semibold text-gray-100">{children}</h3>
         </div>
     );
 }
@@ -87,8 +100,6 @@ function Select({ label, value, onChange, options, required = false }) {
         </div>
     );
 }
-
-// Tabs Components
 export function Tabs({ defaultValue, children }) {
     const [active, setActive] = useState(defaultValue);
     return (
@@ -108,13 +119,16 @@ export function TabsList({ children }) {
     );
 }
 
+// TabsTrigger đã được sửa để chấp nhận prop 'onClick' cho việc điều hướng
 export function TabsTrigger({ value, active, setActive, children, onClick }) {
     const isActive = active === value;
 
     const handleClick = () => {
+        // Nếu có hàm onClick tùy chỉnh (để điều hướng), thì gọi nó
         if (onClick) {
             onClick();
         } else {
+            // Nếu không, chỉ cập nhật state như bình thường
             setActive(value);
         }
     };
@@ -132,114 +146,68 @@ export function TabsTrigger({ value, active, setActive, children, onClick }) {
     );
 }
 
-// Main Route Management Component
-export default function RouteManagement() {
-    const navigate = useNavigate();
-    const [routes, setRoutes] = useState([]);
-    const [routers, setRouters] = useState([]);
+export function TabsContent({ value, active, children }) {
+    return active === value ? <div className="animate-in fade-in duration-300">{children}</div> : null;
+}
+// Main Subnet Management Component
+export default function SubnetManagement() {
+    const [subnets, setSubnets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedRoute, setSelectedRoute] = useState(null);
+    const [selectedSubnet, setSelectedSubnet] = useState(null);
+    const navigate = useNavigate();
 
-    // Form states
     const [formData, setFormData] = useState({
         name: '',
-        router_id: '',
-        destination_cidr: '',
-        next_hop: '',
+        network_id: '',
+        cidr: '',
+        ip_version: '4',
+        gateway_ip: '',
+        enable_dhcp: true,
         description: ''
     });
 
-    // Mock data for demonstration
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
-
-            // Mock routers data
-            const mockRouters = [
-                { id: "router-001", name: "Main Router" },
-                { id: "router-002", name: "External Router" },
-                { id: "router-003", name: "Internal Router" }
-            ];
-
-            // Mock routes data
-            const mockRoutes = [
-                {
-                    id: "route-001",
-                    name: "Default Route",
-                    router_id: "router-001",
-                    router_name: "Main Router",
-                    destination_cidr: "0.0.0.0/0",
-                    next_hop: "192.168.1.1",
-                    status: "active",
-                    description: "Default gateway route"
-                },
-                {
-                    id: "route-002",
-                    name: "Internal Route",
-                    router_id: "router-001",
-                    router_name: "Main Router",
-                    destination_cidr: "10.0.0.0/8",
-                    next_hop: "10.0.1.1",
-                    status: "active",
-                    description: "Internal network routing"
-                },
-                {
-                    id: "route-003",
-                    name: "DMZ Route",
-                    router_id: "router-002",
-                    router_name: "External Router",
-                    destination_cidr: "172.16.0.0/12",
-                    next_hop: "172.16.1.1",
-                    status: "inactive",
-                    description: "DMZ network access"
-                },
-                {
-                    id: "route-004",
-                    name: "Private Route",
-                    router_id: "router-003",
-                    router_name: "Internal Router",
-                    destination_cidr: "192.168.0.0/16",
-                    next_hop: "192.168.1.254",
-                    status: "active",
-                    description: "Private network routing"
-                }
-            ];
-
-            setTimeout(() => {
-                setRouters(mockRouters);
-                setRoutes(mockRoutes);
-                setLoading(false);
-            }, 1000);
+            try {
+                const response = await axiosInstance.get('openstack/network/subnet-list/');
+                const data = response.data.map((subnet) => ({
+                    ...subnet,
+                    network_name: 'Unknown', // Placeholder until real name is fetched from backend
+                    status: 'active',        // Default status
+                    description: ''          // Optional if not used in UI
+                }));
+                setSubnets(data);
+            } catch (error) {
+                console.error("Failed to fetch subnets:", error);
+            }
+            setLoading(false);
         };
-
         fetchData();
     }, []);
-
-    
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
             <Header />
-            
             <header className="border-b border-gray-700 bg-gray-900/50 backdrop-blur-lg">
                 <div className="px-6 lg:px-8 py-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                                <span className="text-2xl">🔌</span>
+                            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                                <span className="text-2xl">🔗</span>
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-                                    Route Management
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                                    Subnet Management
                                 </h1>
-                                <p className="text-gray-400 mt-1">Configure and manage network routes</p>
+                                <p className="text-gray-400 mt-1">Configure and manage network subnets</p>
                             </div>
                         </div>
                         <Button onClick={() => setIsCreateModalOpen(true)}>
                             <span>+</span>
-                            Create Route
+                            Create Subnet
                         </Button>
                     </div>
                 </div>
@@ -247,51 +215,20 @@ export default function RouteManagement() {
 
             <div className="px-6 lg:px-8 py-8">
                 <TabsList>
-                    <TabsTrigger
-                        value="networks"
-                        onClick={() => navigate('/admin/network')}
-                    >
-                        📡 Networks
-                    </TabsTrigger>
-                    
-                    <TabsTrigger
-                        value="subnets"
-                        onClick={() => navigate('/admin/subnet')}
-                    >
-                        🔗 Subnets
-                    </TabsTrigger>
-                    
-                    <TabsTrigger
-                        value="routes"
-                        onClick={() => navigate('/admin/route')}
-                    >
-                        🔌 Routes
-                    </TabsTrigger>
-                    
-                    <TabsTrigger
-                        value="security"
-                        onClick={() => navigate('/admin/security-group')}
-                    >
-                        🛡️ Security Groups
-                    </TabsTrigger>
+                    <TabsTrigger value="networks" onClick={() => navigate('/admin/network')}>📡 Networks</TabsTrigger>
+                    <TabsTrigger value="subnets" onClick={() => navigate('/admin/subnet')}>🔗 Subnets</TabsTrigger>
+                    <TabsTrigger value="ports" onClick={() => navigate('/admin/route')}>🔌 Routes</TabsTrigger>
+                    <TabsTrigger value="security" onClick={() => navigate('/admin/security-group')}>🛡️ Security Groups</TabsTrigger>
                 </TabsList>
 
-                {/* Routes Table */}
                 <Card>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-700">
                             <thead className="bg-gray-900/50">
                                 <tr>
-                                    {[
-                                        { key: 'name', label: 'Route Name' },
-                                        { key: 'router', label: 'Router' },
-                                        { key: 'destination', label: 'Destination CIDR' },
-                                        { key: 'next_hop', label: 'Next Hop' },
-                                        { key: 'status', label: 'Status' },
-                                        { key: 'actions', label: 'Actions' }
-                                    ].map(header => (
-                                        <th key={header.key} className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                            {header.label}
+                                    {["Subnet Name", "CIDR", "Gateway", "DHCP", "Actions"].map((label, idx) => (
+                                        <th key={idx} className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                            {label}
                                         </th>
                                     ))}
                                 </tr>
@@ -299,75 +236,57 @@ export default function RouteManagement() {
                             <tbody className="divide-y divide-gray-800">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="6" className="text-center py-12">
+                                        <td colSpan="5" className="text-center py-12">
                                             <div className="flex items-center justify-center gap-3">
-                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
-                                                <span className="text-gray-400">Loading routes...</span>
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+                                                <span className="text-gray-400">Loading subnets...</span>
                                             </div>
                                         </td>
                                     </tr>
-                                ) : routes.length === 0 ? (
+                                ) : subnets.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="text-center py-12">
+                                        <td colSpan="5" className="text-center py-12">
                                             <div className="text-gray-500">
-                                                <div className="text-4xl mb-4">🔌</div>
-                                                <p className="font-medium">No routes found</p>
-                                                <p className="text-sm text-gray-600 mt-1">Create your first route to get started</p>
+                                                <div className="text-4xl mb-4">🔗</div>
+                                                <p className="font-medium">No subnets found</p>
+                                                <p className="text-sm text-gray-600 mt-1">Create your first subnet to get started</p>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    routes.map((route) => (
-                                        <tr key={route.id} className="hover:bg-gray-800/30 transition-colors duration-200">
+                                    subnets.map((subnet) => (
+                                        <tr key={subnet.id} className="hover:bg-gray-800/30 transition-colors duration-200">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                                                        <span className="text-purple-400 text-sm">🔌</span>
+                                                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                                        <span className="text-green-400 text-sm">🔗</span>
                                                     </div>
                                                     <div>
-                                                        <span className="font-medium text-gray-200">{route.name}</span>
-                                                        {route.description && (
-                                                            <p className="text-xs text-gray-400 mt-1">{route.description}</p>
-                                                        )}
+                                                        <span className="font-medium text-gray-200">{subnet.name}</span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-md text-xs">
-                                                    {route.router_name}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
                                                 <code className="text-sm text-gray-300 bg-gray-900/50 px-2 py-1 rounded">
-                                                    {route.destination_cidr}
+                                                    {subnet.cidr}
                                                 </code>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <code className="text-sm text-gray-300">{route.next_hop}</code>
+                                                <code className="text-sm text-gray-300">{subnet.gateway_ip}</code>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    route.status === 'active' 
-                                                        ? 'bg-green-500/20 text-green-400' 
+                                                    subnet.enable_dhcp
+                                                        ? 'bg-green-500/20 text-green-400'
                                                         : 'bg-gray-500/20 text-gray-400'
                                                 }`}>
-                                                    {route.status === 'active' ? '● Active' : '○ Inactive'}
+                                                    {subnet.enable_dhcp ? '● Enabled' : '○ Disabled'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex gap-2">
-                                                    <button 
-         
-                                                        className="text-blue-400 hover:text-blue-300 text-sm"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button 
-                                             
-                                                        className="text-red-400 hover:text-red-300 text-sm"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <button className="text-blue-400 hover:text-blue-300 text-sm">Edit</button>
+                                                    <button className="text-red-400 hover:text-red-300 text-sm">Delete</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -378,9 +297,6 @@ export default function RouteManagement() {
                     </div>
                 </Card>
             </div>
-
-   
-           
         </div>
     );
 }

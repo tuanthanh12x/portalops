@@ -152,7 +152,7 @@ export default function SubnetManagement() {
                                 <p className="text-gray-400 mt-1">Configure and manage network subnets</p>
                             </div>
                         </div>
-                        <Button >
+                        <Button onClick={() => setIsCreateModalOpen(true)}>
                             <span>+</span>
                             Create Subnet
                         </Button>

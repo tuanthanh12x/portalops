@@ -356,8 +356,7 @@ export default function RouteManagement() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex gap-2">
-                                                    <button 
-         
+       
                                                         className="text-blue-400 hover:text-blue-300 text-sm"
                                                     >
                                                         Edit

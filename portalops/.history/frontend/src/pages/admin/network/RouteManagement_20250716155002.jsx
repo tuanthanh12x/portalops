@@ -357,13 +357,13 @@ export default function RouteManagement() {
                                             <td className="px-6 py-4">
                                                 <div className="flex gap-2">
                                                     <button 
-         
+                                                        onClick={() => handleEditRoute(route)}
                                                         className="text-blue-400 hover:text-blue-300 text-sm"
                                                     >
                                                         Edit
                                                     </button>
                                                     <button 
-                                             
+                                                        onClick={() => handleDeleteRoute(route.id)}
                                                         className="text-red-400 hover:text-red-300 text-sm"
                                                     >
                                                         Delete
@@ -379,8 +379,125 @@ export default function RouteManagement() {
                 </Card>
             </div>
 
-   
-           
+            {/* Create Route Modal */}
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Create New Route"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Route Name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter route name"
+                        required
+                    />
+
+                    <Select
+                        label="Router"
+                        value={formData.router_id}
+                        onChange={(e) => handleInputChange('router_id', e.target.value)}
+                        options={routerOptions}
+                        required
+                    />
+
+                    <Input
+                        label="Destination CIDR"
+                        value={formData.destination_cidr}
+                        onChange={(e) => handleInputChange('destination_cidr', e.target.value)}
+                        placeholder="e.g., 0.0.0.0/0 or 10.0.0.0/8"
+                        required
+                    />
+
+                    <Input
+                        label="Next Hop"
+                        value={formData.next_hop}
+                        onChange={(e) => handleInputChange('next_hop', e.target.value)}
+                        placeholder="e.g., 192.168.1.1"
+                        required
+                    />
+
+                    <Input
+                        label="Description"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        placeholder="Optional description"
+                    />
+
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={handleCreateRoute} variant="success">
+                            Create Route
+                        </Button>
+                        <Button
+                            onClick={() => setIsCreateModalOpen(false)}
+                            variant="secondary"
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Route Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Edit Route"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Route Name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter route name"
+                        required
+                    />
+
+                    <Select
+                        label="Router"
+                        value={formData.router_id}
+                        onChange={(e) => handleInputChange('router_id', e.target.value)}
+                        options={routerOptions}
+                        required
+                    />
+
+                    <Input
+                        label="Destination CIDR"
+                        value={formData.destination_cidr}
+                        onChange={(e) => handleInputChange('destination_cidr', e.target.value)}
+                        placeholder="e.g., 0.0.0.0/0 or 10.0.0.0/8"
+                        required
+                    />
+
+                    <Input
+                        label="Next Hop"
+                        value={formData.next_hop}
+                        onChange={(e) => handleInputChange('next_hop', e.target.value)}
+                        placeholder="e.g., 192.168.1.1"
+                        required
+                    />
+
+                    <Input
+                        label="Description"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        placeholder="Optional description"
+                    />
+
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={handleUpdateRoute} variant="success">
+                            Update Route
+                        </Button>
+                        <Button
+                            onClick={() => setIsEditModalOpen(false)}
+                            variant="secondary"
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

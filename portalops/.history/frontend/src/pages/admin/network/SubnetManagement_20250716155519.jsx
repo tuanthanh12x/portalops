@@ -103,6 +103,9 @@ export function TabsContent({ value, active, children }) {
 export default function SubnetManagement() {
     const [subnets, setSubnets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedSubnet, setSelectedSubnet] = useState(null);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -152,7 +155,7 @@ export default function SubnetManagement() {
                                 <p className="text-gray-400 mt-1">Configure and manage network subnets</p>
                             </div>
                         </div>
-                        <Button >
+                        <Button onClick={() => setIsCreateModalOpen(true)}>
                             <span>+</span>
                             Create Subnet
                         </Button>

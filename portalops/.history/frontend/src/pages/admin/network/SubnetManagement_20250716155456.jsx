@@ -23,7 +23,40 @@ function Card({ children, className = "" }) {
     );
 }
 
+function CardContent({ children }) {
+    return <div className="space-y-3">{children}</div>;
+}
 
+function CardTitle({ children, icon }) {
+    return (
+        <div className="flex items-center gap-3">
+            {icon && <span className="text-2xl">{icon}</span>}
+            <h3 className="text-lg font-semibold text-gray-100">{children}</h3>
+        </div>
+    );
+}
+
+// Modal Component
+function Modal({ isOpen, onClose, title, children }) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-100">{title}</h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-200 text-xl"
+                    >
+                        ×
+                    </button>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
+}
 
 // Input Component
 
@@ -103,6 +136,9 @@ export function TabsContent({ value, active, children }) {
 export default function SubnetManagement() {
     const [subnets, setSubnets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedSubnet, setSelectedSubnet] = useState(null);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -152,7 +188,7 @@ export default function SubnetManagement() {
                                 <p className="text-gray-400 mt-1">Configure and manage network subnets</p>
                             </div>
                         </div>
-                        <Button >
+                        <Button onClick={() => setIsCreateModalOpen(true)}>
                             <span>+</span>
                             Create Subnet
                         </Button>
