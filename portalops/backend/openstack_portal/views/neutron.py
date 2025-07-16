@@ -163,7 +163,7 @@ class NetworkListView(APIView):
         networks = []
         try:
             for net in conn.network.networks():
-                count_subnet =net.subnet_ids.count()
+                count_subnet =len(net.subnet_ids)
                 networks.append({
                     "id": net.id,
                     "name": net.name,
