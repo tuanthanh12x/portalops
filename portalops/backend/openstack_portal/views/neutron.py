@@ -272,7 +272,7 @@ class SubnetListView(APIView):
                     "cidr": subnet.cidr,
                     "ip_version": subnet.ip_version,
                     "gateway_ip": subnet.gateway_ip,
-                    "enable_dhcp": subnet_data.get("enable_dhcp"),
+                    "enable_dhcp": subnet.enable_dhcp,
                     "network_id": subnet.network_id,
                     "project_id": subnet.project_id,
                     "allocation_pools": subnet.allocation_pools,
