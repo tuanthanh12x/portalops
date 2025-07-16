@@ -150,6 +150,7 @@ export default function NetworkDashboardPage() {
       </header>
 
       <div className="px-6 lg:px-8 py-8">
+       
 
         {/* Error Message */}
         {error && (
@@ -205,6 +206,7 @@ export default function NetworkDashboardPage() {
                         { key: 'shared', label: 'Shared' },
                         { key: 'external', label: 'External' },
                         { key: 'subnets', label: 'Subnets' },
+                      
                         { key: 'id', label: 'Network ID' },
                         { key: 'actions', label: 'Actions' }
                       ].map(header => (
@@ -296,7 +298,7 @@ export default function NetworkDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             <code className="text-xs text-gray-400 bg-gray-900/50 px-2 py-1 rounded">
-                              {net.id ? net.id.substring(0, 128) : "-"}
+                              {net.id ? net.id.substring(0, 8) + "..." : "-"}
                             </code>
                           </td>
                           <td className="px-6 py-4">

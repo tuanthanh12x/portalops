@@ -245,3 +245,40 @@ class CreateNetworkView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+
+class SubnetListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        token = token_bytes.decode()
+        conn = connect_with_token_v5(token, project_id)
+
+        subnets = []
+        try:
+            for subnet in conn.network.subnets():
+                subnets.append({
+                    "id": subnet.id,
+                    "name": subnet.name,
+                    "cidr": subnet.cidr,
+                    "ip_version": subnet.ip_version,
+                    "gateway_ip": subnet.gateway_ip,
+                    "enable_dhcp": subnet.enable_dhcp,
+                    "network_id": subnet.network_id,
+                    "project_id": subnet.project_id,
+                    "allocation_pools": subnet.allocation_pools,
+                    "dns_nameservers": subnet.dns_nameservers,
+                    "host_routes": subnet.host_routes,
+                })
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+        return Response(subnets)

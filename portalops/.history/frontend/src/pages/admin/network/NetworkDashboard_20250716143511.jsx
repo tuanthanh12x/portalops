@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from '../../../components/admin/Navbar';
 import axiosInstance from "../../../api/axiosInstance";
-
 // CUSTOM UI COMPONENTS //
 
 export function Tabs({ defaultValue, children }) {
@@ -91,27 +90,30 @@ export default function NetworkDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchNetworks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Fixed: Use axiosInstance directly instead of treating it like fetch
-      const response = await axiosInstance.get('openstack/network/network-list/');
-      
-      // Fixed: axiosInstance returns response.data, not response.json()
-      setNetworks(response.data);
-    } catch (err) {
-      console.error("❌ Failed to fetch networks:", err);
-      setError(err.message || 'Failed to fetch networks');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchNetworks();
+    const fetchNetworks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+       const response = await axiosInstance.get('http://108.171.195.159:8000/api/openstack/network/network-list/');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setNetworks(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch networks:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
   }, []);
+    fetchNetworks();
+
 
   // Hàm để refresh dữ liệu
   const refreshNetworks = () => {
@@ -150,6 +152,41 @@ export default function NetworkDashboardPage() {
       </header>
 
       <div className="px-6 lg:px-8 py-8">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent>
+              <CardTitle icon="📊">Total Networks</CardTitle>
+              <div className="text-3xl font-bold text-blue-400">
+                {loading ? "..." : networks.length}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <CardTitle icon="✅">Active Networks</CardTitle>
+              <div className="text-3xl font-bold text-green-400">
+                {loading ? "..." : networks.filter(n => n.status === 'ACTIVE').length}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <CardTitle icon="🔗">Shared Networks</CardTitle>
+              <div className="text-3xl font-bold text-purple-400">
+                {loading ? "..." : networks.filter(n => n.shared).length}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <CardTitle icon="🌍">External Networks</CardTitle>
+              <div className="text-3xl font-bold text-orange-400">
+                {loading ? "..." : networks.filter(n => n.router_external).length}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Error Message */}
         {error && (
@@ -205,6 +242,7 @@ export default function NetworkDashboardPage() {
                         { key: 'shared', label: 'Shared' },
                         { key: 'external', label: 'External' },
                         { key: 'subnets', label: 'Subnets' },
+                        { key: 'tenant', label: 'Tenant ID' },
                         { key: 'id', label: 'Network ID' },
                         { key: 'actions', label: 'Actions' }
                       ].map(header => (
@@ -296,7 +334,12 @@ export default function NetworkDashboardPage() {
                           </td>
                           <td className="px-6 py-4">
                             <code className="text-xs text-gray-400 bg-gray-900/50 px-2 py-1 rounded">
-                              {net.id ? net.id.substring(0, 128) : "-"}
+                              {net.tenant_id ? net.tenant_id.substring(0, 8) + "..." : "-"}
+                            </code>
+                          </td>
+                          <td className="px-6 py-4">
+                            <code className="text-xs text-gray-400 bg-gray-900/50 px-2 py-1 rounded">
+                              {net.id ? net.id.substring(0, 8) + "..." : "-"}
                             </code>
                           </td>
                           <td className="px-6 py-4">
