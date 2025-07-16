@@ -83,6 +83,7 @@ const Navbar = () => {
               <ul className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30">
                 <li><a href="/users-manager" className="block px-5 py-3 hover:bg-gray-700">Users</a></li>
                 <li><a href="/images" className="block px-5 py-3 hover:bg-gray-700">Images</a></li>
+                <li><a href="/keypairs" className="block px-5 py-3 hover:bg-gray-700">Keypairs</a></li>
               </ul>
             )}
           </li>
@@ -99,7 +100,9 @@ const Navbar = () => {
               <ul className="absolute left-0 mt-3 w-44 bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-30 z-30">
                 <li><a href="/admin/projects" className="block px-5 py-3 hover:bg-gray-700">Projects</a></li>
                 <li><a href="/admin/packages" className="block px-5 py-3 hover:bg-gray-700">Packages</a></li>
-
+                <li><a href="/admin/vms" className="block px-5 py-3 hover:bg-gray-700">VMs</a></li>
+                <li><a href="/" className="block px-5 py-3 hover:bg-gray-700">Snapshots</a></li>
+                <li><a href="/buckets" className="block px-5 py-3 hover:bg-gray-700">Buckets</a></li>
               </ul>
             )}
           </li>

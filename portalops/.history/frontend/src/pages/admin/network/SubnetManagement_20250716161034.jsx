@@ -250,11 +250,10 @@ export default function SubnetManagement() {
                     </div>
                 </Card>
             </div>
-                {selectedSubnet && (
-    <SubnetDetailModal subnet={selectedSubnet} onClose={() => setSelectedSubnet(null)} />
-)}
         </div>
     );
-
+    {selectedSubnet && (
+    <SubnetDetailModal subnet={selectedSubnet} onClose={() => setSelectedSubnet(null)} />
+)}
 
 }

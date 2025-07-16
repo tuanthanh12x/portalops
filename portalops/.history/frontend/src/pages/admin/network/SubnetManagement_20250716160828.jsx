@@ -105,7 +105,7 @@ export default function SubnetManagement() {
     const [subnets, setSubnets] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const [selectedSubnet, setSelectedSubnet] = useState(null);
+const [selectedSubnet, setSelectedSubnet] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         network_id: '',
@@ -223,25 +223,20 @@ export default function SubnetManagement() {
                                                 <code className="text-sm text-gray-300">{subnet.gateway_ip}</code>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${subnet.enable_dhcp
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    subnet.enable_dhcp
                                                         ? 'bg-green-500/20 text-green-400'
                                                         : 'bg-gray-500/20 text-gray-400'
-                                                    }`}>
+                                                }`}>
                                                     {subnet.enable_dhcp ? '● Enabled' : '○ Disabled'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex gap-3">
-                                                    <button
-                                                        className="text-blue-400 hover:text-blue-300 text-sm"
-                                                        onClick={() => setSelectedSubnet(subnet)}
-                                                    >
-                                                        View
-                                                    </button>
+                                                <div className="flex gap-2">
+                                                    <button className="text-blue-400 hover:text-blue-300 text-sm">Edit</button>
                                                     <button className="text-red-400 hover:text-red-300 text-sm">Delete</button>
                                                 </div>
                                             </td>
-
                                         </tr>
                                     ))
                                 )}
@@ -250,11 +245,6 @@ export default function SubnetManagement() {
                     </div>
                 </Card>
             </div>
-                {selectedSubnet && (
-    <SubnetDetailModal subnet={selectedSubnet} onClose={() => setSelectedSubnet(null)} />
-)}
         </div>
     );
-
-
 }
