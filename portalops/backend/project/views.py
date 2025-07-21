@@ -652,4 +652,7 @@ class UserProjectListView(APIView):
 
 from .tasks import sync_floating_ips_task
 class SyncFloatingIPsView(APIView):
-    sync_floating_ips_task.delay()
+    permission_classes = [IsAdmin]
+    def post(self, request, *args, **kwargs):
+        sync_floating_ips_task.delay()
+        return Response({"detail": "Sync task has been started."})
