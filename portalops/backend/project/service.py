@@ -1,17 +1,17 @@
 from utils.conn import get_admin_connection
-from ipaddress import ip_address
+from ipaddress import ip_address, IPv4Address
 
 from .models import IPStatus, FloatingIPPool
 
 
 def sync_floating_ips():
-
-
     conn = get_admin_connection()
 
+    # Lấy toàn bộ floating IP đang được tạo
     floating_ips = {
         fip.floating_ip_address: fip
         for fip in conn.network.ips()
+        if isinstance(ip_address(fip.floating_ip_address), IPv4Address)
     }
 
     external_nets = [
@@ -22,6 +22,10 @@ def sync_floating_ips():
     for net in external_nets:
         subnets = conn.network.subnets(network_id=net.id)
         for subnet in subnets:
+            # Bỏ qua subnet IPv6
+            if subnet.ip_version != 4:
+                continue
+
             for pool in subnet.allocation_pools:
                 start_ip = ip_address(pool['start'])
                 end_ip = ip_address(pool['end'])
