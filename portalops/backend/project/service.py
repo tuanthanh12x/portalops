@@ -7,22 +7,23 @@ from .models import IPStatus, FloatingIPPool
 def sync_floating_ips():
     conn = get_admin_connection()
 
-    # Lấy toàn bộ floating IP đang được tạo
+    # Chỉ lấy Floating IP v4 có địa chỉ hợp lệ
     floating_ips = {
         fip.floating_ip_address: fip
         for fip in conn.network.ips()
-        if isinstance(ip_address(fip.floating_ip_address), IPv4Address)
+        if fip.floating_ip_address
+        and isinstance(ip_address(fip.floating_ip_address), IPv4Address)
     }
 
     external_nets = [
         net for net in conn.network.networks()
-        if net.is_router_external
+        if getattr(net, "is_router_external", False)
     ]
 
     for net in external_nets:
         subnets = conn.network.subnets(network_id=net.id)
         for subnet in subnets:
-            # Bỏ qua subnet IPv6
+            # Chỉ xử lý IPv4 subnet
             if subnet.ip_version != 4:
                 continue
 
