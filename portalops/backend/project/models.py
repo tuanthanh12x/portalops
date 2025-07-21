@@ -64,3 +64,41 @@ class ProjectUserMapping(models.Model):
 
     def __str__(self):
         return f"{self.user.username} in {self.project.name} ({self.role})"
+
+
+class IPStatus(models.TextChoices):
+    AVAILABLE = "available", "Available"
+    ALLOCATED = "allocated", "Allocated"
+    RESERVED = "reserved", "Reserved"
+    RELEASED = "released", "Released"
+
+
+class FloatingIPPool(models.Model):
+    ip_address = models.GenericIPAddressField(protocol="both", unique=True)
+    subnet_id = models.UUIDField()  # liên kết tới subnet trong OpenStack
+    network_id = models.UUIDField()  # external network
+
+    project_id = models.UUIDField(null=True, blank=True)  # project dùng IP
+    vm_id = models.UUIDField(null=True, blank=True)  # VM được gán IP
+
+    status = models.CharField(
+        max_length=10,
+        choices=IPStatus.choices,
+        default=IPStatus.AVAILABLE
+    )
+
+    note = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "floating_ip_pool"
+        indexes = [
+            models.Index(fields=["subnet_id"]),
+            models.Index(fields=["network_id"]),
+            models.Index(fields=["status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.ip_address} [{self.status}]"

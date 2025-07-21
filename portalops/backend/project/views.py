@@ -648,3 +648,8 @@ class UserProjectListView(APIView):
         serializer = ProjectSerializer(projects, many=True)
 
         return Response(serializer.data)
+
+
+from .tasks import sync_floating_ips_task
+class SyncFloatingIPsView(APIView):
+    sync_floating_ips_task.delay()
