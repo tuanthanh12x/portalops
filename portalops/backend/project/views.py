@@ -701,3 +701,62 @@ class FloatingIPAListView(APIView):
 
         except Exception as e:
             return Response({"detail": f"Failed to retrieve floating IPs: {str(e)}"}, status=500)
+
+
+class FloatingIPReservedListView(APIView):
+    permission_classes = [IsAdmin]
+    def get(self, request):
+        try:
+            floating_ips = FloatingIPPool.objects.filter(status="Reserved")
+
+            data = [
+                {
+                    "ip_address": ip.ip_address,
+                    "subnet_id": ip.subnet_id,
+                    "network_id": ip.network_id,
+                    "vm_id": ip.vm_id,
+                    "status": ip.status,
+                    "note": ip.note,
+                    "created_at": ip.created_at,
+                    "updated_at": ip.updated_at,
+                }
+                for ip in floating_ips
+            ]
+
+            return Response(data, status=200)
+
+        except Exception as e:
+            return Response({"detail": f"Failed to retrieve floating IPs: {str(e)}"}, status=500)
+
+
+class AssignFloatingIPView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, project_id):
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+
+        ip_address = request.data.get("ip_address")
+
+        if not ip_address:
+            return Response({"detail": "Missing 'ip_address' in request body."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            ip_obj = get_object_or_404(FloatingIPPool, ip_address=ip_address)
+
+            if ip_obj.status == IPStatus.ALLOCATED:
+                return Response({"detail": f"IP {ip_address} is already allocated to another project."}, status=400)
+
+            # Assign IP to project only (no VM)
+            ip_obj.project_id = project_id
+            ip_obj.vm_id = None  # Ensure VM is unset
+            ip_obj.status = IPStatus.ALLOCATED
+            ip_obj.save()
+
+            return Response(
+                {"detail": f"Floating IP {ip_address} successfully assigned to project {project_id}."},
+                status=200
+            )
+
+        except Exception as e:
+            return Response({"detail": f"Error assigning floating IP: {str(e)}"}, status=500)
