@@ -15,6 +15,6 @@ urlpatterns = [
     path("<str:project_id>/admin-IPs-proj-list/", FloatingIPAListView.as_view(), name="ipadminpro-list"),
     path("<str:openstack_id>/project-detail/", AdminProjectDetailView.as_view(), name="admin-project-detail"),
     path("sync-floating-ips/", SyncFloatingIPsView.as_view(), name="sync-floating-ips"),
-    path("floating-ips-reserved-list/", AvailableFloatingIPListView.as_view(), name="sync-floating-ips"),
+    path("available-floating-ips-list/", AvailableFloatingIPListView.as_view(), name="available-floating-ips"),
     path("<str:project_id>/assign-floating-ip/", AssignFloatingIPView.as_view(), name="assign-floating-ip"),
 ]

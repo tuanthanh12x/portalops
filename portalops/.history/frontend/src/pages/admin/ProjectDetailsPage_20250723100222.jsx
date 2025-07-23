@@ -55,6 +55,50 @@ useEffect(() => {
   }
 };
 const handleAssignIPToProject = async () => {
+  if (!newIP) {
+    alert("❗ Please enter a valid IP address.");
+    return;
+  }
+
+  try {
+    await axiosInstance.post(`/projects/${id}/assign-floating-ip/`, {
+      ip_address: newIP,
+    });
+    alert("✅ Floating IP assigned to project.");
+    setShowAssignIPModal(false);
+    setNewIP("");
+    const res = await axiosInstance.get(`/project/${id}/admin-IPs-proj-list/`);
+    setFloatingIPs(res.data);
+  } catch (err) {
+    alert("❌ Failed to assign floating IP.");
+    console.error(err);
+  }
+};
+const openAssignIPModal = async () => {
+  try {
+    const res = await axiosInstance.get("/available-floating-ips-list/");
+    setAvailableIPs(res.data);
+    setShowAssignIPModal(true);
+  } catch (err) {
+    alert("Failed to fetch available IPs.");
+    console.error(err);
+  }
+};
+
+
+  const usagePercent = (used, total) =>
+    total > 0 ? Math.round((used / total) * 100) : 0;
+
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        <p>Loading project details...</p>
+      </div>
+    );
+  }
+
+  const { owner, usage, vms, product_type } = project;
+const handleAssignIPToProject = async () => {
   if (!selectedIP) {
     alert("Please select a floating IP.");
     return;
@@ -77,45 +121,6 @@ const handleAssignIPToProject = async () => {
   }
 };
 
-const openAssignIPModal = async () => {
-  try {
-    const res = await axiosInstance.get("/project/available-floating-ips-list/");
-    setAvailableIPs(res.data);
-    setShowAssignIPModal(true);
-  } catch (err) {
-    alert("Failed to fetch available IPs.");
-    console.error(err);
-  }
-};
-
-
-  const usagePercent = (used, total) =>
-    total > 0 ? Math.round((used / total) * 100) : 0;
-
-  if (!project) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        <p>Loading project details...</p>
-      </div>
-    );
-  }
-
-  const { owner, usage, vms, product_type } = project;
-const handleAssignIP = async (ipId, vmId) => {
-  try {
-    await axiosInstance.post(`/project/assign-floating-ip/`, {
-      ip_id: ipId,
-      vm_id: vmId,
-    });
-    alert("✅ Floating IP assigned");
-    // Refresh the IP list
-    const res = await axiosInstance.get(`/project/${id}/floating-ips/`);
-    setFloatingIPs(res.data);
-  } catch (err) {
-    alert("❌ Failed to assign IP");
-    console.error(err);
-  }
-};
 
 const handleUnassignIP = async (ipId) => {
   try {

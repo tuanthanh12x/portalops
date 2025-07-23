@@ -11,8 +11,6 @@ export default function AdminProjectDetailPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState(null);
   const [newIP, setNewIP] = useState("");
-  const [availableIPs, setAvailableIPs] = useState([]);
-const [selectedIP, setSelectedIP] = useState("");
 const [showAssignIPModal, setShowAssignIPModal] = useState(false);
 
   useEffect(() => {
@@ -55,35 +53,22 @@ useEffect(() => {
   }
 };
 const handleAssignIPToProject = async () => {
-  if (!selectedIP) {
-    alert("Please select a floating IP.");
+  if (!newIP) {
+    alert("❗ Please enter a valid IP address.");
     return;
   }
 
   try {
     await axiosInstance.post(`/projects/${id}/assign-floating-ip/`, {
-      ip_address: selectedIP,
+      ip_address: newIP,
     });
-
-    alert("Floating IP assigned to project.");
+    alert("✅ Floating IP assigned to project.");
     setShowAssignIPModal(false);
-    setSelectedIP("");
-
+    setNewIP("");
     const res = await axiosInstance.get(`/project/${id}/admin-IPs-proj-list/`);
     setFloatingIPs(res.data);
   } catch (err) {
-    alert("Failed to assign floating IP.");
-    console.error(err);
-  }
-};
-
-const openAssignIPModal = async () => {
-  try {
-    const res = await axiosInstance.get("/project/available-floating-ips-list/");
-    setAvailableIPs(res.data);
-    setShowAssignIPModal(true);
-  } catch (err) {
-    alert("Failed to fetch available IPs.");
+    alert("❌ Failed to assign floating IP.");
     console.error(err);
   }
 };
@@ -207,7 +192,7 @@ const handleUnassignIP = async (ipId) => {
   <div className="mb-4">
   <button
     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
-onClick={openAssignIPModal}
+    onClick={() => setShowAssignIPModal(true)}
   >
     ➕ Assign Floating IP to Project
   </button>
@@ -258,20 +243,13 @@ onClick={openAssignIPModal}
   <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
     <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-xl">
       <h3 className="text-2xl font-bold text-green-400 mb-4">Assign Floating IP</h3>
-      
-      <select
-        className="w-full p-2 mb-4 bg-gray-800 text-white rounded border border-gray-600"
-        value={selectedIP}
-        onChange={(e) => setSelectedIP(e.target.value)}
-      >
-        <option value="">-- Select an IP --</option>
-        {availableIPs.map((ip) => (
-          <option key={ip.ip_address} value={ip.ip_address}>
-            {ip.ip_address} {ip.note ? `- ${ip.note}` : ""}
-          </option>
-        ))}
-      </select>
-
+      <input
+        type="text"
+        placeholder="Enter IP address..."
+        className="w-full p-2 mb-4 bg-gray-800 text-white rounded border border-gray-600 focus:outline-none"
+        value={newIP}
+        onChange={(e) => setNewIP(e.target.value)}
+      />
       <div className="flex justify-end gap-3">
         <button
           onClick={() => setShowAssignIPModal(false)}

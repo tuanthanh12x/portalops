@@ -55,31 +55,28 @@ useEffect(() => {
   }
 };
 const handleAssignIPToProject = async () => {
-  if (!selectedIP) {
-    alert("Please select a floating IP.");
+  if (!newIP) {
+    alert("❗ Please enter a valid IP address.");
     return;
   }
 
   try {
     await axiosInstance.post(`/projects/${id}/assign-floating-ip/`, {
-      ip_address: selectedIP,
+      ip_address: newIP,
     });
-
-    alert("Floating IP assigned to project.");
+    alert("✅ Floating IP assigned to project.");
     setShowAssignIPModal(false);
-    setSelectedIP("");
-
+    setNewIP("");
     const res = await axiosInstance.get(`/project/${id}/admin-IPs-proj-list/`);
     setFloatingIPs(res.data);
   } catch (err) {
-    alert("Failed to assign floating IP.");
+    alert("❌ Failed to assign floating IP.");
     console.error(err);
   }
 };
-
 const openAssignIPModal = async () => {
   try {
-    const res = await axiosInstance.get("/project/available-floating-ips-list/");
+    const res = await axiosInstance.get("/available-floating-ips-list/");
     setAvailableIPs(res.data);
     setShowAssignIPModal(true);
   } catch (err) {

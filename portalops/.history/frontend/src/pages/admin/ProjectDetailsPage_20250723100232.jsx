@@ -79,7 +79,7 @@ const handleAssignIPToProject = async () => {
 
 const openAssignIPModal = async () => {
   try {
-    const res = await axiosInstance.get("/project/available-floating-ips-list/");
+    const res = await axiosInstance.get("/available-floating-ips-list/");
     setAvailableIPs(res.data);
     setShowAssignIPModal(true);
   } catch (err) {
