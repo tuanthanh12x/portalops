@@ -1,24 +1,27 @@
+from django.core.validators import validate_ipv4_address
 from utils.conn import get_admin_connection
 from ipaddress import ip_address, IPv4Address
-
+from django.core.exceptions import ValidationError
 from .models import IPStatus, FloatingIPPool
+
+def is_valid_ipv4(ip):
+    try:
+        validate_ipv4_address(ip)
+        return True
+    except ValidationError:
+        return False
 
 def sync_floating_ips():
     conn = get_admin_connection()
 
-    # Strictly collect only valid IPv4 Floating IPs
+    # Collect only valid IPv4 floating IPs
     floating_ips = {}
     for fip in conn.network.ips():
-        if not fip.floating_ip_address:
-            continue
-        try:
-            ip_obj = ip_address(fip.floating_ip_address)
-            if isinstance(ip_obj, IPv4Address):
-                floating_ips[str(ip_obj)] = fip
-        except ValueError:
-            continue  # Skip malformed IPs
+        ip_str = fip.floating_ip_address
+        if ip_str and is_valid_ipv4(ip_str):
+            floating_ips[ip_str] = fip
 
-    # Get external networks only
+    # Only include external networks
     external_nets = [
         net for net in conn.network.networks()
         if getattr(net, "is_router_external", False)
@@ -28,7 +31,7 @@ def sync_floating_ips():
         subnets = conn.network.subnets(network_id=net.id)
         for subnet in subnets:
             if subnet.ip_version != 4:
-                continue  # Ensure only IPv4 subnets are processed
+                continue  # Skip IPv6 subnets
 
             for pool in subnet.allocation_pools:
                 start_ip = ip_address(pool['start'])
