@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from userauth.permissions import IsAdmin
 
 from overview.tasks import redis_client
-from .models import ProjectType, ProjectUserMapping, Project
+from .models import ProjectType, ProjectUserMapping, Project, FloatingIPPool, IPStatus
 from utils.conn import vl_connect_with_token
 
 from utils.conn import connect_with_token_v5
@@ -260,6 +260,23 @@ class CreateProjectView(APIView):
             )
 
             mapped_user_id = None
+
+            floating_ip_quota = project_type.floating_ips
+
+            available_ips = FloatingIPPool.objects.filter(
+                status=IPStatus.AVAILABLE
+            ).order_by('created_at')[:floating_ip_quota]
+
+            if available_ips.count() < floating_ip_quota:
+                return Response({
+                    "error": f"Not enough available floating IPs in pool. Required: {floating_ip_quota}, Available: {available_ips.count()}"
+                }, status=400)
+
+            # Update IPs in DB
+            for ip in available_ips:
+                ip.project_id = os_project.id
+                ip.status = IPStatus.RESERVED
+                ip.save()
 
             # Step 5 (optional): assign project owner
             if assign_user_id:

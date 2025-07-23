@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from utils.conn import connect_with_token_v5
 
-
+from project.models import FloatingIPPool
 
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
@@ -53,39 +53,33 @@ class FloatingIPListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        username = request.user.username
         project_id = request.auth.get("project_id")
-        token_key = f"keystone_token:{username}:{project_id}"
-        token_bytes = redis_client.get(token_key)
 
-        if not token_bytes:
-            return Response({"detail": "Token not found in Redis."}, status=401)
+        if not project_id:
+            return Response({"detail": "Missing project_id in token."}, status=400)
 
         try:
-            token = token_bytes.decode()
-            conn = connect_with_token_v5(token, project_id)
+            # Filter IPs belonging to this project
+            floating_ips = FloatingIPPool.objects.filter(project_id=project_id)
 
-            floating_ips = []
-            for fip in conn.network.ips():
-                if fip.floating_ip_address:
-                    floating_ips.append({
-                        "id": fip.id,
-                        "floating_ip_address": fip.floating_ip_address,
-                        "fixed_ip_address": fip.fixed_ip_address,
-                        "port_id": fip.port_id,
-                        "status": fip.status,
-                        "router_id": fip.router_id,
-                        "description": fip.description,
-                        "created_at": fip.created_at,
-                        "updated_at": fip.updated_at,
-                        "project_id": fip.project_id,
-                    })
+            data = [
+                {
+                    "ip_address": ip.ip_address,
+                    "subnet_id": ip.subnet_id,
+                    "network_id": ip.network_id,
+                    "vm_id": ip.vm_id,
+                    "status": ip.status,
+                    "note": ip.note,
+                    "created_at": ip.created_at,
+                    "updated_at": ip.updated_at,
+                }
+                for ip in floating_ips
+            ]
 
-            return Response(floating_ips)
+            return Response(data, status=200)
 
         except Exception as e:
-            return Response({"detail": f"Failed to fetch floating IPs: {str(e)}"}, status=500)
-
+            return Response({"detail": f"Failed to retrieve floating IPs: {str(e)}"}, status=500)
 
 class AttachFloatingIPView(APIView):
     permission_classes = [IsAuthenticated]
