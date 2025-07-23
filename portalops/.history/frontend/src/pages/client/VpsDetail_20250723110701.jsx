@@ -107,7 +107,7 @@ const VPSDetailPage = () => {
   const handleChangeIp = async () => {
     setLoadingIPs(true);
     try {
-      const res = await axiosInstance.get('/openstac/network/floatingip-list/');
+      const res = await axiosInstance.get('/openstack/network/floatingip-list/');
       setAvailableIPs(res.data);
       setChangeIpModalOpen(true);
     } catch (error) {
@@ -125,15 +125,11 @@ const VPSDetailPage = () => {
     setLoadingId("change-ip");
     try {
       const res = await axiosInstance.post(
-        `/openstack/network/assign-or-replace-floating-ip/`,
-        { 
-          ip_id: selectedIpId,
-          vm_id: id,
-          project_id: vps.project_id // optional, if available in vps data
-        }
+        `/openstack/compute/instances/${id}/change-ip/`,
+        { floating_ip_id: selectedIpId }
       );
       setPopup({ 
-        message: res.data.detail || "IP address changed successfully", 
+        message: res.data.message || "IP address changed successfully", 
         type: "success" 
       });
       
@@ -143,7 +139,7 @@ const VPSDetailPage = () => {
     } catch (error) {
       console.error("Change IP failed:", error);
       setPopup({
-        message: error.response?.data?.detail || "Failed to change IP address",
+        message: error.response?.data?.error || "Failed to change IP address",
         type: "error"
       });
     } finally {
@@ -359,42 +355,22 @@ const VPSDetailPage = () => {
 };
 
 const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading }) => {
-  const [selectedIpAddress, setSelectedIpAddress] = useState("");
+  const [selectedIpId, setSelectedIpId] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedIpAddress) {
+    if (!selectedIpId) {
       alert("Please select an IP address.");
       return;
     }
-    onConfirm(selectedIpAddress);
+    onConfirm(selectedIpId);
   };
 
   // Filter available IPs (exclude current IP and show only unassigned)
   const selectableIPs = availableIPs.filter(ip => 
-    ip.ip_address !== currentIp && 
-    (!ip.vm_id || ip.status === 'available')
+    ip.floating_ip_address !== currentIp && 
+    (!ip.instance_id || ip.status === 'DOWN')
   );
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'available':
-        return 'text-green-400';
-      case 'assigned':
-        return 'text-red-400';
-      case 'reserved':
-        return 'text-yellow-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
-  const getStatusText = (ip) => {
-    if (ip.vm_id) {
-      return `Assigned to VM: ${ip.vm_id}`;
-    }
-    return ip.status || 'Available';
-  };
 
   return (
     <div
@@ -402,7 +378,7 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
       aria-modal="true"
       role="dialog"
     >
-      <div className="bg-gray-800 rounded-md p-6 w-[600px] max-w-[90vw] shadow-lg max-h-[80vh] overflow-y-auto">
+      <div className="bg-gray-800 rounded-md p-6 w-[500px] max-w-[90vw] shadow-lg max-h-[80vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4 text-indigo-400">
           Change IP Address
         </h2>
@@ -419,43 +395,27 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
             {selectableIPs.length === 0 ? (
               <div className="bg-yellow-900/20 border border-yellow-600 rounded-md p-4">
                 <p className="text-yellow-300 text-sm">
-                  No available floating IPs found. All IPs are either assigned or this is your current IP.
+                  No available floating IPs found. Please create a new floating IP first.
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {selectableIPs.map((ip, index) => (
-                  <label key={index} className="flex items-center space-x-3 bg-gray-700 p-4 rounded-md hover:bg-gray-600 cursor-pointer">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {selectableIPs.map((ip) => (
+                  <label key={ip.id} className="flex items-center space-x-3 bg-gray-700 p-3 rounded-md hover:bg-gray-600 cursor-pointer">
                     <input
                       type="radio"
                       name="selectedIp"
-                      value={ip.ip_address}
-                      checked={selectedIpAddress === ip.ip_address}
-                      onChange={(e) => setSelectedIpAddress(e.target.value)}
+                      value={ip.id}
+                      checked={selectedIpId === ip.id}
+                      onChange={(e) => setSelectedIpId(e.target.value)}
                       className="text-indigo-600 focus:ring-indigo-500"
                     />
                     <div className="flex-1">
-                      <div className="font-mono font-semibold text-white text-lg">
-                        {ip.ip_address}
+                      <div className="font-mono font-semibold text-white">
+                        {ip.floating_ip_address}
                       </div>
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-400 mt-1">
-                        <span className={getStatusColor(ip.status)}>
-                          Status: {getStatusText(ip)}
-                        </span>
-                        {ip.subnet_id && (
-                          <span>Subnet: {ip.subnet_id}</span>
-                        )}
-                        {ip.network_id && (
-                          <span>Network: {ip.network_id}</span>
-                        )}
-                      </div>
-                      {ip.note && (
-                        <div className="text-xs text-gray-500 mt-1 italic">
-                          Note: {ip.note}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-500 mt-1">
-                        Created: {new Date(ip.created_at).toLocaleDateString()}
+                      <div className="text-xs text-gray-400">
+                        Status: {ip.status} | Pool: {ip.pool || 'N/A'}
                       </div>
                     </div>
                   </label>
@@ -483,7 +443,7 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
             </button>
             <button
               type="submit"
-              disabled={loading || !selectedIpAddress || selectableIPs.length === 0}
+              disabled={loading || !selectedIpId || selectableIPs.length === 0}
               className="px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Changing..." : "Change IP"}

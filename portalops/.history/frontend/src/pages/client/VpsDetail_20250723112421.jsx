@@ -104,23 +104,6 @@ const VPSDetailPage = () => {
     setSnapshotModalOpen(true);
   };
 
-  const handleChangeIp = async () => {
-    setLoadingIPs(true);
-    try {
-      const res = await axiosInstance.get('/openstac/network/floatingip-list/');
-      setAvailableIPs(res.data);
-      setChangeIpModalOpen(true);
-    } catch (error) {
-      console.error("Failed to load floating IPs:", error);
-      setPopup({
-        message: error.response?.data?.error || "Failed to load available IPs",
-        type: "error"
-      });
-    } finally {
-      setLoadingIPs(false);
-    }
-  };
-
   const changeIpAddress = async (selectedIpId) => {
     setLoadingId("change-ip");
     try {
@@ -144,6 +127,33 @@ const VPSDetailPage = () => {
       console.error("Change IP failed:", error);
       setPopup({
         message: error.response?.data?.detail || "Failed to change IP address",
+        type: "error"
+      });
+    } finally {
+      setLoadingId(null);
+      setChangeIpModalOpen(false);
+    }
+  };
+
+  const changeIpAddress = async (selectedIpAddress) => {
+    setLoadingId("change-ip");
+    try {
+      const res = await axiosInstance.post(
+        `/openstack/compute/instances/${id}/change-ip/`,
+        { ip_address: selectedIpAddress }
+      );
+      setPopup({ 
+        message: res.data.message || "IP address changed successfully", 
+        type: "success" 
+      });
+      
+      // Refresh VPS data to get new IP
+      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+      setVps(updated.data);
+    } catch (error) {
+      console.error("Change IP failed:", error);
+      setPopup({
+        message: error.response?.data?.error || "Failed to change IP address",
         type: "error"
       });
     } finally {

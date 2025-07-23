@@ -277,3 +277,44 @@ class SubnetListView(APIView):
             return Response({"error": str(e)}, status=500)
 
         return Response(subnets)
+
+
+class AssignOrReplaceFloatingIPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        ip_id = request.data.get("ip_id")
+        vm_id = request.data.get("vm_id")
+        project_id = request.data.get("project_id")  # optional but recommended
+
+        if not ip_id or not vm_id:
+            return Response({"detail": "Both 'ip_id' and 'vm_id' are required."}, status=400)
+
+        try:
+            # Get new IP to assign
+            new_ip = FloatingIPPool.objects.get(id=ip_id, status="available")
+
+            # Detach any old floating IP from this VM
+            existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
+            if existing_ip:
+                existing_ip.vm_id = None
+                existing_ip.status = "available"
+                existing_ip.project_id = None
+                existing_ip.save()
+
+            # Assign new IP
+            new_ip.vm_id = vm_id
+            new_ip.status = "allocated"
+            new_ip.project_id = project_id or new_ip.project_id
+            new_ip.save()
+
+            return Response({
+                "detail": "Floating IP assigned successfully.",
+                "ip_address": new_ip.ip_address,
+                "ip_id": new_ip.id
+            }, status=200)
+
+        except FloatingIPPool.DoesNotExist:
+            return Response({"detail": "Floating IP not found or not available."}, status=404)
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)

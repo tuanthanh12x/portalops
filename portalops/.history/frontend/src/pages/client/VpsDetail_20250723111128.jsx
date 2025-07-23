@@ -107,7 +107,7 @@ const VPSDetailPage = () => {
   const handleChangeIp = async () => {
     setLoadingIPs(true);
     try {
-      const res = await axiosInstance.get('/openstac/network/floatingip-list/');
+      const res = await axiosInstance.get('/network/floatingip-list/');
       setAvailableIPs(res.data);
       setChangeIpModalOpen(true);
     } catch (error) {
@@ -121,19 +121,15 @@ const VPSDetailPage = () => {
     }
   };
 
-  const changeIpAddress = async (selectedIpId) => {
+  const changeIpAddress = async (selectedIpAddress) => {
     setLoadingId("change-ip");
     try {
       const res = await axiosInstance.post(
-        `/openstack/network/assign-or-replace-floating-ip/`,
-        { 
-          ip_id: selectedIpId,
-          vm_id: id,
-          project_id: vps.project_id // optional, if available in vps data
-        }
+        `/openstack/compute/instances/${id}/change-ip/`,
+        { ip_address: selectedIpAddress }
       );
       setPopup({ 
-        message: res.data.detail || "IP address changed successfully", 
+        message: res.data.message || "IP address changed successfully", 
         type: "success" 
       });
       
@@ -143,7 +139,7 @@ const VPSDetailPage = () => {
     } catch (error) {
       console.error("Change IP failed:", error);
       setPopup({
-        message: error.response?.data?.detail || "Failed to change IP address",
+        message: error.response?.data?.error || "Failed to change IP address",
         type: "error"
       });
     } finally {

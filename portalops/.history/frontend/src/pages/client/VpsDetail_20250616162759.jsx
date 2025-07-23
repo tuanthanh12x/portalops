@@ -13,7 +13,6 @@ import {
   HardDrive,
   Server,
   Globe,
-  Network,
 } from "lucide-react";
 
 const VPSDetailPage = () => {
@@ -23,9 +22,6 @@ const VPSDetailPage = () => {
   const [error, setError] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
   const [isSnapshotModalOpen, setSnapshotModalOpen] = useState(false);
-  const [isChangeIpModalOpen, setChangeIpModalOpen] = useState(false);
-  const [availableIPs, setAvailableIPs] = useState([]);
-  const [loadingIPs, setLoadingIPs] = useState(false);
   const [popup, setPopup] = useState(null);
 
   useEffect(() => {
@@ -68,6 +64,7 @@ const VPSDetailPage = () => {
     }
   };
 
+
   const handlePowerOn = () => performInstanceAction(id, "start");
   const handlePowerOff = () => performInstanceAction(id, "stop");
   const handleReboot = () => performInstanceAction(id, "reboot");
@@ -102,54 +99,6 @@ const VPSDetailPage = () => {
 
   const handleBackup = () => {
     setSnapshotModalOpen(true);
-  };
-
-  const handleChangeIp = async () => {
-    setLoadingIPs(true);
-    try {
-      const res = await axiosInstance.get('/openstac/network/floatingip-list/');
-      setAvailableIPs(res.data);
-      setChangeIpModalOpen(true);
-    } catch (error) {
-      console.error("Failed to load floating IPs:", error);
-      setPopup({
-        message: error.response?.data?.error || "Failed to load available IPs",
-        type: "error"
-      });
-    } finally {
-      setLoadingIPs(false);
-    }
-  };
-
-  const changeIpAddress = async (selectedIpId) => {
-    setLoadingId("change-ip");
-    try {
-      const res = await axiosInstance.post(
-        `/openstack/network/assign-or-replace-floating-ip/`,
-        { 
-          ip_id: selectedIpId,
-          vm_id: id,
-          project_id: vps.project_id // optional, if available in vps data
-        }
-      );
-      setPopup({ 
-        message: res.data.detail || "IP address changed successfully", 
-        type: "success" 
-      });
-      
-      // Refresh VPS data to get new IP
-      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
-      setVps(updated.data);
-    } catch (error) {
-      console.error("Change IP failed:", error);
-      setPopup({
-        message: error.response?.data?.detail || "Failed to change IP address",
-        type: "error"
-      });
-    } finally {
-      setLoadingId(null);
-      setChangeIpModalOpen(false);
-    }
   };
 
   const createBackup = async (backupName) => {
@@ -244,8 +193,10 @@ const VPSDetailPage = () => {
                     : vps.status}
               </span>
             </p>
+
+
           </div>
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3">
             {vps.status.toLowerCase() === "active" ? (
               <ActionButton
                 color="red"
@@ -281,13 +232,6 @@ const VPSDetailPage = () => {
               onClick={handleBackup}
             />
             <ActionButton
-              color="purple"
-              icon={<Network size={16} />}
-              label={loadingIPs ? "Loading IPs..." : loadingId === "change-ip" ? "Changing..." : "Change IP"}
-              onClick={handleChangeIp}
-              disabled={loadingIPs || loadingId === "change-ip"}
-            />
-            <ActionButton
               color="red"
               icon={<Trash2 size={16} />}
               label="Destroy"
@@ -310,6 +254,8 @@ const VPSDetailPage = () => {
           <UsageBar label="RAM Usage" percent={vps.monitoring?.ram_usage || 0} color="bg-green-500" />
           <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
         </Section>
+
+
 
         <Section title="Volumes">
           {vps.volumes.length === 0 ? (
@@ -344,153 +290,6 @@ const VPSDetailPage = () => {
           onCreate={createBackup}
         />
       )}
-
-      {isChangeIpModalOpen && (
-        <ChangeIpModal
-          onClose={() => setChangeIpModalOpen(false)}
-          onConfirm={changeIpAddress}
-          currentIp={vps.ip}
-          availableIPs={availableIPs}
-          loading={loadingId === "change-ip"}
-        />
-      )}
-    </div>
-  );
-};
-
-const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading }) => {
-  const [selectedIpAddress, setSelectedIpAddress] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedIpAddress) {
-      alert("Please select an IP address.");
-      return;
-    }
-    onConfirm(selectedIpAddress);
-  };
-
-  // Filter available IPs (exclude current IP and show only unassigned)
-  const selectableIPs = availableIPs.filter(ip => 
-    ip.ip_address !== currentIp && 
-    (!ip.vm_id || ip.status === 'available')
-  );
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'available':
-        return 'text-green-400';
-      case 'assigned':
-        return 'text-red-400';
-      case 'reserved':
-        return 'text-yellow-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
-  const getStatusText = (ip) => {
-    if (ip.vm_id) {
-      return `Assigned to VM: ${ip.vm_id}`;
-    }
-    return ip.status || 'Available';
-  };
-
-  return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-      aria-modal="true"
-      role="dialog"
-    >
-      <div className="bg-gray-800 rounded-md p-6 w-[600px] max-w-[90vw] shadow-lg max-h-[80vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-400">
-          Change IP Address
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-gray-700 rounded-md p-4">
-            <p className="text-gray-300 text-sm mb-2">Current IP Address:</p>
-            <p className="text-white font-mono font-semibold">{currentIp}</p>
-          </div>
-
-          <div>
-            <label className="block text-gray-300 mb-2">
-              Select New IP Address:
-            </label>
-            {selectableIPs.length === 0 ? (
-              <div className="bg-yellow-900/20 border border-yellow-600 rounded-md p-4">
-                <p className="text-yellow-300 text-sm">
-                  No available floating IPs found. All IPs are either assigned or this is your current IP.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {selectableIPs.map((ip, index) => (
-                  <label key={index} className="flex items-center space-x-3 bg-gray-700 p-4 rounded-md hover:bg-gray-600 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="selectedIp"
-                      value={ip.ip_address}
-                      checked={selectedIpAddress === ip.ip_address}
-                      onChange={(e) => setSelectedIpAddress(e.target.value)}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-mono font-semibold text-white text-lg">
-                        {ip.ip_address}
-                      </div>
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-400 mt-1">
-                        <span className={getStatusColor(ip.status)}>
-                          Status: {getStatusText(ip)}
-                        </span>
-                        {ip.subnet_id && (
-                          <span>Subnet: {ip.subnet_id}</span>
-                        )}
-                        {ip.network_id && (
-                          <span>Network: {ip.network_id}</span>
-                        )}
-                      </div>
-                      {ip.note && (
-                        <div className="text-xs text-gray-500 mt-1 italic">
-                          Note: {ip.note}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-500 mt-1">
-                        Created: {new Date(ip.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-yellow-900/20 border border-yellow-600 rounded-md p-4">
-            <p className="text-yellow-300 text-sm">
-              <strong>Warning:</strong> Changing the IP address will assign the selected floating IP to your VPS. 
-              The current IP will be released back to the pool. This action may require you to update 
-              DNS records and firewall rules.
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700 text-gray-300"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !selectedIpAddress || selectableIPs.length === 0}
-              className="px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Changing..." : "Change IP"}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 };
@@ -559,7 +358,6 @@ const ActionButton = ({ icon, label, onClick, color, disabled }) => {
     blue: "bg-blue-600 hover:bg-blue-700",
     gray: "bg-gray-600 hover:bg-gray-700",
     red: "bg-red-600 hover:bg-red-700",
-    purple: "bg-purple-600 hover:bg-purple-700",
   };
   return (
     <button

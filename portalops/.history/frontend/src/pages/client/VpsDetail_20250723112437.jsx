@@ -150,6 +150,35 @@ const VPSDetailPage = () => {
       setLoadingId(null);
       setChangeIpModalOpen(false);
     }
+  };const changeIpAddress = async (selectedIpId) => {
+    setLoadingId("change-ip");
+    try {
+      const res = await axiosInstance.post(
+        `/openstack/network/assign-or-replace-floating-ip/`,
+        { 
+          ip_id: selectedIpId,
+          vm_id: id,
+          project_id: vps.project_id // optional, if available in vps data
+        }
+      );
+      setPopup({ 
+        message: res.data.detail || "IP address changed successfully", 
+        type: "success" 
+      });
+      
+      // Refresh VPS data to get new IP
+      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
+      setVps(updated.data);
+    } catch (error) {
+      console.error("Change IP failed:", error);
+      setPopup({
+        message: error.response?.data?.detail || "Failed to change IP address",
+        type: "error"
+      });
+    } finally {
+      setLoadingId(null);
+      setChangeIpModalOpen(false);
+    }
   };
 
   const createBackup = async (backupName) => {
