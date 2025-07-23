@@ -61,10 +61,10 @@ const EditProfilePage = () => {
     setIsLoading(true);
     try {
       const res = await axiosInstance.put('/auth/profile/update/', formData);
-      setMessage({ type: 'success', text: 'Update info sucessfully!' });
+      setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.detail || 'Update failes. Please try again.' });
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Cập nhật thất bại. Vui lòng thử lại.' });
       setTimeout(() => setMessage(null), 3000);
     } finally {
       setIsLoading(false);
@@ -72,9 +72,9 @@ const EditProfilePage = () => {
   };
 
   const sections = [
-    { id: 'personal', label: 'Personal Info', icon: '👤' },
-    { id: 'company', label: 'Company Info', icon: '🏢' },
-    { id: 'account', label: 'Account & Security', icon: '🔐' },
+    { id: 'personal', label: 'Thông tin cá nhân', icon: '👤' },
+    { id: 'company', label: 'Thông tin công ty', icon: '🏢' },
+    { id: 'account', label: 'Tài khoản & Bảo mật', icon: '🔐' },
   ];
 
   const PersonalSection = () => (
@@ -82,7 +82,7 @@ const EditProfilePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="group">
           <label className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-blue-400 transition-colors">
-            Fullname
+            Họ và tên
           </label>
           <div className="relative">
             <input
@@ -91,7 +91,7 @@ const EditProfilePage = () => {
               value={formData.full_name}
               onChange={handleChange}
               className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-4 py-3 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-700/50"
-              placeholder="Enter your fullname"
+              placeholder="Nhập họ và tên của bạn"
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
               <span className="text-gray-400">👤</span>
@@ -101,7 +101,7 @@ const EditProfilePage = () => {
 
         <div className="group">
           <label className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-blue-400 transition-colors">
-            Phone Number
+            Số điện thoại
           </label>
           <div className="relative">
             <input
@@ -121,7 +121,7 @@ const EditProfilePage = () => {
 
       <div className="group">
         <label className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-blue-400 transition-colors">
-          Address
+          Địa chỉ
         </label>
         <div className="relative">
           <textarea
@@ -130,7 +130,7 @@ const EditProfilePage = () => {
             onChange={handleChange}
             rows="3"
             className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-4 py-3 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-700/50 resize-none"
-            placeholder="Enter your address"
+            placeholder="Nhập địa chỉ của bạn"
           />
           <div className="absolute top-3 right-3">
             <span className="text-gray-400">📍</span>
@@ -140,7 +140,7 @@ const EditProfilePage = () => {
 
       <div className="group">
         <label className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-blue-400 transition-colors">
-          Timezone
+          Múi giờ
         </label>
         <div className="relative">
           <select
@@ -176,7 +176,7 @@ const EditProfilePage = () => {
             value={formData.company}
             onChange={handleChange}
             className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-4 py-3 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-700/50"
-            placeholder="Enter company name"
+            placeholder="Nhập tên công ty"
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
             <span className="text-gray-400">🏢</span>
@@ -261,7 +261,7 @@ const EditProfilePage = () => {
             onClick={() => navigate('/setup-2fa')}
             className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
-            🔐 Setup 2FA
+            🔐 Thiết lập 2FA
           </button>
         </div>
       </div>
@@ -285,9 +285,9 @@ const EditProfilePage = () => {
       <div className="max-w-6xl mx-auto pt-8 px-4">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-            ⚙️ Account Settings
+            ⚙️ Acco
           </h1>
-          <p className="text-gray-400">Manage Account Info & Security</p>
+          <p className="text-gray-400">Quản lý thông tin cá nhân và tùy chọn bảo mật</p>
         </div>
 
         {/* Message */}
@@ -334,7 +334,7 @@ const EditProfilePage = () => {
                     {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : '?'}
                   </div>
                   <div>
-                    <div className="font-semibold text-white">{formData.full_name || 'Nameless'}</div>
+                    <div className="font-semibold text-white">{formData.full_name || 'Chưa có tên'}</div>
                     <div className="text-sm text-gray-400">{formData.email}</div>
                   </div>
                 </div>
@@ -359,12 +359,12 @@ const EditProfilePage = () => {
                       {isLoading ? (
                         <div className="flex items-center space-x-2">
                           <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                          <span>Saving...</span>
+                          <span>Đang lưu...</span>
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">
                           <span>💾</span>
-                          <span>Save</span>
+                          <span>Lưu thay đổi</span>
                         </div>
                       )}
                     </button>

@@ -61,10 +61,10 @@ const EditProfilePage = () => {
     setIsLoading(true);
     try {
       const res = await axiosInstance.put('/auth/profile/update/', formData);
-      setMessage({ type: 'success', text: 'Update info sucessfully!' });
+      setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.detail || 'Update failes. Please try again.' });
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Cập nhật thất bại. Vui lòng thử lại.' });
       setTimeout(() => setMessage(null), 3000);
     } finally {
       setIsLoading(false);
@@ -72,9 +72,9 @@ const EditProfilePage = () => {
   };
 
   const sections = [
-    { id: 'personal', label: 'Personal Info', icon: '👤' },
-    { id: 'company', label: 'Company Info', icon: '🏢' },
-    { id: 'account', label: 'Account & Security', icon: '🔐' },
+    { id: 'personal', label: 'Thông tin cá nhân', icon: '👤' },
+    { id: 'company', label: '', icon: '🏢' },
+    { id: 'account', label: 'Tài khoản & Bảo mật', icon: '🔐' },
   ];
 
   const PersonalSection = () => (
@@ -91,7 +91,7 @@ const EditProfilePage = () => {
               value={formData.full_name}
               onChange={handleChange}
               className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-4 py-3 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-700/50"
-              placeholder="Enter your fullname"
+              placeholder="Nhập họ và tên của bạn"
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
               <span className="text-gray-400">👤</span>
@@ -334,7 +334,7 @@ const EditProfilePage = () => {
                     {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : '?'}
                   </div>
                   <div>
-                    <div className="font-semibold text-white">{formData.full_name || 'Nameless'}</div>
+                    <div className="font-semibold text-white">{formData.full_name || 'Chưa có tên'}</div>
                     <div className="text-sm text-gray-400">{formData.email}</div>
                   </div>
                 </div>

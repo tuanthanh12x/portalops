@@ -744,7 +744,7 @@ class AssignFloatingIPView(APIView):
             # Assign IP to project only (no VM)
             ip_obj.project_id = project_id
             ip_obj.vm_id = None  # Ensure VM is unset
-            ip_obj.status = IPStatus.ALLOCATED
+            ip_obj.status = IPStatus.RESERVED
             ip_obj.save()
 
             return Response(

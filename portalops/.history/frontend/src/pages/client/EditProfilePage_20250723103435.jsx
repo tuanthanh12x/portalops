@@ -91,7 +91,7 @@ const EditProfilePage = () => {
               value={formData.full_name}
               onChange={handleChange}
               className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-4 py-3 rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:bg-gray-700/50"
-              placeholder="Enter your fullname"
+              placeholder=""
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3">
               <span className="text-gray-400">👤</span>
