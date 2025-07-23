@@ -673,3 +673,31 @@ class SyncFloatingIPsView(APIView):
     def post(self, request, *args, **kwargs):
         sync_floating_ips_task.delay()
         return Response({"detail": "Sync task has been started."})
+
+
+
+class FloatingIPAListView(APIView):
+    permission_classes = [IsAdmin]
+    def get(self, request, project_id):
+        # Optionally restrict to staff only
+        try:
+            floating_ips = FloatingIPPool.objects.filter(project_id=project_id)
+
+            data = [
+                {
+                    "ip_address": ip.ip_address,
+                    "subnet_id": ip.subnet_id,
+                    "network_id": ip.network_id,
+                    "vm_id": ip.vm_id,
+                    "status": ip.status,
+                    "note": ip.note,
+                    "created_at": ip.created_at,
+                    "updated_at": ip.updated_at,
+                }
+                for ip in floating_ips
+            ]
+
+            return Response(data, status=200)
+
+        except Exception as e:
+            return Response({"detail": f"Failed to retrieve floating IPs: {str(e)}"}, status=500)

@@ -7,7 +7,6 @@ export default function AdminProjectDetailPage() {
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [packages, setPackages] = useState([]);
-  const [floatingIPs, setFloatingIPs] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState(null);
 
@@ -24,11 +23,7 @@ export default function AdminProjectDetailPage() {
         .catch((err) => console.error("Failed to fetch packages:", err));
     }
   }, [showModal]);
-useEffect(() => {
-  axiosInstance.get(`/project/${id}/admin-IPs-proj-list/`)
-    .then(res => setFloatingIPs(res.data))
-    .catch(err => console.error("Failed to fetch floating IPs:", err));
-}, [id]);
+
   const handleChangePackage = async () => {
   const projectId = id;
   const packageId = selectedPackageId;
@@ -64,35 +59,7 @@ useEffect(() => {
   }
 
   const { owner, usage, vms, product_type } = project;
-const handleAssignIP = async (ipId, vmId) => {
-  try {
-    await axiosInstance.post(`/project/assign-floating-ip/`, {
-      ip_id: ipId,
-      vm_id: vmId,
-    });
-    alert("✅ Floating IP assigned");
-    // Refresh the IP list
-    const res = await axiosInstance.get(`/project/${id}/floating-ips/`);
-    setFloatingIPs(res.data);
-  } catch (err) {
-    alert("❌ Failed to assign IP");
-    console.error(err);
-  }
-};
 
-const handleUnassignIP = async (ipId) => {
-  try {
-    await axiosInstance.post(`/project/unassign-floating-ip/`, {
-      ip_id: ipId,
-    });
-    alert("✅ Floating IP unassigned");
-    const res = await axiosInstance.get(`/project/${id}/floating-ips/`);
-    setFloatingIPs(res.data);
-  } catch (err) {
-    alert("❌ Failed to unassign IP");
-    console.error(err);
-  }
-};
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
       <AdminNavbar />
@@ -165,48 +132,6 @@ const handleUnassignIP = async (ipId) => {
               </table>
             </div>
           </div>
-          <div className="mt-10">
-  <h3 className="text-xl font-bold text-indigo-400 mb-4">Floating IPs</h3>
-  <div className="overflow-x-auto rounded-lg bg-white/5 p-4">
-    <table className="w-full text-left text-sm">
-      <thead>
-        <tr className="text-white/70 border-b border-white/10">
-          <th className="py-2">IP Address</th>
-          <th>Status</th>
-          <th>VM</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {floatingIPs.map(ip => (
-          <tr key={ip.id} className="border-b border-white/10 hover:bg-white/10">
-            <td className="py-2 text-white font-medium">{ip.ip_address}</td>
-            <td className="text-white/80">{ip.status}</td>
-            <td className="text-white/70">{ip.vm_id ?? "—"}</td>
-            <td className="space-x-2">
-              {ip.status === "reserved" && (
-                <button
-                  className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 rounded"
-                  onClick={() => handleAssignIP(ip.id, vms[0]?.id)} // for demo; can add dropdown
-                >
-                  Assign
-                </button>
-              )}
-              {ip.status === "allocated" && (
-                <button
-                  className="px-3 py-1 text-sm bg-yellow-600 hover:bg-yellow-700 rounded"
-                  onClick={() => handleUnassignIP(ip.id)}
-                >
-                  Unassign
-                </button>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</div>
         </div>
       </div>
 

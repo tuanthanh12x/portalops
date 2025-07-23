@@ -78,7 +78,7 @@ class FloatingIPPool(models.Model):
     ip_address = models.GenericIPAddressField(protocol="both", unique=True)
     subnet_id = models.UUIDField()  # liên kết tới subnet trong OpenStack
     network_id = models.UUIDField()  # external network
-
+    vm_id = models.UUIDField(null=True, blank=True)
     project_id = models.UUIDField(null=True, blank=True)  # project dùng IP
     vm_id = models.UUIDField(null=True, blank=True)  # VM được gán IP
 

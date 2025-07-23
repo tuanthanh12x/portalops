@@ -55,7 +55,7 @@ const FloatingIPListPage = () => {
                         <tbody className="divide-y divide-gray-800 text-gray-200">
                             {floatingIPs.map((ip) => (
                                 <tr key={ip.id} className="hover:bg-gray-900/30 transition">
-                                    <td className="px-6 py-4 font-medium">{ip.ip_address}</td>
+                                    <td className="px-6 py-4 font-medium">{ip.floating_ip_address}</td>
                                     <td className="px-6 py-4">
                                         <span
                                             className={`inline-block px-2 py-1 text-xs rounded-full ${ip.status === "ACTIVE"

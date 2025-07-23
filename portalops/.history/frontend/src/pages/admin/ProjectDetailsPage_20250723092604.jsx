@@ -25,7 +25,7 @@ export default function AdminProjectDetailPage() {
     }
   }, [showModal]);
 useEffect(() => {
-  axiosInstance.get(`/project/${id}/admin-IPs-proj-list/`)
+  axiosInstance.get(`/project/${id}/floating-ips/`)
     .then(res => setFloatingIPs(res.data))
     .catch(err => console.error("Failed to fetch floating IPs:", err));
 }, [id]);
