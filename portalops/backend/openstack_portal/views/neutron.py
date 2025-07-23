@@ -279,33 +279,55 @@ class SubnetListView(APIView):
         return Response(subnets)
 
 
+
 class AssignOrReplaceFloatingIPView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
         ip_id = request.data.get("ip_id")
         vm_id = request.data.get("vm_id")
-        project_id = request.data.get("project_id")  # optional but recommended
 
         if not ip_id or not vm_id:
             return Response({"detail": "Both 'ip_id' and 'vm_id' are required."}, status=400)
 
         try:
-            # Get new IP to assign
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            # Get the new IP to assign
             new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="reserved")
 
-            # Detach any old floating IP from this VM
+            # Detach existing IP (if any)
             existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
             if existing_ip:
+                os_old_fip = conn.network.find_ip(existing_ip.ip_address)
+                if os_old_fip:
+                    conn.compute.remove_floating_ip_from_server(server=vm_id, address=os_old_fip.floating_ip_address)
+
                 existing_ip.vm_id = None
                 existing_ip.status = "available"
                 existing_ip.project_id = None
                 existing_ip.save()
 
-            # Assign new IP
+            # Attach new IP
+            os_new_fip = conn.network.find_ip(new_ip.ip_address)
+            if not os_new_fip:
+                return Response({"detail": "New Floating IP not found in OpenStack."}, status=404)
+
+            conn.compute.add_floating_ip_to_server(server=vm_id, address=os_new_fip.floating_ip_address)
+
+            # Update DB
             new_ip.vm_id = vm_id
             new_ip.status = "allocated"
-            new_ip.project_id = project_id or new_ip.project_id
+            new_ip.project_id = project_id
             new_ip.save()
 
             return Response({
