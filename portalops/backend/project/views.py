@@ -729,8 +729,6 @@ class AssignFloatingIPView(APIView):
     permission_classes = [IsAdmin]
 
     def post(self, request, project_id):
-        if not request.user.is_staff:
-            return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
 
         ip_address = request.data.get("ip_address")
 
