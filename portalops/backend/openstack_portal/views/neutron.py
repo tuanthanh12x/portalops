@@ -292,7 +292,7 @@ class AssignOrReplaceFloatingIPView(APIView):
 
         try:
             # Get new IP to assign
-            new_ip = FloatingIPPool.objects.get(id=ip_id, status="available")
+            new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="available")
 
             # Detach any old floating IP from this VM
             existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
