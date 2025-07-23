@@ -3,18 +3,22 @@ from ipaddress import ip_address, IPv4Address
 
 from .models import IPStatus, FloatingIPPool
 
-
 def sync_floating_ips():
     conn = get_admin_connection()
 
-    # Chỉ lấy Floating IP v4 có địa chỉ hợp lệ
-    floating_ips = {
-        fip.floating_ip_address: fip
-        for fip in conn.network.ips()
-        if fip.floating_ip_address
-        and isinstance(ip_address(fip.floating_ip_address), IPv4Address)
-    }
+    # Strictly collect only valid IPv4 Floating IPs
+    floating_ips = {}
+    for fip in conn.network.ips():
+        if not fip.floating_ip_address:
+            continue
+        try:
+            ip_obj = ip_address(fip.floating_ip_address)
+            if isinstance(ip_obj, IPv4Address):
+                floating_ips[str(ip_obj)] = fip
+        except ValueError:
+            continue  # Skip malformed IPs
 
+    # Get external networks only
     external_nets = [
         net for net in conn.network.networks()
         if getattr(net, "is_router_external", False)
@@ -23,9 +27,8 @@ def sync_floating_ips():
     for net in external_nets:
         subnets = conn.network.subnets(network_id=net.id)
         for subnet in subnets:
-            # Chỉ xử lý IPv4 subnet
             if subnet.ip_version != 4:
-                continue
+                continue  # Ensure only IPv4 subnets are processed
 
             for pool in subnet.allocation_pools:
                 start_ip = ip_address(pool['start'])

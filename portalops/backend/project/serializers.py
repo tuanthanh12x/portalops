@@ -9,7 +9,6 @@ User = get_user_model()
 class AssignUserToProjectSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     project_id = serializers.IntegerField()
-
     def validate(self, data):
         try:
             user = User.objects.get(id=data["user_id"])

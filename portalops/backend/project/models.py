@@ -66,6 +66,7 @@ class ProjectUserMapping(models.Model):
         return f"{self.user.username} in {self.project.name} ({self.role})"
 
 
+
 class IPStatus(models.TextChoices):
     AVAILABLE = "available", "Available"
     ALLOCATED = "allocated", "Allocated"
