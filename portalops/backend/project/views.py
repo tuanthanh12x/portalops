@@ -703,22 +703,18 @@ class FloatingIPAListView(APIView):
             return Response({"detail": f"Failed to retrieve floating IPs: {str(e)}"}, status=500)
 
 
-class FloatingIPReservedListView(APIView):
+class AvailableFloatingIPListView(APIView):
     permission_classes = [IsAdmin]
     def get(self, request):
         try:
-            floating_ips = FloatingIPPool.objects.filter(status="Reserved")
+            floating_ips = FloatingIPPool.objects.filter(status="available")
 
             data = [
                 {
                     "ip_address": ip.ip_address,
                     "subnet_id": ip.subnet_id,
                     "network_id": ip.network_id,
-                    "vm_id": ip.vm_id,
-                    "status": ip.status,
                     "note": ip.note,
-                    "created_at": ip.created_at,
-                    "updated_at": ip.updated_at,
                 }
                 for ip in floating_ips
             ]

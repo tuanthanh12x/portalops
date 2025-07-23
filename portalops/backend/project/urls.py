@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import CreateProjectTypeView, ListProjectTypeView, AllProjectsOverview, CreateProjectView, \
     AssignUserToProjectView, ChangeVPSTypeView, AdminProjectDetailView, UserProjectListView, SyncFloatingIPsView, \
-    FloatingIPAListView, FloatingIPReservedListView, AssignFloatingIPView
+    FloatingIPAListView, AvailableFloatingIPListView, AssignFloatingIPView
 
 urlpatterns = [
     path("project-package/", CreateProjectTypeView.as_view(), name="create-project-package"),
@@ -15,6 +15,6 @@ urlpatterns = [
     path("<str:project_id>/admin-IPs-proj-list/", FloatingIPAListView.as_view(), name="ipadminpro-list"),
     path("<str:openstack_id>/project-detail/", AdminProjectDetailView.as_view(), name="admin-project-detail"),
     path("sync-floating-ips/", SyncFloatingIPsView.as_view(), name="sync-floating-ips"),
-    path("floating-ips-reserved-list/", FloatingIPReservedListView.as_view(), name="sync-floating-ips"),
+    path("floating-ips-reserved-list/", AvailableFloatingIPListView.as_view(), name="sync-floating-ips"),
     path("<str:project_id>/assign-floating-ip/", AssignFloatingIPView.as_view(), name="assign-floating-ip"),
 ]
