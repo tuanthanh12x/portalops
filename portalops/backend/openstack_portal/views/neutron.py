@@ -279,7 +279,6 @@ class SubnetListView(APIView):
         return Response(subnets)
 
 
-
 class AssignOrReplaceFloatingIPView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -302,27 +301,42 @@ class AssignOrReplaceFloatingIPView(APIView):
             token = token_bytes.decode()
             conn = connect_with_token_v5(token, project_id)
 
-            # Get the new IP to assign
+            # Get the new IP to assign (from DB)
             new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="reserved")
 
-            # Detach existing IP (if any)
+            # Detach any existing IP
             existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
             if existing_ip:
                 os_old_fip = conn.network.find_ip(existing_ip.ip_address)
                 if os_old_fip:
-                    conn.compute.remove_floating_ip_from_server(server=vm_id, address=os_old_fip.floating_ip_address)
+                    conn.compute.remove_floating_ip_from_server(
+                        server=vm_id,
+                        address=os_old_fip.floating_ip_address
+                    )
 
                 existing_ip.vm_id = None
                 existing_ip.status = "available"
                 existing_ip.project_id = None
                 existing_ip.save()
 
-            # Attach new IP
+            # Ensure new IP exists in OpenStack
             os_new_fip = conn.network.find_ip(new_ip.ip_address)
             if not os_new_fip:
-                return Response({"detail": "New Floating IP not found in OpenStack."}, status=404)
+                # Create floating IP in OpenStack using the known address
+                external_net = conn.network.find_network("public")  # ⚠️ change to your network name
+                if not external_net:
+                    return Response({"detail": "External network not found."}, status=404)
 
-            conn.compute.add_floating_ip_to_server(server=vm_id, address=os_new_fip.floating_ip_address)
+                os_new_fip = conn.network.create_ip(
+                    floating_ip_address=new_ip.ip_address,
+                    floating_network_id=external_net.id
+                )
+
+            # Attach the floating IP to the VM
+            conn.compute.add_floating_ip_to_server(
+                server=vm_id,
+                address=os_new_fip.floating_ip_address
+            )
 
             # Update DB
             new_ip.vm_id = vm_id

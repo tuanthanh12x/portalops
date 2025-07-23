@@ -94,8 +94,8 @@ function ProjectDashboard() {
                                     <Server className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold">Manage Packages</h1>
-                                    <p className="text-sm text-gray-400">Cloud service package management</p>
+                                    <h1 className="text-xl font-bold">Manage Pacs</h1>
+                                    <p className="text-sm text-gray-400">Quản lý các gói dịch vụ cloud</p>
                                 </div>
                             </div>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2">
