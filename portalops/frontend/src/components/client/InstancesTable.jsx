@@ -7,15 +7,50 @@ const Spinner = () => (
   <span className="loader inline-block w-4 h-4 border-2 border-t-white border-r-white border-transparent rounded-full animate-spin"></span>
 );
 
+const IPDisplay = ({ floating_ips = [], fixed_ips = [] }) => {
+  if (floating_ips.length === 0 && fixed_ips.length === 0) return "-";
+
+  return (
+    <div className="group relative">
+      {floating_ips.length > 0 && (
+        <>
+          <div className="text-blue-300">🌐 {floating_ips[0]}</div>
+          <div className="absolute left-0 top-full mt-1 w-max hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg shadow-lg p-2 z-10">
+            {floating_ips.slice(1).map((ip, idx) => (
+              <div key={`fip-extra-${idx}`} className="text-blue-300">
+                🌐 {ip}
+              </div>
+            ))}
+            {fixed_ips.map((ip, idx) => (
+              <div key={`fixed-ip-${idx}`} className="text-gray-400">
+                📌 {ip}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {floating_ips.length === 0 &&
+        fixed_ips.length > 0 && (
+          <div className="absolute left-0 top-full mt-1 w-max hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg shadow-lg p-2 z-10">
+            {fixed_ips.map((ip, idx) => (
+              <div key={`fixed-ip-${idx}`} className="text-gray-400">
+                📌 {ip}
+              </div>
+            ))}
+          </div>
+        )}
+    </div>
+  );
+};
+
 const InstancesTable = ({ instances }) => {
   const [instanceList, setInstanceList] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [popup, setPopup] = useState(null);
 
   useEffect(() => {
-    if (Array.isArray(instances)) {
-      setInstanceList(instances);
-    }
+    if (Array.isArray(instances)) setInstanceList(instances);
   }, [instances]);
 
   const handleConsole = async (instanceId) => {
@@ -47,7 +82,6 @@ const InstancesTable = ({ instances }) => {
     setLoadingId(instanceId);
     try {
       await axiosInstance.post(`/openstack/compute/instances/${instanceId}/action/`, { action });
-
       setInstanceList((prev) =>
         prev.map((i) =>
           i.id === instanceId
@@ -80,13 +114,7 @@ const InstancesTable = ({ instances }) => {
         </Link>
       </header>
 
-      {popup && (
-        <Popup
-          message={popup.message}
-          type={popup.type}
-          onClose={() => setPopup(null)}
-        />
-      )}
+      {popup && <Popup message={popup.message} type={popup.type} onClose={() => setPopup(null)} />}
 
       {loadingId && (
         <div className="text-right text-blue-300 py-2 text-sm animate-pulse">
@@ -122,18 +150,25 @@ const InstancesTable = ({ instances }) => {
               </tr>
             ) : (
               instanceList.map((instance) => {
-                const isOnline = instance.status.toLowerCase() === "online";
+                const {
+                  id,
+                  name,
+                  status,
+                  floating_ips,
+                  fixed_ips,
+                  plan,
+                  region,
+                  created,
+                } = instance;
+                const isOnline = status.toLowerCase() === "online";
                 const actionLabel = isOnline ? "Shut Down" : "Power On";
                 const actionType = isOnline ? "stop" : "start";
 
                 return (
-                  <tr key={instance.id} className="hover:bg-gray-900/30 transition">
+                  <tr key={id} className="hover:bg-gray-900/30 transition">
                     <td className="px-6 py-4 font-medium">
-                      <Link
-                        to={`/client/vps/${instance.id}`}
-                        className="text-indigo-400 hover:underline"
-                      >
-                        {instance.name}
+                      <Link to={`/client/vps/${id}`} className="text-indigo-400 hover:underline">
+                        {name}
                       </Link>
                     </td>
                     <td className="px-6 py-4">
@@ -144,50 +179,35 @@ const InstancesTable = ({ instances }) => {
                             : "bg-red-800 text-red-300"
                         }`}
                       >
-                        {instance.status}
+                        {status}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {instance.ip?.floating ? (
-                        <span
-                          className="relative group cursor-pointer text-blue-300 hover:text-blue-200 transition"
-                          title={`Fixed IP: ${instance.ip.fixed || "N/A"}`}
-                        >
-                          {instance.ip.floating}
-                          <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 mt-1 shadow-lg whitespace-nowrap">
-                            Fixed IP: {instance.ip.fixed || "N/A"}
-                          </span>
-                        </span>
-                      ) : (
-                        "-"
-                      )}
+                      <IPDisplay floating_ips={floating_ips} fixed_ips={fixed_ips} />
                     </td>
-                    <td className="px-6 py-4">{instance.plan || "-"}</td>
-                    <td className="px-6 py-4">{instance.region || "-"}</td>
-                    <td
-                      className="px-6 py-4"
-                      title={new Date(instance.created).toLocaleString()}
-                    >
-                      {new Date(instance.created).toLocaleDateString()}
+                    <td className="px-6 py-4">{plan || "-"}</td>
+                    <td className="px-6 py-4">{region || "-"}</td>
+                    <td className="px-6 py-4" title={new Date(created).toLocaleString()}>
+                      {new Date(created).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 flex space-x-2">
                       <button
-                        disabled={loadingId === instance.id}
-                        onClick={() => handleAction(instance.id, actionType)}
+                        disabled={loadingId === id}
+                        onClick={() => handleAction(id, actionType)}
                         className={`px-4 py-1 text-xs font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 ${
                           isOnline
                             ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
                             : "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                         } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        {loadingId === instance.id ? <Spinner /> : actionLabel}
+                        {loadingId === id ? <Spinner /> : actionLabel}
                       </button>
                       <button
-                        disabled={loadingId === instance.id}
-                        onClick={() => handleConsole(instance.id)}
+                        disabled={loadingId === id}
+                        onClick={() => handleConsole(id)}
                         className="px-4 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {loadingId === instance.id ? <Spinner /> : "Console"}
+                        {loadingId === id ? <Spinner /> : "Console"}
                       </button>
                     </td>
                   </tr>
