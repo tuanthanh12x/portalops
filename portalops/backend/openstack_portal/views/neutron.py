@@ -59,19 +59,15 @@ class FloatingIPListView(APIView):
             return Response({"detail": "Missing project_id in token."}, status=400)
 
         try:
-            # Filter IPs belonging to this project
             floating_ips = FloatingIPPool.objects.filter(project_id=project_id)
 
             data = [
                 {
                     "ip_address": ip.ip_address,
-                    "subnet_id": ip.subnet_id,
-                    "network_id": ip.network_id,
-                    "vm_id": ip.vm_id,
+                    "vm_name": ip.vm_name,
                     "status": ip.status,
                     "note": ip.note,
                     "created_at": ip.created_at,
-                    "updated_at": ip.updated_at,
                 }
                 for ip in floating_ips
             ]
@@ -359,6 +355,7 @@ class AssignOrReplaceFloatingIPView(APIView):
 
             # Update DB
             new_ip.vm_id = vm_id
+            new_ip.vm_name = server.name
             new_ip.status = "allocated"
             new_ip.project_id = project_id
             new_ip.save()
