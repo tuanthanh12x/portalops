@@ -3,7 +3,6 @@ import axiosInstance from "../../api/axiosInstance";
 import { Link } from "react-router-dom";
 import Popup from "../../components/client/Popup";
 
-// Spinner CSS for buttons
 const Spinner = () => (
   <span className="loader inline-block w-4 h-4 border-2 border-t-white border-r-white border-transparent rounded-full animate-spin"></span>
 );
@@ -148,7 +147,21 @@ const InstancesTable = ({ instances }) => {
                         {instance.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">{instance.ip || "-"}</td>
+                    <td className="px-6 py-4">
+                      {instance.ip?.floating ? (
+                        <span
+                          className="relative group cursor-pointer text-blue-300 hover:text-blue-200 transition"
+                          title={`Fixed IP: ${instance.ip.fixed || "N/A"}`}
+                        >
+                          {instance.ip.floating}
+                          <span className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 mt-1 shadow-lg whitespace-nowrap">
+                            Fixed IP: {instance.ip.fixed || "N/A"}
+                          </span>
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                     <td className="px-6 py-4">{instance.plan || "-"}</td>
                     <td className="px-6 py-4">{instance.region || "-"}</td>
                     <td

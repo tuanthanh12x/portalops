@@ -9,7 +9,6 @@ from django.conf import settings
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
-
 @shared_task
 def cache_user_instances(username, token, project_id):
     redis_key = f"instances_cache:{username}:{project_id}"
@@ -28,14 +27,12 @@ def cache_user_instances(username, token, project_id):
     result = []
 
     for server in servers:
-        ip = ""
+        ip_list = []
         for net in server.get("addresses", {}).values():
-            if isinstance(net, list) and net:
-                ip = next(
-                    (addr["addr"] for addr in net if addr.get("version") == 4),
-                    net[0].get("addr", "")
-                )
-                break
+            if isinstance(net, list):
+                for addr in net:
+                    if addr.get("version") == 4:
+                        ip_list.append(addr.get("addr"))
 
         flavor_id = server.get("flavor", {}).get("id")
         plan = "Unknown"
@@ -58,7 +55,7 @@ def cache_user_instances(username, token, project_id):
             "id": server.get("id"),
             "name": server.get("name"),
             "status": "Online" if server.get("status") == "ACTIVE" else "Offline",
-            "ip": ip,
+            "ips": ip_list,
             "plan": plan,
             "region": server.get("OS-EXT-AZ:availability_zone", ""),
             "created": server.get("created", "")[:10]
@@ -67,3 +64,4 @@ def cache_user_instances(username, token, project_id):
 
     redis_client.set(redis_key, str(result), ex=300)  # cache for 5 minutes
     return result
+
