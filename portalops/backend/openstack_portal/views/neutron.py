@@ -349,10 +349,7 @@ class AssignOrReplaceFloatingIPView(APIView):
             if not server:
                 return Response({"detail": "VM not found in current project."}, status=404)
             # Attach the floating IP to the VM
-            conn.compute.add_floating_ip_to_server(
-                server=vm_id,
-                address=os_new_fip.floating_ip_address
-            )
+            conn.compute.add_floating_ip_to_server(server=server, address=os_new_fip.floating_ip_address)
 
             # Update DB
             new_ip.vm_id = vm_id
