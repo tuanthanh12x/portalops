@@ -321,16 +321,29 @@ class AssignOrReplaceFloatingIPView(APIView):
 
             # Ensure new IP exists in OpenStack
             os_new_fip = conn.network.find_ip(new_ip.ip_address)
+
             if not os_new_fip:
-                # Create floating IP in OpenStack using the known address
-                external_net = conn.network.find_network("public")  # ⚠️ change to your network name
+                # Optional: verify no conflict exists with this IP
+                try:
+                    ip_list = list(conn.network.ips(floating_ip_address=new_ip.ip_address))
+                    if ip_list:
+                        return Response({"detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."},
+                                        status=409)
+                except Exception as lookup_err:
+                    return Response({"detail": f"Error checking existing IPs: {str(lookup_err)}"}, status=500)
+
+                # Create the IP in OpenStack
+                external_net = conn.network.find_network("public")  # 🔁 Replace with your actual external network name
                 if not external_net:
                     return Response({"detail": "External network not found."}, status=404)
 
-                os_new_fip = conn.network.create_ip(
-                    floating_ip_address=new_ip.ip_address,
-                    floating_network_id=external_net.id
-                )
+                try:
+                    os_new_fip = conn.network.create_ip(
+                        floating_ip_address=new_ip.ip_address,
+                        floating_network_id=external_net.id
+                    )
+                except Exception as create_err:
+                    return Response({"detail": f"Failed to create IP in OpenStack: {str(create_err)}"}, status=500)
 
             # Attach the floating IP to the VM
             conn.compute.add_floating_ip_to_server(

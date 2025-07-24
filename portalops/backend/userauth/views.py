@@ -501,7 +501,7 @@ class RoleListAPIView(ListAPIView):
     serializer_class = RoleSerializer
 
 
-from .tasks import send_reset_password_email, create_openstack_project_and_user, sync_vm_count_for_all_users ,create_openstack_user, create_openstack_project
+from .tasks import send_reset_password_email, create_openstack_project_and_user,create_openstack_user, create_openstack_project
 
 
 class ForgotPasswordView(APIView):
@@ -744,10 +744,6 @@ class UserListView(APIView):
 
 
 
-@api_view(['POST'])
-def trigger_vm_sync(request):
-    sync_vm_count_for_all_users.delay()
-    return Response({"message": "VM count sync triggered"}, status=202)
 
 
 
