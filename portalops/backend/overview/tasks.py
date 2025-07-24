@@ -9,8 +9,13 @@ from django.conf import settings
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+
 @shared_task
 def cache_user_instances(username, token, project_id):
+    """
+    Fetches and caches the list of OpenStack instances for a specific user/project.
+    Separates floating and fixed IPs. Stores data in Redis for 5 minutes.
+    """
     redis_key = f"instances_cache:{username}:{project_id}"
     headers = {"X-Auth-Token": token}
     compute_url = settings.OPENSTACK_COMPUTE_URL
@@ -19,21 +24,27 @@ def cache_user_instances(username, token, project_id):
         servers_url = f"{compute_url}/servers/detail"
         response = requests.get(servers_url, headers=headers)
         response.raise_for_status()
-        data = response.json()
+        servers = response.json().get("servers", [])
     except requests.RequestException:
         return None
 
-    servers = data.get("servers", [])
     result = []
 
     for server in servers:
-        ip_list = []
-        for net in server.get("addresses", {}).values():
-            if isinstance(net, list):
-                for addr in net:
-                    if addr.get("version") == 4:
-                        ip_list.append(addr.get("addr"))
+        fixed_ips = []
+        floating_ips = []
 
+        # Separate floating vs. fixed IPs
+        for network in server.get("addresses", {}).values():
+            if isinstance(network, list):
+                for addr in network:
+                    if addr.get("version") == 4:
+                        if addr.get("OS-EXT-IPS:type") == "floating":
+                            floating_ips.append(addr.get("addr"))
+                        elif addr.get("OS-EXT-IPS:type") == "fixed":
+                            fixed_ips.append(addr.get("addr"))
+
+        # Flavor (plan) info
         flavor_id = server.get("flavor", {}).get("id")
         plan = "Unknown"
 
@@ -44,24 +55,25 @@ def cache_user_instances(username, token, project_id):
                 flavor_res.raise_for_status()
                 flavor = flavor_res.json().get("flavor", {})
                 vcpus = flavor.get("vcpus")
-                ram = flavor.get("ram")  # MB
-                disk = flavor.get("disk")  # GB
+                ram = flavor.get("ram")
+                disk = flavor.get("disk")
                 name = flavor.get("name", "Unnamed Plan")
                 plan = f"{name} ({vcpus} vCPU / {ram}MB / {disk}GB)"
-            except Exception:
-                plan = "Unknown"
+            except requests.RequestException:
+                pass
 
         instance = {
             "id": server.get("id"),
             "name": server.get("name"),
             "status": "Online" if server.get("status") == "ACTIVE" else "Offline",
-            "ips": ip_list,
+            "fixed_ips": fixed_ips,
+            "floating_ips": floating_ips,
             "plan": plan,
             "region": server.get("OS-EXT-AZ:availability_zone", ""),
             "created": server.get("created", "")[:10]
         }
+
         result.append(instance)
 
-    redis_client.set(redis_key, str(result), ex=300)  # cache for 5 minutes
+    redis_client.set(redis_key, str(result), ex=300)
     return result
-
