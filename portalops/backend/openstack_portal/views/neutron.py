@@ -345,7 +345,7 @@ class AssignOrReplaceFloatingIPView(APIView):
                 except Exception as create_err:
                     return Response({"detail": f"Failed to create IP in OpenStack: {str(create_err)}"}, status=500)
 
-            server = conn.compute.find_server(vm_id)
+            server = conn.compute.get_server(vm_id)
             if not server:
                 return Response({"detail": "VM not found in current project."}, status=404)
             # Attach the floating IP to the VM
