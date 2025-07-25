@@ -47,7 +47,7 @@ const FloatingIPListPage = () => {
             <tbody className="divide-y divide-gray-800 text-gray-200">
               {floatingIPs.map((ip) => (
                 <tr
-                  key={ip.id || `${ip.ip_address}-${ip.attached_to || "none"}`}
+                  key={ip.id || `${ip.ip_address}-${ip.vm_name || "none"}`}
                   className="hover:bg-gray-900/30 transition"
                 >
                   <td className="px-6 py-4 font-medium">{ip.ip_address}</td>
@@ -66,7 +66,7 @@ const FloatingIPListPage = () => {
                       {ip.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{ip.attached_to || "–"}</td>
+                  <td className="px-6 py-4">{ip.vm_name || "–"}</td>
                   <td className="px-6 py-4">
                     {ip.created_at
                       ? new Date(ip.created_at).toLocaleDateString()

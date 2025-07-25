@@ -5,7 +5,7 @@ import ProjectCard from "./ProjectCard";
 import PackageChangeModal from "./PackageChangeModal";
 import ProjectDetailsModal from "./ProjectDetails";
 import { fetchRealProjects, fetchPackageOptions } from "./mockData";
-
+import axiosInstance from "../../../api/axiosInstance";
 function ProjectDashboard() {
     const [projects, setProjects] = useState([]);
     const [packageOptions, setPackageOptions] = useState([]);
@@ -58,24 +58,40 @@ function ProjectDashboard() {
         setSelectedProject(project);
         setShowPackageChange(true);
     };
+const handlePackageConfirm = async (newPackageName) => {
+    if (!selectedProject) return;
 
-    const handlePackageConfirm = (newPackage) => {
-        const newPrice = packageOptions.find(p => p.name === newPackage)?.price || 0;
+    const newType = packageOptions.find(pkg => pkg.name === newPackageName);
+    if (!newType) {
+        console.error("Invalid package selected.");
+        return;
+    }
 
+    try {
+        // Send request to update project type
+        const response = await axiosInstance.post("/api/project/client-change-vps-type/", {
+            project_id: selectedProject.id,          // this should match project.openstack_id
+            project_type_id: newType.id              // expected by backend
+        });
+
+        // On success, update local state
         setProjects(projects.map(p =>
             p.id === selectedProject.id
                 ? {
                     ...p,
-                    package: newPackage,
-                    pricing: { ...p.pricing, monthly: newPrice },
+                    package: newType.name,
+                    pricing: { ...p.pricing, monthly: newType.price },
                 }
                 : p
         ));
 
         setShowPackageChange(false);
         setSelectedProject(null);
-    };
-
+    } catch (error) {
+        console.error("Failed to change VPS type:", error.response?.data || error.message);
+        // Optionally show error notification here
+    }
+};
     const closeModals = () => {
         setShowDetails(false);
         setShowPackageChange(false);

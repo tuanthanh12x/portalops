@@ -29,24 +29,22 @@ const IPDisplay = ({ floating_ips = [], fixed_ips = [] }) => {
           </div>
         </>
       )}
-
-      {floating_ips.length === 0 &&
-        fixed_ips.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 w-max hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg shadow-lg p-2 z-10">
-            {fixed_ips.map((ip, idx) => (
-              <div key={`fixed-ip-${idx}`} className="text-gray-400">
-                📌 {ip}
-              </div>
-            ))}
-          </div>
-        )}
+      {floating_ips.length === 0 && fixed_ips.length > 0 && (
+        <div className="absolute left-0 top-full mt-1 w-max hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg shadow-lg p-2 z-10">
+          {fixed_ips.map((ip, idx) => (
+            <div key={`fixed-ip-${idx}`} className="text-gray-400">
+              📌 {ip}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
 const InstancesTable = ({ instances }) => {
   const [instanceList, setInstanceList] = useState([]);
-  const [loadingId, setLoadingId] = useState(null);
+  const [loadingActions, setLoadingActions] = useState({});
   const [popup, setPopup] = useState(null);
 
   useEffect(() => {
@@ -54,7 +52,8 @@ const InstancesTable = ({ instances }) => {
   }, [instances]);
 
   const handleConsole = async (instanceId) => {
-    setLoadingId(instanceId);
+    const key = `${instanceId}-console`;
+    setLoadingActions(prev => ({ ...prev, [key]: true }));
     try {
       const res = await axiosInstance.post("/overview/console/", {
         server_id: instanceId,
@@ -74,16 +73,17 @@ const InstancesTable = ({ instances }) => {
         type: "error",
       });
     } finally {
-      setLoadingId(null);
+      setLoadingActions(prev => ({ ...prev, [key]: false }));
     }
   };
 
   const handleAction = async (instanceId, action) => {
-    setLoadingId(instanceId);
+    const key = `${instanceId}-${action}`;
+    setLoadingActions(prev => ({ ...prev, [key]: true }));
     try {
       await axiosInstance.post(`/openstack/compute/instances/${instanceId}/action/`, { action });
-      setInstanceList((prev) =>
-        prev.map((i) =>
+      setInstanceList(prev =>
+        prev.map(i =>
           i.id === instanceId
             ? { ...i, status: action === "start" ? "Online" : "Offline" }
             : i
@@ -94,7 +94,7 @@ const InstancesTable = ({ instances }) => {
       console.error("Action failed:", err);
       setPopup({ message: `Failed to execute action '${action}'.`, type: "error" });
     } finally {
-      setLoadingId(null);
+      setLoadingActions(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -115,12 +115,6 @@ const InstancesTable = ({ instances }) => {
       </header>
 
       {popup && <Popup message={popup.message} type={popup.type} onClose={() => setPopup(null)} />}
-
-      {loadingId && (
-        <div className="text-right text-blue-300 py-2 text-sm animate-pulse">
-          🔄 Processing instance ID: {loadingId}
-        </div>
-      )}
 
       <div className="overflow-x-auto rounded-xl bg-black/30 backdrop-blur-lg shadow-xl border border-gray-700">
         <table className="min-w-full divide-y divide-gray-700 text-sm">
@@ -160,9 +154,13 @@ const InstancesTable = ({ instances }) => {
                   region,
                   created,
                 } = instance;
+
                 const isOnline = status.toLowerCase() === "online";
                 const actionLabel = isOnline ? "Shut Down" : "Power On";
                 const actionType = isOnline ? "stop" : "start";
+
+                const isActionLoading = loadingActions[`${id}-${actionType}`];
+                const isConsoleLoading = loadingActions[`${id}-console`];
 
                 return (
                   <tr key={id} className="hover:bg-gray-900/30 transition">
@@ -192,7 +190,7 @@ const InstancesTable = ({ instances }) => {
                     </td>
                     <td className="px-6 py-4 flex space-x-2">
                       <button
-                        disabled={loadingId === id}
+                        disabled={isActionLoading}
                         onClick={() => handleAction(id, actionType)}
                         className={`px-4 py-1 text-xs font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 ${
                           isOnline
@@ -200,14 +198,15 @@ const InstancesTable = ({ instances }) => {
                             : "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                         } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        {loadingId === id ? <Spinner /> : actionLabel}
+                        {isActionLoading ? <Spinner /> : actionLabel}
                       </button>
+
                       <button
-                        disabled={loadingId === id}
+                        disabled={isConsoleLoading}
                         onClick={() => handleConsole(id)}
                         className="px-4 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {loadingId === id ? <Spinner /> : "Console"}
+                        {isConsoleLoading ? <Spinner /> : "Console"}
                       </button>
                     </td>
                   </tr>
