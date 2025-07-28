@@ -1,6 +1,7 @@
 
 from celery import shared_task
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.conf import settings
 from django.http import request
@@ -120,11 +121,10 @@ def create_openstack_project_and_user(user_id, raw_password):
         return str(e)
 
 
-
 @shared_task
 def create_openstack_user(user_id, raw_password):
     try:
-        user = User.objects.get(id=user_id)
+        user = User.objects.select_related('userprofile').get(id=user_id)
 
         conn = connection.Connection(
             auth_url=settings.OPENSTACK_AUTH_URL,
@@ -142,21 +142,27 @@ def create_openstack_user(user_id, raw_password):
             email=user.email,
             enabled=True
         )
-        user_profile = user.userprofile
-        user_profile.openstack_user_id = os_user.id
-        user_profile.save(update_fields=["openstack_user_id"])
+
+        user.userprofile.openstack_user_id = os_user.id
+        user.userprofile.save(update_fields=["openstack_user_id"])
 
         return {
             "status": "success",
             "openstack_user_id": os_user.id,
-            "message": f"Created OpenStack user for {user.username}"
+            "message": f"✅ Created OpenStack user for {user.username}"
+        }
+
+    except ObjectDoesNotExist:
+        return {
+            "status": "error",
+            "message": f"❌ User with id {user_id} does not exist"
         }
 
     except Exception as e:
-        print(f"[❌ OpenStack Error] {e}")
-        return str(e)
-
-
+        return {
+            "status": "error",
+            "message": f"❌ OpenStack Error: {str(e)}"
+        }
 
 @shared_task
 def create_openstack_project(user_id):
