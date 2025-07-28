@@ -17,9 +17,50 @@ export default function AdminProjectDetailPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showAllIPs, setShowAllIPs] = useState(false);
+  const [showChangeOwnerPopup, setShowChangeOwnerPopup] = useState(false);
+
+
+
+       const [projects, setProjects] = useState([]);
+       const [showAssignPopup, setShowAssignPopup] = useState(false);
+       const [allUsers, setAllUsers] = useState([]);
+       const [selectedUserId, setSelectedUserId] = useState("");
+       const [selectedProjectId, setSelectedProjectId] = useState("");
+       const [filteredUsers, setFilteredUsers] = useState([]);
+       const [popup, setPopUp] = useState([]);
+       const [filteredProjects, setFilteredProjects] = useState([]);
+
 
   const IP_DISPLAY_LIMIT = 5;
+useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const res = await axiosInstance.get("/project/projects/list/");
+                const data = res.data || [];
+                setProjects(data);
+                setFilteredProjects(data);
+            } catch (err) {
+                console.error("❌ Failed to fetch projects:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
+        fetchProjects();
+    }, []);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const res = await axiosInstance.get("/auth/ausers-list/");
+                setAllUsers(res.data || []);
+                setFilteredUsers(res.data || []);
+            } catch (err) {
+                console.error("❌ Failed to fetch users:", err);
+            }
+        };
+        fetchUsers();
+    }, []);
   useEffect(() => {
     fetchProjectDetails();
   }, [id]);
@@ -77,6 +118,7 @@ export default function AdminProjectDetailPage() {
       setLoading(false);
     }
   };
+  
 
   const handleAssignIPToProject = async () => {
     if (!selectedIP) {
@@ -129,6 +171,20 @@ export default function AdminProjectDetailPage() {
       setLoading(false);
     }
   };
+  const handleChangeOwner = async () => {
+  try {
+    await axiosInstance.post("/project/change-owner/", {
+      project_id: selectedProjectId, // Make sure this ID is set somewhere
+      new_owner: selectedUserId,
+    });
+    alert("✅ Owner changed successfully!");
+    setShowChangeOwnerPopup(false);
+  } catch (err) {
+    console.error("❌ Failed to change owner:", err);
+    alert("❌ Failed to change project owner.");
+  }
+};
+
 
   const handleUnassignIP = async (ipId) => {
     setLoading(true);
@@ -431,19 +487,45 @@ export default function AdminProjectDetailPage() {
             </Card>
 
             {/* Management Actions */}
-            <Card title="Project Management">
-              <div className="space-y-3">
-                <ActionBtn label="Change Owner" color="gray" />
-                <ActionBtn 
-                  label="Update Package" 
-                  color="blue" 
-                  onClick={() => setShowModal(true)}
-                  disabled={loading}
-                />
-                <ActionBtn label="Suspend Project" color="yellow" />
-                <ActionBtn label="Delete Project" color="red" />
-              </div>
-            </Card>
+       <Card title="Project Management">
+  <div className="space-y-3">
+    {/* Change Owner */}
+    <button
+      onClick={() => setShowChangeOwnerPopup(true)}
+      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold transition-all duration-300"
+    >
+      🧑‍💼 Change Owner
+    </button>
+
+    {/* Update Package */}
+    <button
+      onClick={() => setShowModal(true)}
+      disabled={loading}
+      className={`w-full px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-semibold transition-all duration-300 ${
+        loading ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+    >
+      📦 Update Package
+    </button>
+
+    {/* Suspend Project */}
+    <button
+      onClick={() => console.log("Suspend clicked")}
+      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-black font-semibold transition-all duration-300"
+    >
+      🚫 Suspend Project
+    </button>
+
+    {/* Delete Project */}
+    <button
+      onClick={() => console.log("Delete clicked")}
+      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white font-semibold transition-all duration-300"
+    >
+      ❌ Delete Project
+    </button>
+  </div>
+</Card>
+
           </div>
         </div>
       </div>
@@ -541,6 +623,60 @@ export default function AdminProjectDetailPage() {
           </div>
         </Modal>
       )}
+      {showChangeOwnerPopup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl">
+      <h2 className="text-xl font-semibold mb-4 text-indigo-400">Change Project Owner</h2>
+
+      <div className="mb-4">
+        <label className="block text-sm mb-1">Select New Owner</label>
+        <input
+          type="text"
+          placeholder="Search username or email..."
+          className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-2"
+          onChange={(e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(
+              (u) =>
+                u.username.toLowerCase().includes(keyword) ||
+                (u.email && u.email.toLowerCase().includes(keyword))
+            );
+            setFilteredUsers(filtered);
+          }}
+        />
+        <select
+          value={selectedUserId}
+          onChange={(e) => setSelectedUserId(e.target.value)}
+          className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white"
+        >
+          <option value="">-- Choose User --</option>
+          {filteredUsers.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.username}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={() => setShowChangeOwnerPopup(false)}
+          className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => handleChangeOwner()} // You'll define this below
+          disabled={!selectedUserId}
+          className="px-4 py-2 rounded bg-green-600 hover:bg-green-500 text-white font-semibold"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {showConfirmModal && confirmAction && (
         <Modal 
