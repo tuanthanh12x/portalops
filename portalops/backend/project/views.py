@@ -676,48 +676,52 @@ class AdminProjectDetailView(APIView):
             }
 
             # --- VM list ---
-        vms = []
-        for server in servers:
-            if getattr(server, "project_id", None) != project.openstack_id:
-                continue
+            # --- VM list ---
+            # --- VM list ---
+            # --- VM list ---
+            vms = []
+            for server in servers:
+                if getattr(server, "project_id", None) != project.openstack_id:
+                    continue
 
-            flavor_id_raw = str(server.flavor.get("id"))
-            flavor = flavor_map.get(flavor_id_raw)
-            flavor_id = str(flavor.id) if flavor else flavor_id_raw
+                flavor_id_raw = str(server.flavor.get("id"))
+                flavor = flavor_map.get(flavor_id_raw)
+                flavor_id = str(flavor.id) if flavor else flavor_id_raw
 
-            ip = ""
-            for net in server.get("addresses", {}).values():
-                if isinstance(net, list) and net:
-                    # Try to get a floating IP first
-                    floating_ip = next(
-                        (addr["addr"] for addr in net if
-                         addr.get("OS-EXT-IPS:type") == "floating" and addr.get("version") == 4),
-                        None
-                    )
-                    if floating_ip:
-                        ip = floating_ip
-                    else:
-                        # Fallback to first available fixed IP
-                        ip = next(
-                            (addr["addr"] for addr in net if addr.get("version") == 4),
-                            net[0].get("addr", "")
+                ip = ""
+                for net in server.get("addresses", {}).values():
+                    if isinstance(net, list) and net:
+                        # Try to get a floating IP first
+                        floating_ip = next(
+                            (addr["addr"] for addr in net if
+                             addr.get("OS-EXT-IPS:type") == "floating" and addr.get("version") == 4),
+                            None
                         )
-                    break
+                        if floating_ip:
+                            ip = floating_ip
+                        else:
+                            # Fallback to first available fixed IP
+                            ip = next(
+                                (addr["addr"] for addr in net if addr.get("version") == 4),
+                                net[0].get("addr", "")
+                            )
+                        break
 
-            vms.append({
-                "id": server.id,
-                "name": server.name,
-                "status": server.status,
-                "ip": ip,
-                "created": server.created_at[:10] if server.created_at else "",
-                "flavor": {
-                    "id": flavor_id,
-                    "name": flavor.name if flavor else "Unknown",
-                    "vcpus": flavor.vcpus if flavor else 0,
-                    "ram": flavor.ram if flavor else 0,
-                    "disk": flavor.disk if flavor else 0,
-                }
-            })
+                vms.append({
+                    "id": server.id,
+                    "name": server.name,
+                    "status": server.status,
+                    "ip": ip,
+                    "created": server.created_at[:10] if server.created_at else "",
+                    "flavor": {
+                        "id": flavor_id,
+                        "name": flavor.name if flavor else "Unknown",
+                        "vcpus": flavor.vcpus if flavor else 0,
+                        "ram": flavor.ram if flavor else 0,
+                        "disk": flavor.disk if flavor else 0,
+                    }
+                })
+
 
 
         except Exception as e:
