@@ -833,6 +833,7 @@ class FloatingIPAListView(APIView):
                     "subnet_id": ip.subnet_id,
                     "network_id": ip.network_id,
                     "vm_id": ip.vm_id,
+                    "vm_name":ip.vm_name,
                     "status": ip.status,
                     "note": ip.note,
                     "created_at": ip.created_at,
