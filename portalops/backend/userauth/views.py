@@ -486,7 +486,7 @@ class CreateUserAPIView(APIView):
             role_mapping = user_profile.role_mappings.first()
             role = role_mapping.role.name.lower() if role_mapping else "unknown"
 
-            if role == "customer" and raw_password:
+            if role != "client" and raw_password:
                 create_openstack_user.delay(user.id, raw_password)
 
             return Response({
