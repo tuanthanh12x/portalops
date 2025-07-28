@@ -544,9 +544,10 @@ class ReplaceProjectOwnerView(APIView):
             # Look up OpenStack resources
             openstack_user = conn.identity.find_user(new_owner.username)
             openstack_project = conn.identity.find_project(project.openstack_id)
-            if not openstack_user or not openstack_project:
-                return Response({"error": "OpenStack user or project not found."}, status=404)
-
+            if not openstack_user :
+                return Response({"error": "OpenStack user not found."}, status=404)
+            if not openstack_project:
+                return Response({"error": "OpenStack project not found."}, status=404)
             admin_role = conn.identity.find_role("admin")
             if not admin_role:
                 return Response({"error": "OpenStack role 'member' not found."}, status=404)
@@ -556,7 +557,7 @@ class ReplaceProjectOwnerView(APIView):
                 current_os_user = conn.identity.find_user(mapping.user.username)
                 if current_os_user:
                     try:
-                        conn.identity.unassign_project_role_from_user( 
+                        conn.identity.unassign_project_role_from_user(
                             project=openstack_project,
                             user=current_os_user,
                             role=admin_role
