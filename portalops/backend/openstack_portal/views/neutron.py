@@ -298,7 +298,7 @@ class AssignOrReplaceFloatingIPView(APIView):
             conn = connect_with_token_v5(token, project_id)
 
             # Get the new IP to assign (from DB)
-            new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status=" ")
+            new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="reversed")
 
             # Detach any existing IP
             existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()

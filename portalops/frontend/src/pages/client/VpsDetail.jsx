@@ -283,7 +283,7 @@ const VPSDetailPage = () => {
             <ActionButton
               color="purple"
               icon={<Network size={16} />}
-              label={loadingIPs ? "Loading IPs..." : loadingId === "change-ip" ? "Changing..." : "Change IP"}
+              label={loadingIPs ? "Loading IPs..." : loadingId === "change-ip" ? "Adding..." : "Add IP"}
               onClick={handleChangeIp}
               disabled={loadingIPs || loadingId === "change-ip"}
             />
@@ -404,7 +404,7 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
     >
       <div className="bg-gray-800 rounded-md p-6 w-[600px] max-w-[90vw] shadow-lg max-h-[80vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4 text-indigo-400">
-          Change IP Address
+          Add IP Address
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-gray-700 rounded-md p-4">
@@ -467,7 +467,7 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
           <div className="bg-yellow-900/20 border border-yellow-600 rounded-md p-4">
             <p className="text-yellow-300 text-sm">
               <strong>Warning:</strong> Changing the IP address will assign the selected floating IP to your VPS. 
-              The current IP will be released back to the pool. This action may require you to update 
+              The current IP will be released back to the your pool. This action may require you to update 
               DNS records and firewall rules.
             </p>
           </div>
@@ -486,7 +486,7 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
               disabled={loading || !selectedIpAddress || selectableIPs.length === 0}
               className="px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Changing..." : "Change IP"}
+              {loading ? "Adding..." : "Add IP"}
             </button>
           </div>
         </form>

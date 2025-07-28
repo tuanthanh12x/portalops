@@ -69,8 +69,8 @@ const handlePackageConfirm = async (newPackageName) => {
 
     try {
         // Send request to update project type
-        const response = await axiosInstance.post("project/client-change-vps-type/", {
-            project_id: selectedProject.id,          // this should match project.openstack_id
+        const response = await axiosInstance.post("project/client-change-vps-package/", {
+            project_id: selectedProject.openstack_id,          // this should match project.openstack_id
             project_type_id: newType.id              // expected by backend
         });
 
