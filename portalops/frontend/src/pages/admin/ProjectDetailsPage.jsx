@@ -18,6 +18,7 @@ export default function AdminProjectDetailPage() {
   const [loading, setLoading] = useState(false);
   const [showAllIPs, setShowAllIPs] = useState(false);
   const [showChangeOwnerPopup, setShowChangeOwnerPopup] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
 
@@ -171,19 +172,30 @@ useEffect(() => {
       setLoading(false);
     }
   };
+  
+
   const handleChangeOwner = async () => {
+  if (!id || !selectedUserId) {
+    alert("⚠️ Project ID or new owner ID is missing.");
+    return;
+  }
+
   try {
-    await axiosInstance.post("/project/change-owner/", {
-      project_id: selectedProjectId, // Make sure this ID is set somewhere
+    setIsSubmitting(true);
+    await axiosInstance.post("/project/replace-project-owner", {
+      project: id, // taken from useParams()
       new_owner: selectedUserId,
     });
-    alert("✅ Owner changed successfully!");
+    alert("✅ Project owner updated successfully!");
     setShowChangeOwnerPopup(false);
   } catch (err) {
     console.error("❌ Failed to change owner:", err);
-    alert("❌ Failed to change project owner.");
+    alert("❌ Unable to update project owner.");
+  } finally {
+    setIsSubmitting(false);
   }
 };
+
 
 
   const handleUnassignIP = async (ipId) => {
@@ -623,16 +635,18 @@ useEffect(() => {
           </div>
         </Modal>
       )}
-      {showChangeOwnerPopup && (
+  {showChangeOwnerPopup && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl">
       <h2 className="text-xl font-semibold mb-4 text-indigo-400">Change Project Owner</h2>
 
       <div className="mb-4">
-        <label className="block text-sm mb-1">Select New Owner</label>
+        <label className="block text-sm font-medium text-indigo-300 mb-2">
+          Select New Owner
+        </label>
         <input
           type="text"
-          placeholder="Search username or email..."
+          placeholder="Search by username or email..."
           className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-2"
           onChange={(e) => {
             const keyword = e.target.value.toLowerCase();
@@ -649,7 +663,7 @@ useEffect(() => {
           onChange={(e) => setSelectedUserId(e.target.value)}
           className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white"
         >
-          <option value="">-- Choose User --</option>
+          <option value="" disabled>-- Select a user --</option>
           {filteredUsers.map((user) => (
             <option key={user.id} value={user.id}>
               {user.username}
@@ -666,11 +680,13 @@ useEffect(() => {
           Cancel
         </button>
         <button
-          onClick={() => handleChangeOwner()} // You'll define this below
-          disabled={!selectedUserId}
-          className="px-4 py-2 rounded bg-green-600 hover:bg-green-500 text-white font-semibold"
+          onClick={handleChangeOwner}
+          disabled={!selectedUserId || isSubmitting}
+          className={`px-4 py-2 rounded font-semibold text-white ${
+            isSubmitting ? "bg-green-700 cursor-not-allowed" : "bg-green-600 hover:bg-green-500"
+          }`}
         >
-          Confirm
+          {isSubmitting ? "Processing..." : "Confirm"}
         </button>
       </div>
     </div>
