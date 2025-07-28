@@ -41,3 +41,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'type', 'openstack_id', 'created_at']
+
+
+class ReplaceProjectOwnerSerializer(serializers.Serializer):
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    new_owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())

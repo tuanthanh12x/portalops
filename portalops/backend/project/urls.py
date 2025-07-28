@@ -2,7 +2,8 @@ from django.urls import path
 
 from .views import CreateProjectTypeView, ListProjectTypeView, AllProjectsOverview, CreateProjectView, \
     AssignUserToProjectView, ChangeVPSTypeView, AdminProjectDetailView, UserProjectListView, SyncFloatingIPsView, \
-    FloatingIPAListView, AvailableFloatingIPListView, AssignFloatingIPView, ClientChangeVPSTypeView
+    FloatingIPAListView, AvailableFloatingIPListView, AssignFloatingIPView, ClientChangeVPSTypeView, \
+    ReplaceProjectOwnerView
 
 urlpatterns = [
     path("project-package/", CreateProjectTypeView.as_view(), name="create-project-package"),
@@ -18,4 +19,6 @@ urlpatterns = [
     path("sync-floating-ips/", SyncFloatingIPsView.as_view(), name="sync-floating-ips"),
     path("available-floating-ips-list/", AvailableFloatingIPListView.as_view(), name="available-floating-ips"),
     path("<str:project_id>/assign-floating-ip/", AssignFloatingIPView.as_view(), name="assign-floating-ip"),
+    path("replace-project-owner", ReplaceProjectOwnerView.as_view(), name="replace-project-owner"),
+
 ]

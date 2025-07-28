@@ -16,7 +16,7 @@ from utils.conn import vl_connect_with_token
 
 from utils.conn import connect_with_token_v5
 
-from .serializers import AssignUserToProjectSerializer, ProjectSerializer
+from .serializers import AssignUserToProjectSerializer, ProjectSerializer, ReplaceProjectOwnerSerializer
 from utils.token import get_admin_token
 
 
@@ -516,6 +516,69 @@ class AssignUserToProjectView(APIView):
             return Response({"error": f"OpenStack error: {str(e)}"}, status=500)
 
         return Response({"message": "✅ User assigned to project successfully."}, status=200)
+
+
+class ReplaceProjectOwnerView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+
+        token_bytes = redis_client.get(token_key)
+        if not token_bytes:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        token = token_bytes
+        serializer = ReplaceProjectOwnerSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        new_owner = serializer.validated_data["new_owner"]
+        project = serializer.validated_data["project"]
+
+        conn = connect_with_token_v5(token, project_id)
+
+        try:
+            # Look up OpenStack resources
+            openstack_user = conn.identity.find_user(new_owner.username)
+            openstack_project = conn.identity.find_project(project.openstack_id)
+            if not openstack_user or not openstack_project:
+                return Response({"error": "OpenStack user or project not found."}, status=404)
+
+            admin_role = conn.identity.find_role("admin")
+            if not admin_role:
+                return Response({"error": "OpenStack role 'member' not found."}, status=404)
+            # Remove current admin(s) of the project
+            current_mappings = ProjectUserMapping.objects.filter(project=project, role="member")
+            for mapping in current_mappings:
+                current_os_user = conn.identity.find_user(mapping.user.username)
+                if current_os_user:
+                    try:
+                        conn.identity.unassign_project_role_from_user( 
+                            project=openstack_project,
+                            user=current_os_user,
+                            role=admin_role
+                        )
+                    except Exception:
+                        pass  # soft fail in case unassignment fails
+                mapping.delete()
+
+            # Assign admin role to new owner in OpenStack
+            conn.identity.assign_project_role_to_user(
+                project=openstack_project,
+                user=openstack_user,
+                role=admin_role
+            )
+
+            # Save new owner in local DB
+            ProjectUserMapping.objects.create(user=new_owner, project=project, role="owner")
+
+        except Exception as e:
+            return Response({"error": f"OpenStack error: {str(e)}"}, status=500)
+
+        return Response({"message": "✅ Project owner replaced successfully."}, status=200)
 
 
 class AdminProjectDetailView(APIView):
