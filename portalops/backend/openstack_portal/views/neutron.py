@@ -370,3 +370,159 @@ class AssignOrReplaceFloatingIPView(APIView):
             return Response({"detail": "Floating IP not found or not available."}, status=404)
         except Exception as e:
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
+
+
+
+class AddingFloatingIPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        ip_id = request.data.get("ip_id")
+        vm_id = request.data.get("vm_id")
+
+        if not ip_id or not vm_id:
+            return Response({"detail": "Both 'ip_id' and 'vm_id' are required."}, status=400)
+
+        try:
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            # Get the new IP to assign (from DB)
+            new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="reserved")
+
+            # Detach any existing IP
+            existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
+            if existing_ip:
+                os_old_fip = conn.network.find_ip(existing_ip.ip_address)
+                if os_old_fip:
+                    conn.compute.remove_floating_ip_from_server(
+                        server=vm_id,
+                        address=os_old_fip.floating_ip_address
+                    )
+
+                existing_ip.vm_id = None
+                existing_ip.status = "available"
+                existing_ip.project_id = None
+                existing_ip.save()
+
+            # Ensure new IP exists in OpenStack
+            os_new_fip = conn.network.find_ip(new_ip.ip_address)
+
+            if not os_new_fip:
+                # Optional: verify no conflict exists with this IP
+                try:
+                    ip_list = list(conn.network.ips(floating_ip_address=new_ip.ip_address))
+                    if ip_list:
+                        return Response({"detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."},
+                                        status=409)
+                except Exception as lookup_err:
+                    return Response({"detail": f"Error checking existing IPs: {str(lookup_err)}"}, status=500)
+
+                # Create the IP in OpenStack
+                external_net = conn.network.find_network("public")  # 🔁 Replace with your actual external network name
+                if not external_net:
+                    return Response({"detail": "External network not found."}, status=404)
+
+                try:
+                    os_new_fip = conn.network.create_ip(
+                        floating_ip_address=new_ip.ip_address,
+                        floating_network_id=external_net.id
+                    )
+                except Exception as create_err:
+                    return Response({"detail": f"Failed to create IP in OpenStack: {str(create_err)}"}, status=500)
+
+            server = conn.compute.get_server(vm_id)
+            if not server:
+                return Response({"detail": "VM not found in current project."}, status=404)
+            # Attach the floating IP to the VM
+            action_url = f"/servers/{vm_id}/action"
+            payload = {
+                "addFloatingIp": {
+                    "address": os_new_fip.floating_ip_address
+                }
+            }
+            conn.compute.post(action_url, json=payload)
+
+            # Update DB
+            new_ip.vm_id = vm_id
+            new_ip.vm_name = server.name
+            new_ip.status = "allocated"
+            new_ip.project_id = project_id
+            new_ip.save()
+
+            return Response({
+                "detail": "Floating IP assigned successfully.",
+                "ip_address": new_ip.ip_address,
+                "ip_id": new_ip.id
+            }, status=200)
+
+        except FloatingIPPool.DoesNotExist:
+            return Response({"detail": "Floating IP not found or not available."}, status=404)
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
+
+
+class RemovingFloatingIPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        ip_id = request.data.get("ip_id")
+        vm_id = request.data.get("vm_id")
+
+        if not ip_id or not vm_id:
+            return Response({"detail": "Both 'ip_id' and 'vm_id' are required."}, status=400)
+
+        try:
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            # Tìm IP trong DB
+            try:
+                ip_record = FloatingIPPool.objects.get(ip_address=ip_id, vm_id=vm_id)
+            except FloatingIPPool.DoesNotExist:
+                return Response({"detail": "Floating IP not associated with this VM."}, status=404)
+
+            # Tìm Floating IP trong OpenStack
+            os_fip = conn.network.find_ip(ip_id)
+            if not os_fip:
+                return Response({"detail": "Floating IP not found in OpenStack."}, status=404)
+
+            # Gỡ IP khỏi VM
+            try:
+                conn.compute.remove_floating_ip_from_server(
+                    server=vm_id,
+                    address=os_fip.floating_ip_address
+                )
+            except Exception as detach_err:
+                return Response({"detail": f"Error detaching floating IP: {str(detach_err)}"}, status=500)
+
+            # Cập nhật DB
+            ip_record.vm_id = None
+            ip_record.vm_name = None
+            ip_record.status = "reserved"
+            ip_record.project_id = project_id
+            ip_record.save()
+
+            return Response({
+                "detail": "Floating IP successfully detached from VPS.",
+                "ip_address": ip_id
+            }, status=200)
+
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)

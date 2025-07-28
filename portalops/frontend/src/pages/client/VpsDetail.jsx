@@ -330,10 +330,10 @@ const VPSDetailPage = () => {
 
         <Section title="Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoCard label="IPv4" value={vps.ipv4 || "N/A"} />
-            <InfoCard label="IPv6" value={vps.ipv6 || "N/A"} />
-            <InfoCard label="MAC Address" value={vps.mac_address || "N/A"} />
-            <InfoCard label="Gateway" value={vps.gateway || "N/A"} />
+            <InfoCard label="Floating IP" value={vps.network.floating_ip || "N/A"} />
+            <InfoCard label="Fixed IP" value={vps.network.private_ip || "N/A"} />
+            <InfoCard label="MAC Address" value={vps.network.mac_address || "N/A"} />
+            <InfoCard label="Gateway" value={vps.network.subnet || "N/A"} />
           </div>
         </Section>
       </div>
