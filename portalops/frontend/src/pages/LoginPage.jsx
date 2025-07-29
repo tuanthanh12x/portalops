@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
+import { jwtDecode } from 'jwt-decode';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
@@ -22,8 +23,7 @@ function LoginPage() {
     };
     localStorage.setItem(key, JSON.stringify(item));
   };
-
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
   e.preventDefault();
   setError('');
   try {
@@ -41,15 +41,22 @@ function LoginPage() {
 
     // Step 2: Require project selection
     if (response.data.require_project_selection) {
-      // The backend has already verified that the user has multiple projects
       setProjects(response.data.projects);
       return;
     }
 
-    // Step 3: Access token is returned directly if only one project or no selection needed
+    // Step 3: Process access token
     if (response.data.access) {
-      setTokenWithExpiry('accessToken', response.data.access);
-      window.location.href = '/';
+      const accessToken = response.data.access;
+      setTokenWithExpiry('accessToken', accessToken);
+
+      // Decode and check roles
+      const decoded = jwtDecode(accessToken);
+      const roles = decoded?.roles || [];
+      const isAdmin = roles.includes('admin');
+
+      // Redirect based on role
+      window.location.href = isAdmin ? '/admin-dashboard' : '/';
     } else {
       setError('Unexpected response. Please try again.');
     }
@@ -93,11 +100,15 @@ function LoginPage() {
         password,
         openstack_id: selectedProject,
       });
-          if (responseX.data.access ) {
-      setTokenWithExpiry('accessToken', responseX.data.access);
-      window.location.href = '/';}
-      else{
-          setError('Unexpected response. Please try again.');
+      if (responseX.data.access) {
+        setTokenWithExpiry('accessToken', responseX.data.access);
+              const decoded = jwtDecode(responseX.data.access);
+      const roles = decoded?.roles || [];
+      const isAdmin = roles.includes('admin');
+        window.location.href = isAdmin ? '/admin-dashboard' : '/';
+      }
+      else {
+        setError('Unexpected response. Please try again.');
       }
     } catch (err) {
       setError('Failed to confirm project. Try again.');
@@ -195,23 +206,23 @@ function LoginPage() {
                 Select Project
               </label>
               <select
-  className="mt-2 w-full px-4 py-3 bg-gray-800/50 text-green-200 border border-green-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 hover:shadow-glow focus:shadow-glow font-orbitron transition-all duration-300"
-  value={selectedProject}
-  onChange={(e) => setSelectedProject(e.target.value)}
->
-  <option value="" className="bg-gray-900 text-gray-400">
-    -- Choose a project --
-  </option>
-  {projects.map((project) => (
-    <option
-      key={project.openstack_id}
-      value={project.openstack_id}
-      className="bg-gray-900 text-white"
-    >
-      {project.project_name}
-    </option>
-  ))}
-</select>
+                className="mt-2 w-full px-4 py-3 bg-gray-800/50 text-green-200 border border-green-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 hover:shadow-glow focus:shadow-glow font-orbitron transition-all duration-300"
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+              >
+                <option value="" className="bg-gray-900 text-gray-400">
+                  -- Choose a project --
+                </option>
+                {projects.map((project) => (
+                  <option
+                    key={project.openstack_id}
+                    value={project.openstack_id}
+                    className="bg-gray-900 text-white"
+                  >
+                    {project.project_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button

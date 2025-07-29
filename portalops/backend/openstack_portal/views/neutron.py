@@ -375,7 +375,6 @@ class AssignOrReplaceFloatingIPView(APIView):
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
 
 
-
 class AddingFloatingIPView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -398,63 +397,73 @@ class AddingFloatingIPView(APIView):
             token = token_bytes.decode()
             conn = connect_with_token_v5(token, project_id)
 
-            # Get the new IP to assign (from DB)
+            # Lấy IP từ DB
             new_ip = FloatingIPPool.objects.get(ip_address=ip_id, status="reserved")
 
-            # Detach any existing IP
-            existing_ip = FloatingIPPool.objects.filter(vm_id=vm_id).first()
-            if existing_ip:
-                os_old_fip = conn.network.find_ip(existing_ip.ip_address)
-                if os_old_fip:
-                    conn.compute.remove_floating_ip_from_server(
-                        server=vm_id,
-                        address=os_old_fip.floating_ip_address
-                    )
-
-                existing_ip.vm_id = None
-                existing_ip.status = "available"
-                existing_ip.project_id = None
-                existing_ip.save()
-
-            # Ensure new IP exists in OpenStack
+            # Kiểm tra IP đã tồn tại trên OpenStack chưa
             os_new_fip = conn.network.find_ip(new_ip.ip_address)
-
             if not os_new_fip:
-                # Optional: verify no conflict exists with this IP
-                try:
-                    ip_list = list(conn.network.ips(floating_ip_address=new_ip.ip_address))
-                    if ip_list:
-                        return Response({"detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."},
-                                        status=409)
-                except Exception as lookup_err:
-                    return Response({"detail": f"Error checking existing IPs: {str(lookup_err)}"}, status=500)
+                # Đảm bảo không bị trùng lặp
+                ip_list = list(conn.network.ips(floating_ip_address=new_ip.ip_address))
+                if ip_list:
+                    return Response({"detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."}, status=409)
 
-                # Create the IP in OpenStack
-                external_net = conn.network.find_network("public")  # 🔁 Replace with your actual external network name
+                external_net = conn.network.find_network("public")
                 if not external_net:
                     return Response({"detail": "External network not found."}, status=404)
 
-                try:
-                    os_new_fip = conn.network.create_ip(
-                        floating_ip_address=new_ip.ip_address,
-                        floating_network_id=external_net.id
-                    )
-                except Exception as create_err:
-                    return Response({"detail": f"Failed to create IP in OpenStack: {str(create_err)}"}, status=500)
+                os_new_fip = conn.network.create_ip(
+                    floating_ip_address=new_ip.ip_address,
+                    floating_network_id=external_net.id
+                )
 
             server = conn.compute.get_server(vm_id)
             if not server:
-                return Response({"detail": "VM not found in current project."}, status=404)
-            # Attach the floating IP to the VM
+                return Response({"detail": "VM not found."}, status=404)
+
+            # Tìm fixed IP chưa gắn floating IP
+            available_fixed_ip = None
+            server_interfaces = list(conn.compute.server_interfaces(vm_id))
+
+            for iface in server_interfaces:
+                for fixed in iface.fixed_ips:
+                    fixed_ip = fixed.get("ip_address")
+                    if not fixed_ip:
+                        continue
+
+                    # Kiểm tra fixed_ip này có đang được gán floating IP không
+                    fips = list(conn.network.ips(fixed_ip_address=fixed_ip))
+                    is_used = any(fip.floating_ip_address for fip in fips)
+                    if not is_used:
+                        available_fixed_ip = fixed_ip
+                        break
+                if available_fixed_ip:
+                    break
+
+            # Nếu không có fixed IP trống → tạo thêm port mới
+            if not available_fixed_ip:
+                internal_net = conn.network.find_network("private")  # 👈 chỉnh tên nếu cần
+                if not internal_net:
+                    return Response({"detail": "Internal network not found."}, status=404)
+
+                new_port = conn.network.create_port(
+                    network_id=internal_net.id,
+                    name=f"{vm_id}-auto-port"
+                )
+                conn.compute.create_server_interface(vm_id, port_id=new_port.id)
+                available_fixed_ip = new_port.fixed_ips[0]["ip_address"]
+
+            # Gán floating IP vào fixed IP
             action_url = f"/servers/{vm_id}/action"
             payload = {
                 "addFloatingIp": {
-                    "address": os_new_fip.floating_ip_address
+                    "address": os_new_fip.floating_ip_address,
+                    "fixed_address": available_fixed_ip
                 }
             }
             conn.compute.post(action_url, json=payload)
 
-            # Update DB
+            # Cập nhật DB
             new_ip.vm_id = vm_id
             new_ip.vm_name = server.name
             new_ip.status = "allocated"
