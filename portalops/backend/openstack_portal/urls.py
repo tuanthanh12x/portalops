@@ -5,7 +5,7 @@ from .views.glance import ListImagesView, SnapshotListAPIView
 from .views.neutron import PortListView, FloatingIPListView, AttachFloatingIPView, NetworkListView, CreateNetworkView, \
     SubnetListView, AssignOrReplaceFloatingIPView, RemovingFloatingIPView, CreateNetworkAPI, AddingFloatingIPView
 from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, InstanceActionAPI, \
-    VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView
+    VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView, CreateInstanceAsAdminAPI
 
 urlpatterns = [
     path('instance-option/', InstanceOptionsView.as_view(), name='instance-option'),
@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('volume-option/', VolumeOptionsView.as_view(), name='volume-option'),
     path('compute/instances/', CreateInstanceAPI.as_view(), name='create-instance'),
+    path('compute/admin-instances/', CreateInstanceAsAdminAPI.as_view(), name='admin-create-instance'),
     path('storage/volumes/', VolumeAPI.as_view(), name='volume_api'),
     path('compute/images/', CreateImageAPI.as_view(), name='create-image'),
     path('compute/keypair/', KeypairView.as_view(), name='keypair'),

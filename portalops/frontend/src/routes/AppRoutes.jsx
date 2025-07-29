@@ -39,6 +39,8 @@ import SubnetManagement from './../pages/admin/network/SubnetManagement';
 import RouteManagement from './../pages/admin/network/RouteManagement';
 import NetworkDetailPage from './../pages/admin/network/NetworkDetail';
 import TCreateNetworkPage from './../pages/admin/network/CreateNetworkPage';
+import CreateImagePage from "../pages/admin/CreateImagePage";
+
 function AppRoutes() {
   return (
     <Router>
@@ -84,6 +86,7 @@ function AppRoutes() {
           <Route path="/users-manager" element={<UserManagementPage />} />
           <Route path="/admin/instances" element={< InstancesPage />} />
           <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
+          <Route path="/admin/create-images" element={< CreateImagePage />} />
           <Route path="/admin/packages" element={< ProjectTypeListPage />} />
           <Route path="/admin/project-detail/:id" element={< ProjectDetail />} />
           <Route path="/admin/projects" element={< ProjectListPage />} />
@@ -91,7 +94,7 @@ function AppRoutes() {
           <Route path="/admin/network" element={< NetworkDashboardPage />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
           <Route path="/admin/network-detail" element={< NetworkDetailPage />} />
-                    <Route path="/admin/create-networks" element={< TCreateNetworkPage />} />
+          <Route path="/admin/create-networks" element={< TCreateNetworkPage />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
         </Route>

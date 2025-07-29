@@ -15,6 +15,8 @@ from userauth.permissions import IsAdmin
 
 from overview.tasks import cache_user_instances
 
+from utils.conn import get_admin_connection
+
 redis_client = redis.Redis(host='redis', port=6379, db=0)
 
 class InstanceOptionsView(APIView):
@@ -212,6 +214,45 @@ class CreateInstanceAPI(APIView):
 
         except Exception as e:
             return Response({"error": f"Failed to create instance: {str(e)}"}, status=500)
+
+
+class CreateInstanceAsAdminAPI(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        # Required fields
+        target_project_id = request.data.get("project_id")
+        name = request.data.get("name")
+        image_id = request.data.get("image_id")
+        flavor_id = request.data.get("flavor_id")
+        network_id = request.data.get("network_id")
+
+        if not all([target_project_id, name, image_id, flavor_id, network_id]):
+            return Response({"error": "Missing required fields"}, status=400)
+
+        # Dùng kết nối của admin, scoped vào project của user
+        try:
+            conn = get_admin_connection(project_id=target_project_id)
+        except Exception as e:
+            return Response({"error": f"Failed to connect as admin: {str(e)}"}, status=500)
+
+        # Tạo server
+        try:
+            server = conn.compute.create_server(
+                name=name,
+                image_id=image_id,
+                flavor_id=flavor_id,
+                networks=[{"uuid": network_id}],
+                availability_zone="nova"
+            )
+
+            return Response({"instance": server.to_dict()}, status=201)
+
+        except Exception as e:
+            return Response({"error": f"Failed to create instance: {str(e)}"}, status=500)
+
+
+
 
 
 from keystoneauth1 import session

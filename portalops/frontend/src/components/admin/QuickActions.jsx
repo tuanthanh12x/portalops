@@ -147,7 +147,7 @@ const QuickActions = () => {
   
     { 
       id: 'createFlavor', 
-      text: 'Create Flavor', 
+      text: 'Create Package', 
       to: '/admin/create-package',
       icon: <FlavorIcon />,
       color: 'purple',
@@ -172,7 +172,7 @@ const QuickActions = () => {
     { 
       id: 'createNetwork', 
       text: 'Create Network', 
-      to: '/networks/create',
+      to: '/admin/create-networks',
       icon: <NetworkIcon />,
       color: 'indigo',
       description: 'Configure virtual network'
@@ -188,7 +188,7 @@ const QuickActions = () => {
     { 
       id: 'uploadImage', 
       text: 'Upload Image', 
-      to: '/images/upload',
+      to: '/admin/create-images',
       icon: <ImageIcon />,
       color: 'teal',
       description: 'Add OS images'
