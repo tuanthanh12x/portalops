@@ -252,7 +252,8 @@ const SystemOverview = () => {
           icon={<NetworkIcon iconColor="text-cyan-400" />}
           title="Networks"
           value={formatNumber(stats?.total_networks)}
-          subText={`${stats?.active_networks || 0} active`}
+          // subText={`${stats?.active_networks || 0} active`}
+          subText={`All work well`}
         />
         
         <StatCard

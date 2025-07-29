@@ -40,6 +40,9 @@ import RouteManagement from './../pages/admin/network/RouteManagement';
 import NetworkDetailPage from './../pages/admin/network/NetworkDetail';
 import TCreateNetworkPage from './../pages/admin/network/CreateNetworkPage';
 import CreateImagePage from "../pages/admin/CreateImagePage";
+import CreateInstanceAsAdminPage from "../pages/admin/CreateInstancePage";
+
+
 
 function AppRoutes() {
   return (
@@ -87,6 +90,7 @@ function AppRoutes() {
           <Route path="/admin/instances" element={< InstancesPage />} />
           <Route path="/admin/create-package" element={< CreateProjectTypePage />} />
           <Route path="/admin/create-images" element={< CreateImagePage />} />
+            <Route path="/admin/create-instance" element={< CreateInstanceAsAdminPage />} />
           <Route path="/admin/packages" element={< ProjectTypeListPage />} />
           <Route path="/admin/project-detail/:id" element={< ProjectDetail />} />
           <Route path="/admin/projects" element={< ProjectListPage />} />

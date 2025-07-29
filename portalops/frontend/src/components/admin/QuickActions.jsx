@@ -139,7 +139,7 @@ const QuickActions = () => {
     { 
       id: 'launchInstance', 
       text: 'Launch Instance', 
-      to: '/instances/create',
+      to: '/admin/create-instance',
       icon: <LaunchIcon />,
       color: 'blue',
       description: 'Create a new virtual machine'
