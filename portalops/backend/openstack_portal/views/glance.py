@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from utils.redis_client import redis_client
 
-from .services.glance import get_valid_token, list_all_images, list_snapshots
+from ..services.glance import get_valid_token, list_all_images, list_snapshots
 from utils.conn import connect_with_token_v5
 
 from userauth.permissions import IsAdmin
