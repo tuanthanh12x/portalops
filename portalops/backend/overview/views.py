@@ -147,8 +147,8 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from utils.conn import get_admin_connection
-
 User = get_user_model()
+
 class SystemSummaryView(APIView):
     permission_classes = [IsAdmin]
 
@@ -171,11 +171,21 @@ class SystemSummaryView(APIView):
             volumes = list(conn.block_storage.volumes(details=True, all_projects=True))
             total_storage = sum([int(v.size) for v in volumes])
 
+            # 5. Tổng số project (OpenStack tenants)
+            projects = list(conn.identity.projects())
+            total_projects = len(projects)
+
+            # 6. Tổng số network
+            networks = list(conn.network.networks())
+            total_networks = len(networks)
+
             return Response({
                 "active_users": active_users,
                 "total_instances": total_instances,
                 "total_vcpus_used": total_vcpus,
-                "total_storage_used_gb": total_storage
+                "total_storage_used_gb": total_storage,
+                "total_projects": total_projects,
+                "total_networks": total_networks
             })
 
         except Exception as e:
