@@ -128,6 +128,14 @@ const ActionLinkButton = ({ icon, text, to, color = "blue", isNew = false, descr
 
 const QuickActions = () => {
   const actions = [
+      { 
+      id: 'createProject', 
+      text: 'Create Project', 
+      to: '/admin/create-project',
+      icon: <ProjectIcon />,
+      color: 'green',
+      description: 'Set up a new tenant'
+    },
     { 
       id: 'launchInstance', 
       text: 'Launch Instance', 
@@ -136,14 +144,7 @@ const QuickActions = () => {
       color: 'blue',
       description: 'Create a new virtual machine'
     },
-    { 
-      id: 'createProject', 
-      text: 'Create Project', 
-      to: '/admin/create-project',
-      icon: <ProjectIcon />,
-      color: 'green',
-      description: 'Set up a new tenant'
-    },
+  
     { 
       id: 'createFlavor', 
       text: 'Create Flavor', 

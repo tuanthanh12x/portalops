@@ -1,4 +1,7 @@
 import redis
+import requests
+from django.conf import settings
+from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -526,3 +529,53 @@ class RemovingFloatingIPView(APIView):
 
         except Exception as e:
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
+
+
+class CreateNetworkAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        username = request.auth.get("username")
+        project_id = request.auth.get("project_id")
+
+        # Lấy token từ Redis
+        redis_key = f"keystone_token:{username}:{project_id}"
+        token = redis_client.get(redis_key)
+        if not token:
+            return Response({"error": "Token expired or missing"}, status=401)
+
+        # Lấy dữ liệu từ request
+        name = request.data.get("name")
+        is_shared = request.data.get("shared", False)
+        is_external = request.data.get("router:external", False)
+        admin_state_up = request.data.get("admin_state_up", True)
+
+        if not name:
+            return Response({"error": "Network name is required"}, status=400)
+
+        network_url = f"{settings.OPENSTACK_NETWORK_URL}/v2.0/networks"
+        headers = {
+            "X-Auth-Token": token,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "network": {
+                "name": name,
+                "admin_state_up": admin_state_up,
+                "shared": is_shared,
+                "router:external": is_external,
+                "tenant_id": project_id  # or "project_id"
+            }
+        }
+
+        try:
+            response = requests.post(network_url, json=payload, headers=headers)
+            if response.status_code not in [200, 201]:
+                return Response(response.json(), status=response.status_code)
+
+            return Response(response.json(), status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

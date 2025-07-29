@@ -17,6 +17,8 @@ from utils.conn import connect_with_token_v5
 
 from userauth.permissions import IsAdmin
 
+from project.models import Project
+
 # Redis connection
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
@@ -148,7 +150,6 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from utils.conn import get_admin_connection
 User = get_user_model()
-
 class SystemSummaryView(APIView):
     permission_classes = [IsAdmin]
 
@@ -157,25 +158,24 @@ class SystemSummaryView(APIView):
             project_id = request.auth.get("project_id")
             conn = get_admin_connection(project_id=project_id)
 
-            # 1. Active users trong hệ thống Portal (Django)
+            # 1. Active users in the Portal (Django)
             active_users = User.objects.filter(is_active=True).count()
 
-            # 2. Tổng số VM (instances)
+            # 2. Total number of VM instances
             instances = list(conn.compute.servers(all_projects=True))
             total_instances = len(instances)
 
-            # 3. Tổng vCPU đã sử dụng
+            # 3. Total vCPUs used
             total_vcpus = sum([int(getattr(i.flavor, 'vcpus', 0)) for i in instances])
 
-            # 4. Tổng storage đã sử dụng (GB)
+            # 4. Total storage used (GB)
             volumes = list(conn.block_storage.volumes(details=True, all_projects=True))
             total_storage = sum([int(v.size) for v in volumes])
 
-            # 5. Tổng số project (OpenStack tenants)
-            projects = list(conn.identity.projects())
-            total_projects = len(projects)
+            # 5. Total number of projects (from local DB)
+            total_projects = Project.objects.count()
 
-            # 6. Tổng số network
+            # 6. Total number of networks
             networks = list(conn.network.networks())
             total_networks = len(networks)
 
@@ -190,3 +190,4 @@ class SystemSummaryView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

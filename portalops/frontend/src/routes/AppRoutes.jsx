@@ -38,6 +38,7 @@ import NetworkDashboardPage from './../pages/admin/network/NetworkDashboard';
 import SubnetManagement from './../pages/admin/network/SubnetManagement';
 import RouteManagement from './../pages/admin/network/RouteManagement';
 import NetworkDetailPage from './../pages/admin/network/NetworkDetail';
+import TCreateNetworkPage from './../pages/admin/network/CreateNetworkPage';
 function AppRoutes() {
   return (
     <Router>
@@ -90,6 +91,7 @@ function AppRoutes() {
           <Route path="/admin/network" element={< NetworkDashboardPage />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
           <Route path="/admin/network-detail" element={< NetworkDetailPage />} />
+                    <Route path="/admin/create-networks" element={< TCreateNetworkPage />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
           <Route path="/admin/subnet" element={< SubnetManagement />} />
         </Route>
