@@ -374,7 +374,6 @@ class AssignOrReplaceFloatingIPView(APIView):
         except Exception as e:
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
 
-
 class AddingFloatingIPView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -406,7 +405,9 @@ class AddingFloatingIPView(APIView):
                 # Đảm bảo không bị trùng lặp
                 ip_list = list(conn.network.ips(floating_ip_address=new_ip.ip_address))
                 if ip_list:
-                    return Response({"detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."}, status=409)
+                    return Response({
+                        "detail": f"Conflict: IP {new_ip.ip_address} already exists in OpenStack."
+                    }, status=409)
 
                 external_net = conn.network.find_network("public")
                 if not external_net:
@@ -421,28 +422,25 @@ class AddingFloatingIPView(APIView):
             if not server:
                 return Response({"detail": "VM not found."}, status=404)
 
-            # Tìm fixed IP chưa gắn floating IP
+            # ✅ Tìm fixed IP của VM chưa gán floating IP
             available_fixed_ip = None
-            server_interfaces = list(conn.compute.server_interfaces(vm_id))
+            ports = list(conn.network.ports(device_id=vm_id))
 
-            for iface in server_interfaces:
-                for fixed in iface.fixed_ips:
-                    fixed_ip = fixed.get("ip_address")
-                    if not fixed_ip:
-                        continue
-
-                    # Kiểm tra fixed_ip này có đang được gán floating IP không
-                    fips = list(conn.network.ips(fixed_ip_address=fixed_ip))
-                    is_used = any(fip.floating_ip_address for fip in fips)
-                    if not is_used:
-                        available_fixed_ip = fixed_ip
+            for port in ports:
+                has_floating = list(conn.network.ips(port_id=port.id))
+                if has_floating:
+                    continue
+                for fixed in port.fixed_ips:
+                    ip = fixed.get("ip_address")
+                    if ip:
+                        available_fixed_ip = ip
                         break
                 if available_fixed_ip:
                     break
 
-            # Nếu không có fixed IP trống → tạo thêm port mới
+            # ❗ Nếu không có fixed IP trống → tạo port mới và attach
             if not available_fixed_ip:
-                internal_net = conn.network.find_network("private")  # 👈 chỉnh tên nếu cần
+                internal_net = conn.network.find_network("private")
                 if not internal_net:
                     return Response({"detail": "Internal network not found."}, status=404)
 
@@ -451,7 +449,13 @@ class AddingFloatingIPView(APIView):
                     name=f"{vm_id}-auto-port"
                 )
                 conn.compute.create_server_interface(vm_id, port_id=new_port.id)
-                available_fixed_ip = new_port.fixed_ips[0]["ip_address"]
+
+                # Lấy lại port để đảm bảo fixed IP được cập nhật
+                attached_port = conn.network.get_port(new_port.id)
+                if not attached_port.fixed_ips:
+                    return Response({"detail": "New port has no fixed IP assigned."}, status=500)
+
+                available_fixed_ip = attached_port.fixed_ips[0]["ip_address"]
 
             # Gán floating IP vào fixed IP
             action_url = f"/servers/{vm_id}/action"
