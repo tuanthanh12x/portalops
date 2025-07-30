@@ -1,6 +1,7 @@
 import redis
 import requests
 from django.conf import settings
+from openstack.exceptions import ResourceNotFound
 from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -698,3 +699,39 @@ class GetVMIPsView(APIView):
         except Exception as e:
             return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
 
+
+
+class ChangePasswordVMView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, vm_id):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        new_password = request.data.get("new_password")
+        if not new_password:
+            return Response({"detail": "Missing 'new_password' in request body."}, status=400)
+
+        try:
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            # Kiểm tra VM tồn tại
+            server = conn.compute.get_server(vm_id)
+            if not server:
+                return Response({"detail": "VM not found."}, status=404)
+
+            # Thực hiện thay đổi mật khẩu
+            conn.compute.change_server_password(server=server, new_password=new_password)
+
+            return Response({"message": "Password change requested successfully."}, status=202)
+
+        except ResourceNotFound:
+            return Response({"detail": "VM not found."}, status=404)
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)

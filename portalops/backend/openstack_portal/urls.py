@@ -4,7 +4,7 @@ from .views.cinder import VolumeAPI
 from .views.glance import ListImagesView, SnapshotListAPIView
 from .views.neutron import PortListView, FloatingIPListView, AttachFloatingIPView, NetworkListView, CreateNetworkView, \
     SubnetListView, AssignOrReplaceFloatingIPView, RemovingFloatingIPView, CreateNetworkAPI, AddingFloatingIPView, \
-    ListAllIPView, GetVMIPsView
+    ListAllIPView, GetVMIPsView, ChangePasswordVMView
 from .views.nova import InstanceOptionsView, CreateInstanceAPI, CreateImageAPI, InstanceActionAPI, \
     VolumeOptionsView, KeypairView, VPSDetailView, InstanceSnapshotView, CreateInstanceAsAdminAPI
 
@@ -34,5 +34,6 @@ urlpatterns = [
     path("network/assign-floating-ip/", AddingFloatingIPView.as_view(), name="assign-floating-ip"),
     path("network/list-all-ip-of-project/", ListAllIPView.as_view(), name="list-all-ip-of-project"),
     path("network/list-all-ip-of-vm/<str:vm_id>/", GetVMIPsView.as_view(), name="list-all-ip-of-vm"),
+    path("vms/<str:vm_id>/change-password/", ChangePasswordVMView.as_view(), name="change-vm-password"),
 
 ]
