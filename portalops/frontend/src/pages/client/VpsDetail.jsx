@@ -14,11 +14,14 @@ import {
   Server,
   Globe,
   Network,
+  Copy,
+  CheckCircle,
 } from "lucide-react";
 
 const VPSDetailPage = () => {
   const { id } = useParams();
   const [vps, setVps] = useState(null);
+  const [vmIPs, setVmIPs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
@@ -27,12 +30,18 @@ const VPSDetailPage = () => {
   const [availableIPs, setAvailableIPs] = useState([]);
   const [loadingIPs, setLoadingIPs] = useState(false);
   const [popup, setPopup] = useState(null);
+  const [copiedIp, setCopiedIp] = useState(null);
 
   useEffect(() => {
-    const fetchVps = async () => {
+    const fetchVpsData = async () => {
       try {
-        const res = await axiosInstance.get(`/openstack/vps/${id}/`);
-        setVps(res.data);
+        // Fetch VPS details
+        const vpsRes = await axiosInstance.get(`/openstack/vps/${id}/`);
+        setVps(vpsRes.data);
+
+        // Fetch detailed IP information
+        const ipRes = await axiosInstance.get(`/openstack/network/list-all-ip-of-vm/${id}/`);
+        setVmIPs(ipRes.data);
       } catch (err) {
         console.error("Failed to load VPS details:", err);
         setError("Unable to load VPS details.");
@@ -40,7 +49,7 @@ const VPSDetailPage = () => {
         setLoading(false);
       }
     };
-    fetchVps();
+    fetchVpsData();
   }, [id]);
 
   const performInstanceAction = async (instanceId, action, payload = {}) => {
@@ -136,9 +145,13 @@ const VPSDetailPage = () => {
         type: "success" 
       });
       
-      // Refresh VPS data to get new IP
-      const updated = await axiosInstance.get(`/openstack/vps/${id}/`);
-      setVps(updated.data);
+      // Refresh both VPS data and IP data
+      const [vpsRes, ipRes] = await Promise.all([
+        axiosInstance.get(`/openstack/vps/${id}/`),
+        axiosInstance.get(`/openstack/network/list-all-ip-of-vm/${id}/`)
+      ]);
+      setVps(vpsRes.data);
+      setVmIPs(ipRes.data);
     } catch (error) {
       console.error("Change IP failed:", error);
       setPopup({
@@ -192,6 +205,16 @@ const VPSDetailPage = () => {
       )
     ) {
       performInstanceAction(id, "delete");
+    }
+  };
+
+  const handleCopyIP = async (ip) => {
+    try {
+      await navigator.clipboard.writeText(ip);
+      setCopiedIp(ip);
+      setTimeout(() => setCopiedIp(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy IP:', err);
     }
   };
 
@@ -299,7 +322,7 @@ const VPSDetailPage = () => {
           <InfoCard icon={<Cpu />} label="CPU" value={`${vps.cpu} cores`} />
           <InfoCard icon={<Server />} label="RAM" value={`${vps.ram} `} />
           <InfoCard icon={<HardDrive />} label="Disk" value={`${vps.disk} `} />
-          <InfoCard icon={<Globe />} label="IP Address" value={vps.ip} />
+          <InfoCard icon={<Globe />} label="Primary IP" value={vps.ip} />
           <InfoCard label="Operating System" value={vps.os} />
           <InfoCard label="Region" value={vps.datacenter || "Unknown"} />
         </div>
@@ -308,6 +331,88 @@ const VPSDetailPage = () => {
           <UsageBar label="CPU Usage" percent={vps.monitoring?.cpu_usage || 0} color="bg-blue-500" />
           <UsageBar label="RAM Usage" percent={vps.monitoring?.ram_usage || 0} color="bg-green-500" />
           <UsageBar label="Disk Usage" percent={vps.monitoring?.disk_usage || 0} color="bg-yellow-500" />
+        </Section>
+
+        <Section title="IP Addresses">
+          {vmIPs ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* IPv4 Addresses */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe className="text-blue-400" size={20} />
+                    <h4 className="text-lg font-semibold text-blue-400">IPv4 Addresses</h4>
+                  </div>
+                  <div className="space-y-3">
+                    {vmIPs.ips.filter(ip => ip.version === "IPv4").map((ip, index) => (
+                      <IPAddressCard 
+                        key={index} 
+                        ip={ip} 
+                        onCopy={handleCopyIP}
+                        copiedIp={copiedIp}
+                      />
+                    ))}
+                    {vmIPs.ips.filter(ip => ip.version === "IPv4").length === 0 && (
+                      <p className="text-gray-400 text-sm">No IPv4 addresses configured</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* IPv6 Addresses */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Network className="text-purple-400" size={20} />
+                    <h4 className="text-lg font-semibold text-purple-400">IPv6 Addresses</h4>
+                  </div>
+                  <div className="space-y-3">
+                    {vmIPs.ips.filter(ip => ip.version === "IPv6").map((ip, index) => (
+                      <IPAddressCard 
+                        key={index} 
+                        ip={ip} 
+                        onCopy={handleCopyIP}
+                        copiedIp={copiedIp}
+                      />
+                    ))}
+                    {vmIPs.ips.filter(ip => ip.version === "IPv6").length === 0 && (
+                      <p className="text-gray-400 text-sm">No IPv6 addresses configured</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Summary */}
+              <div className="bg-indigo-900/20 border border-indigo-600 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Network className="text-indigo-400" size={16} />
+                  <span className="text-indigo-400 font-semibold">Network Summary</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">VM Name:</span>
+                    <div className="font-semibold text-white">{vmIPs.vm_name}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Total IPs:</span>
+                    <div className="font-semibold text-white">{vmIPs.ips.length}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">IPv4 Count:</span>
+                    <div className="font-semibold text-blue-400">
+                      {vmIPs.ips.filter(ip => ip.version === "IPv4").length}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">IPv6 Count:</span>
+                    <div className="font-semibold text-purple-400">
+                      {vmIPs.ips.filter(ip => ip.version === "IPv6").length}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-400">Loading IP information...</p>
+          )}
         </Section>
 
         <Section title="Volumes">
@@ -327,7 +432,7 @@ const VPSDetailPage = () => {
           )}
         </Section>
 
-        <Section title="Network Info">
+        <Section title="Legacy Network Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard label="Floating IP" value={vps.network.floating_ip || "N/A"} />
             <InfoCard label="Fixed IP" value={vps.network.private_ip || "N/A"} />
@@ -352,6 +457,69 @@ const VPSDetailPage = () => {
           availableIPs={availableIPs}
           loading={loadingId === "change-ip"}
         />
+      )}
+    </div>
+  );
+};
+
+const IPAddressCard = ({ ip, onCopy, copiedIp }) => {
+  const isFloatingIP = ip.floating_ip && ip.floating_ip !== ip.fixed_ip;
+  
+  return (
+    <div className="bg-gray-700 rounded-md p-4 space-y-3">
+      {/* Fixed IP */}
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="text-xs text-gray-400 mb-1">Private IP</div>
+          <div className="font-mono text-sm text-white flex items-center gap-2">
+            {ip.fixed_ip}
+            <button
+              onClick={() => onCopy(ip.fixed_ip)}
+              className="text-gray-400 hover:text-white transition-colors"
+              title="Copy IP"
+            >
+              {copiedIp === ip.fixed_ip ? (
+                <CheckCircle size={14} className="text-green-400" />
+              ) : (
+                <Copy size={14} />
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="text-xs text-gray-500 bg-gray-600 px-2 py-1 rounded">
+          {ip.version}
+        </div>
+      </div>
+
+      {/* Floating IP */}
+      {isFloatingIP && (
+        <div className="flex items-center justify-between border-t border-gray-600 pt-3">
+          <div className="flex-1">
+            <div className="text-xs text-gray-400 mb-1">Public IP (Floating)</div>
+            <div className="font-mono text-sm text-green-400 flex items-center gap-2">
+              {ip.floating_ip}
+              <button
+                onClick={() => onCopy(ip.floating_ip)}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Copy IP"
+              >
+                {copiedIp === ip.floating_ip ? (
+                  <CheckCircle size={14} className="text-green-400" />
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </div>
+          </div>
+          <Globe size={16} className="text-green-400" />
+        </div>
+      )}
+
+      {/* No floating IP indicator */}
+      {!isFloatingIP && (
+        <div className="text-xs text-gray-500 border-t border-gray-600 pt-2">
+          No public IP assigned
+        </div>
       )}
     </div>
   );
@@ -589,6 +757,7 @@ const Section = ({ title, children }) => (
     {children}
   </section>
 );
+
 
 const UsageBar = ({ label, percent, color }) => (
   <div className="mb-3">

@@ -77,7 +77,7 @@ useEffect(() => {
   }, [id]);
 
   const fetchProjectDetails = () => {
-    axiosInstance.get(`/project/${id}/project-detail/`)
+    axiosInstance.get(`/project/${id}/project-detail/`,{ timeout: 300000 })
       .then((res) => setProject(res.data))
       .catch((err) => console.error("Failed to fetch project detail:", err));
   };
@@ -556,11 +556,12 @@ useEffect(() => {
               onChange={(e) => setSelectedIP(e.target.value)}
             >
               <option value="">-- Select an IP Address --</option>
-              {availableIPs.map((ip) => (
-                <option key={ip.ip_address} value={ip.ip_address}>
-                  {ip.ip_address} {ip.note ? `- ${ip.note}` : ""}
-                </option>
-              ))}
+             {availableIPs.map((ip, index) => (
+  <option key={`${ip.ip_address}-${index}`} value={ip.ip_address}>
+    {ip.ip_address} {ip.note ? `- ${ip.note}` : ""}
+  </option>
+))}
+
             </select>
             <div className="flex justify-end gap-3 pt-4">
               <button

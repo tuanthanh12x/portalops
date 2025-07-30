@@ -586,173 +586,149 @@ class ReplaceProjectOwnerView(APIView):
 
 
 
-
 class AdminProjectDetailView(APIView):
     permission_classes = [IsAdmin]
 
     @staticmethod
     def safe_quota_get(quota, key):
-        value = quota.get(key)
-        if isinstance(value, dict):
-            return value.get("in_use", 0), value.get("limit", 0)
-        return 0, value or 0
+        val = quota.get(key)
+        return (val.get("in_use", 0), val.get("limit", 0)) if isinstance(val, dict) else (0, val or 0)
+
+    @staticmethod
+    def get_token_from_redis(username, project_id):
+        token_key = f"keystone_token:{username}:{project_id}"
+        return redis_client.get(token_key)
+
+    @staticmethod
+    def get_compute_quota(openstack_id, atoken):
+        url = f"{settings.OPENSTACK_COMPUTE_URL}/os-quota-sets/{openstack_id}?usage=True"
+        response = requests.get(url, headers={"X-Auth-Token": atoken})
+        response.raise_for_status()
+        return response.json().get("quota_set", {})
+
+    @staticmethod
+    def get_storage_quota(openstack_id, atoken):
+        url = f"{settings.OPENSTACK_BLOCK_STORAGE_URL}/os-quota-sets/{openstack_id}?usage=True"
+        response = requests.get(url, headers={"X-Auth-Token": atoken})
+        response.raise_for_status()
+        return response.json().get("quota_set", {})
+
+    def extract_vm_info(self, servers, project_id, flavor_map):
+        vms = []
+        cpu_used, ram_used = 0, 0
+
+        for server in servers:
+            if getattr(server, "project_id", None) != project_id:
+                continue
+
+            flavor_id_raw = str(server.flavor.get("id"))
+            flavor = flavor_map.get(flavor_id_raw)
+            if flavor:
+                cpu_used += flavor.vcpus
+                ram_used += flavor.ram
+
+            # Extract IP
+            ip = ""
+            for net in server.get("addresses", {}).values():
+                if isinstance(net, list) and net:
+                    ip = next(
+                        (a["addr"] for a in net if a.get("OS-EXT-IPS:type") == "floating" and a.get("version") == 4),
+                        next((a["addr"] for a in net if a.get("version") == 4), net[0].get("addr", ""))
+                    )
+                    break
+
+            vms.append({
+                "id": server.id,
+                "name": server.name,
+                "status": server.status,
+                "ip": ip,
+                "created": server.created_at[:10] if server.created_at else "",
+                "flavor": {
+                    "id": str(flavor.id) if flavor else flavor_id_raw,
+                    "name": flavor.name if flavor else "Unknown",
+                    "vcpus": flavor.vcpus if flavor else 0,
+                    "ram": flavor.ram if flavor else 0,
+                    "disk": flavor.disk if flavor else 0,
+                }
+            })
+
+        return vms, cpu_used, ram_used
 
     def get(self, request, openstack_id):
-        # 1. Fetch project from DB
+        # Step 1: Get DB Project
         project = get_object_or_404(Project, openstack_id=openstack_id)
         project_id = request.auth.get("project_id")
 
-        owner_mapping = ProjectUserMapping.objects.filter(
-            project=project, is_active=True
-        ).first()
+        owner_mapping = ProjectUserMapping.objects.filter(project=project, is_active=True).first()
         owner = owner_mapping.user if owner_mapping else None
 
-        # 2. Get token from Redis
-        username = request.user.username
-        token_key = f"keystone_token:{username}:{project_id}"
-        token = redis_client.get(token_key)
-
+        # Step 2: Redis token
+        token = self.get_token_from_redis(request.user.username, project_id)
         if not token:
             return Response({"error": "Token not found in Redis."}, status=401)
 
-        # 3. Connect to OpenStack
         try:
+            # Step 3: Connect to OpenStack
             conn = connect_with_token_v5(token, project_id)
-        except Exception as e:
-            return Response({"error": f"OpenStack connection failed: {str(e)}"}, status=500)
-
-        # 4. Query resource limits and VMs
-        compute_url = settings.OPENSTACK_COMPUTE_URL
-        block_storage_url = settings.OPENSTACK_BLOCK_STORAGE_URL
-        try:
             atoken = get_admin_token()
 
-            # --- Compute Quota ---
-            nova_response = requests.get(
-                f"{compute_url}/os-quota-sets/{openstack_id}?usage=True",
-                headers={"X-Auth-Token": atoken}
-            )
-            nova_response.raise_for_status()
-            nova_quota = nova_response.json().get("quota_set", {})
+            # Step 4: Fetch compute/storage quota concurrently
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                compute_future = executor.submit(self.get_compute_quota, openstack_id, atoken)
+                storage_future = executor.submit(self.get_storage_quota, openstack_id, atoken)
+                nova_quota = compute_future.result()
+                cinder_quota = storage_future.result()
+
             _, cpu_limit = self.safe_quota_get(nova_quota, "cores")
             _, ram_limit = self.safe_quota_get(nova_quota, "ram")
+            storage_used, storage_limit = self.safe_quota_get(cinder_quota, "gigabytes")
 
-            # --- Flavor Map ---
-            flavor_map = {}
-            for f in conn.list_flavors():
-                flavor_map[str(f.id)] = f
-                flavor_map[str(f.name)] = f  # allow lookup by name as well
+            # Step 5: Fetch flavor list once
+            flavors = conn.list_flavors()
+            flavor_map = {str(f.id): f for f in flavors}
+            flavor_map.update({str(f.name): f for f in flavors})
 
-            # --- Calculate resource usage ---
-            cpu_used = 0
-            ram_used = 0
+            # Step 6: Fetch servers
             servers = conn.list_servers()
-            for server in servers:
-                if getattr(server, "project_id", None) == project.openstack_id:
-                    flavor_id_raw = str(server.flavor.get("id"))
-                    flavor = flavor_map.get(flavor_id_raw)
-                    if flavor:
-                        cpu_used += flavor.vcpus
-                        ram_used += flavor.ram
+            vms, cpu_used, ram_used = self.extract_vm_info(servers, project.openstack_id, flavor_map)
 
-            # --- Block storage limits ---
-            cinder_url = f"{block_storage_url}/os-quota-sets/{openstack_id}?usage=True"
-            cinder_response = requests.get(
-                cinder_url,
-                headers={"X-Auth-Token": atoken}
-            )
-            cinder_response.raise_for_status()
-            quota = cinder_response.json().get("quota_set", {})
-            storage_used = quota.get("gigabytes", {}).get("in_use", 0)
-            storage_limit = quota.get("gigabytes", {}).get("limit", 0)
+            # Step 7: Compile response
+            return Response({
+                "id": str(project.id),
+                "name": project.name,
+                "description": project.description,
+                "status": "Active",
+                "created_at": project.created_at.isoformat(),
+                "owner": {
+                    "name": owner.username if owner else "—",
+                    "email": owner.email if owner else "—",
+                },
+                "usage": {
+                    "vcpus_used": cpu_used,
+                    "vcpus_total": cpu_limit,
+                    "ram_used": ram_used,
+                    "ram_total": ram_limit,
+                    "storage_used": storage_used,
+                    "storage_total": storage_limit,
+                },
+                "vms": vms,
+                "product_type": {
+                    "id": project.type.id,
+                    "name": project.type.name,
+                    "price_per_month": project.type.price_per_month,
+                    "description": project.type.description,
+                    "vcpus": project.type.vcpus,
+                    "ram": project.type.ram,
+                    "total_volume_gb": project.type.total_volume_gb,
+                    "floating_ips": project.type.floating_ips,
+                    "instances": project.type.instances,
+                } if project.type else None
+            })
 
-            usage = {
-                "vcpus_used": cpu_used,
-                "vcpus_total": cpu_limit,
-                "ram_used": ram_used,
-                "ram_total": ram_limit,
-                "storage_used": storage_used,
-                "storage_total": storage_limit,
-            }
-
-            # --- VM list ---
-            # --- VM list ---
-            # --- VM list ---
-            # --- VM list ---
-            vms = []
-            for server in servers:
-                if getattr(server, "project_id", None) != project.openstack_id:
-                    continue
-
-                flavor_id_raw = str(server.flavor.get("id"))
-                flavor = flavor_map.get(flavor_id_raw)
-                flavor_id = str(flavor.id) if flavor else flavor_id_raw
-
-                ip = ""
-                for net in server.get("addresses", {}).values():
-                    if isinstance(net, list) and net:
-                        # Try to get a floating IP first
-                        floating_ip = next(
-                            (addr["addr"] for addr in net if
-                             addr.get("OS-EXT-IPS:type") == "floating" and addr.get("version") == 4),
-                            None
-                        )
-                        if floating_ip:
-                            ip = floating_ip
-                        else:
-                            # Fallback to first available fixed IP
-                            ip = next(
-                                (addr["addr"] for addr in net if addr.get("version") == 4),
-                                net[0].get("addr", "")
-                            )
-                        break
-
-                vms.append({
-                    "id": server.id,
-                    "name": server.name,
-                    "status": server.status,
-                    "ip": ip,
-                    "created": server.created_at[:10] if server.created_at else "",
-                    "flavor": {
-                        "id": flavor_id,
-                        "name": flavor.name if flavor else "Unknown",
-                        "vcpus": flavor.vcpus if flavor else 0,
-                        "ram": flavor.ram if flavor else 0,
-                        "disk": flavor.disk if flavor else 0,
-                    }
-                })
-
-
-
+        except requests.HTTPError as http_err:
+            return Response({"error": f"Quota fetch failed: {str(http_err)}"}, status=502)
         except Exception as e:
-            return Response({"error": f"Failed to fetch usage or VM list: {str(e)}"}, status=500)
-
-        # 5. Compose response
-        return Response({
-            "id": str(project.id),
-            "name": project.name,
-            "description": project.description,
-            "status": "Active",
-            "created_at": project.created_at.isoformat(),
-            "owner": {
-                "name": owner.username if owner else "—",
-                "email": owner.email if owner else "—",
-            },
-            "usage": usage,
-            "vms": vms,
-            "product_type": {
-                "id": project.type.id,
-                "name": project.type.name,
-                "price_per_month": project.type.price_per_month,
-                "description": project.type.description,
-                "vcpus": project.type.vcpus,
-                "ram": project.type.ram,
-                "total_volume_gb": project.type.total_volume_gb,
-                "floating_ips": project.type.floating_ips,
-                "instances": project.type.instances,
-            } if project.type else None
-        })
-
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
 
 class ChangeOwnerProjectView(APIView):
     permission_classes = [IsAdmin]
