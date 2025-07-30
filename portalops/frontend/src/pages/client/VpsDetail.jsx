@@ -125,11 +125,10 @@ const VPSDetailPage = () => {
     setLoadingId("change-ip");
     try {
       const res = await axiosInstance.post(
-        `/openstack/network/assign-or-replace-floating-ip/`,
+        `/openstack/network/assign-floating-ip/`,
         { 
           ip_id: selectedIpId,
           vm_id: id,
-          project_id: vps.project_id // optional, if available in vps data
         }
       );
       setPopup({ 

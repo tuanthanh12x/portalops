@@ -592,3 +592,109 @@ class CreateNetworkAPI(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+
+class ListAllIPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        try:
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            # 1. Get all floating IPs
+            floating_ips = []
+            for fip in conn.network.ips(project_id=project_id):
+                if fip.floating_ip_address:
+                    floating_ips.append({
+                        "ip": fip.floating_ip_address,
+                        "fixed_ip": fip.fixed_ip_address,
+                        "port_id": fip.port_id,
+                        "status": fip.status,
+                        "type": "floating",
+                        "version": "IPv6" if ":" in fip.floating_ip_address else "IPv4"
+                    })
+
+            # 2. Get all fixed IPs from ports
+            fixed_ips = []
+            ports = conn.network.ports(device_owner="compute:nova", project_id=project_id)
+            for port in ports:
+                for fixed in port.fixed_ips:
+                    ip = fixed.get("ip_address")
+                    fixed_ips.append({
+                        "ip": ip,
+                        "port_id": port.id,
+                        "device_id": port.device_id,
+                        "type": "fixed",
+                        "version": "IPv6" if ":" in ip else "IPv4"
+                    })
+
+            return Response({
+                "floating_ips": floating_ips,
+                "fixed_ips": fixed_ips
+            }, status=200)
+
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
+
+
+class GetVMIPsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, vm_id):
+        username = request.user.username
+        project_id = request.auth.get("project_id")
+        token_key = f"keystone_token:{username}:{project_id}"
+        token_bytes = redis_client.get(token_key)
+
+        if not token_bytes:
+            return Response({"detail": "Token not found in Redis."}, status=401)
+
+        try:
+            token = token_bytes.decode()
+            conn = connect_with_token_v5(token, project_id)
+
+            server = conn.compute.get_server(vm_id)
+            if not server:
+                return Response({"detail": "VM not found."}, status=404)
+
+            # Prepare result
+            result = {
+                "vm_id": vm_id,
+                "vm_name": server.name,
+                "ips": []
+            }
+
+            # Get floating IPs for this project
+            floating_map = {}
+            for fip in conn.network.ips(project_id=project_id):
+                if fip.port_id:
+                    floating_map[fip.port_id] = fip.floating_ip_address
+
+            # List ports of the VM
+            ports = conn.network.ports(device_id=vm_id)
+            for port in ports:
+                for fixed in port.fixed_ips:
+                    ip_address = fixed.get("ip_address")
+                    version = "IPv6" if ":" in ip_address else "IPv4"
+                    floating_ip = floating_map.get(port.id)
+
+                    result["ips"].append({
+                        "fixed_ip": ip_address,
+                        "version": version,
+                        "floating_ip": floating_ip  # may be None
+                    })
+
+            return Response(result, status=200)
+
+        except Exception as e:
+            return Response({"detail": f"Unexpected error: {str(e)}"}, status=500)
+
