@@ -33,6 +33,6 @@ urlpatterns = [
     path("network/create-networks/", CreateNetworkAPI.as_view(), name="create-networks"),
     path("network/assign-floating-ip/", AddingFloatingIPView.as_view(), name="assign-floating-ip"),
     path("network/list-all-ip-of-project/", ListAllIPView.as_view(), name="list-all-ip-of-project"),
-    path("network/list-all-ip-of-vm/", GetVMIPsView.as_view(), name="list-all-ip-of-vm"),
+    path("network/list-all-ip-of-vm/<str:vm_id>/", GetVMIPsView.as_view(), name="list-all-ip-of-vm"),
 
 ]
