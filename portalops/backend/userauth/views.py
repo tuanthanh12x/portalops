@@ -750,7 +750,6 @@ class TWOFALoginView(APIView):
     """
     Handles TOTP verification and completes the login process
     """
-    permission_classes = []
 
     def post(self, request):
         handler = TwoFactorLoginHandler(request)
