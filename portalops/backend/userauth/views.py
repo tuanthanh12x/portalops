@@ -573,6 +573,7 @@ class Verify2FASetupView(APIView):
             return Response({"message": "2FA enabled successfully"})
         return Response({"error": "Invalid code"}, status=400)
 
+    
 class TwoFactorLoginHandler:
     def __init__(self, request):
         self.request = request
@@ -581,6 +582,7 @@ class TwoFactorLoginHandler:
         self.profile = None
         self.username = None
         self.password = None
+        self.project = None
 
     def validate_input(self):
         serializer = CodeSessionSerializer(data=self.data)
@@ -594,30 +596,16 @@ class TwoFactorLoginHandler:
             return Response({"error": "Session expired or invalid."}, status=403)
 
         try:
-            value = session_data
-            if isinstance(value, bytes):
-                value = value.decode("utf-8")
+            value = session_data.decode("utf-8") if isinstance(session_data, bytes) else session_data
+            self.username, self.password = value.split(":", 1)
 
-            username, password = value.split(":", 1)
-
-            # Gán lại cho self để dùng tiếp
-            self.user = User.objects.get(username=username)
-            self.username = username
+            self.user = User.objects.get(username=self.username)
             self.profile = self.user.userprofile
-            self.password = password
         except (User.DoesNotExist, UserProfile.DoesNotExist):
             return Response({"error": "User or profile not found."}, status=404)
         except ValueError:
             return Response({"error": "Corrupted session data."}, status=400)
 
-        return None
-
-    def load_user_profile(self):
-        try:
-            self.user = User.objects.get(username=self.username)
-            self.profile = self.user.userprofile
-        except (User.DoesNotExist, UserProfile.DoesNotExist):
-            return Response({"error": "Invalid user or missing profile."}, status=404)
         return None
 
     def verify_totp(self, code):
@@ -626,44 +614,60 @@ class TwoFactorLoginHandler:
             return Response({"error": "Invalid 2FA code."}, status=400)
         return None
 
+    def resolve_project(self):
+        mappings = ProjectUserMapping.objects.filter(user=self.user, is_active=True)
+        if mappings.count() == 1:
+            self.project = mappings.first().project
+            redis_client.set(f"current_project:{self.username}", self.project.openstack_id, ex=30000)
+        else:
+            # fallback: try get last selected from profile or skip
+            project_id = self.profile.project_id
+            if project_id:
+                self.project = Project.objects.filter(openstack_id=project_id).first()
+        return None
+
     def issue_tokens_and_cache(self):
-        self.profile.last_login = timezone.now()
+        self.profile.last_login = format_last_login(now())
         self.profile.save()
-        roles = []
-        if profile:
-            roles = list(
-                profile.role_mappings.select_related("role")
-                .values_list("role__name", flat=True)
-            )
+        self.user.last_login = format_last_login(now())
+        self.user.save()
+
+        roles = list(
+            self.profile.role_mappings.select_related("role")
+            .values_list("role__name", flat=True)
+        )
+
         refresh = RefreshToken.for_user(self.user)
         refresh["username"] = self.user.username
         refresh["email"] = self.user.email
         refresh["roles"] = roles
 
-        if self.profile.project_id:
-            refresh["project_id"] = self.profile.project_id
+        if self.project:
+            refresh["project_id"] = self.project.openstack_id
+
             try:
-                conn = connection.Connection(
+                scoped_conn = connection.Connection(
                     auth_url=settings.OPENSTACK_AUTH["auth_url"],
                     username=self.username,
                     password=self.password,
-                    project_id=self.profile.project_id,
+                    project_id=self.project.openstack_id,
                     user_domain_name=settings.OPENSTACK_AUTH.get("user_domain_name", "Default"),
                     project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
                     identity_api_version="3"
                 )
-                conn.authorize()
-                token = conn.session.get_token()
+                scoped_conn.authorize()
+                token = scoped_conn.session.get_token()
+
                 redis_client.set(
-                    f"keystone_token:{self.username}:{self.profile.project_id}",
+                    f"keystone_token:{self.username}:{self.project.openstack_id}",
                     token,
                     ex=3600
                 )
             except Exception as e:
-                print(f"[OpenStack] Failed to authorize user: {e}")
+                print(f"[⚠️ OpenStack Scoped Auth Error] {e}")
 
-            if self.profile.is_admin:
-                conn = connection.Connection(
+            try:
+                unscoped_conn = connection.Connection(
                     auth_url=settings.OPENSTACK_AUTH["auth_url"],
                     username=self.username,
                     password=self.password,
@@ -671,25 +675,27 @@ class TwoFactorLoginHandler:
                     project_domain_name=settings.OPENSTACK_AUTH.get("project_domain_name", "Default"),
                     identity_api_version='3',
                 )
-                conn.authorize()
-                keystone_token = conn.session.get_token()
-
-                refresh["keystone_token"] = keystone_token
-
-                redis_key = f"unscope_admin_keystone_token:{self.username}"
-                redis_client.set(redis_key, keystone_token, ex=36000)
+                unscoped_conn.authorize()
+                unscoped_token = unscoped_conn.session.get_token()
+                redis_client.set(
+                    f"unscope_user_keystone_token:{self.username}",
+                    unscoped_token,
+                    ex=36000
+                )
+            except Exception as e:
+                print(f"[⚠️ OpenStack Unscoped Auth Error] {e}")
 
         response = JsonResponse({
+            "message": "2FA login successful.",
             "access": str(refresh.access_token),
-            "message": "2FA login successful"
         })
         response.set_cookie(
             key="refresh_token",
             value=str(refresh),
             httponly=True,
             secure=False,
-            samesite="Strict",
-            path="/api/auth/token/refresh/"
+            samesite="Lax",
+            path="/"
         )
         return response
 
@@ -698,14 +704,10 @@ class TwoFactorLoginHandler:
         if error_response:
             return error_response
 
-        code = validated_data.get("code")
         session_key = validated_data.get("session_key")
+        code = validated_data.get("code")
 
         error_response = self.load_user_session(session_key)
-        if error_response:
-            return error_response
-
-        error_response = self.load_user_profile()
         if error_response:
             return error_response
 
@@ -713,17 +715,19 @@ class TwoFactorLoginHandler:
         if error_response:
             return error_response
 
-        # Delete temp session after use
-        redis_client.delete(f"2fa_session:{session_key}")
+        error_response = self.resolve_project()
+        if error_response:
+            return error_response
 
+        redis_client.delete(f"2fa_session:{session_key}")
         return self.issue_tokens_and_cache()
+
 
 class TWOFALoginView(APIView):
     """
-    Verifies 2FA code after username/password login.
-    Returns JWT and sets refresh token cookie.
+    Handles TOTP verification and completes the login process.
     """
-    permission_classes = []  # Allow unauthenticated access here
+    permission_classes = []  # Allow unauthenticated access
 
     def post(self, request):
         handler = TwoFactorLoginHandler(request)
