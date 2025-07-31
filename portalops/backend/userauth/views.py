@@ -33,6 +33,9 @@ from .permissions import IsAdmin
 from .serializers import CreateUserSerializer, RoleSerializer, UserListSerializer
 from project.models import ProjectUserMapping
 
+from project.models import Project
+
+
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
@@ -619,15 +622,31 @@ class TwoFactorLoginHandler:
         return None
 
     def resolve_project(self):
+        selected_project_id = self.request.data.get("openstack_id")
         mappings = ProjectUserMapping.objects.filter(user=self.user, is_active=True)
         if mappings.count() == 1:
             self.project = mappings.first().project
             redis_client.set(f"current_project:{self.username}", self.project.openstack_id, ex=30000)
         else:
             # fallback: try get last selected from profile or skip
-            project_id = self.profile.project_id
-            if project_id:
-                self.project = Project.objects.filter(openstack_id=project_id).first()
+            project = None
+
+            if mappings.count > 1:
+                if not selected_project_id:
+                    return Response({
+                        "require_project_selection": True,
+                        "projects": [
+                            {
+                                "project_name": pm.project.name,
+                                "openstack_id": pm.project.openstack_id,
+                            } for pm in mappings
+                        ],
+                        "message": "Multiple projects found. Please select one."
+                    })
+                try:
+                    self.project = mappings.get(project__openstack_id=selected_project_id).project
+                except ProjectUserMapping.DoesNotExist:
+                    return Response({"detail": "Invalid or unauthorized project selected."}, status=403)
         return None
 
     def issue_tokens_and_cache(self):
