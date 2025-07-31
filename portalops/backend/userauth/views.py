@@ -573,8 +573,12 @@ class Verify2FASetupView(APIView):
             return Response({"message": "2FA enabled successfully"})
         return Response({"error": "Invalid code"}, status=400)
 
-    
+
+
 class TwoFactorLoginHandler:
+    """
+    Handler class for 2FA login process
+    """
     def __init__(self, request):
         self.request = request
         self.data = request.data
@@ -593,7 +597,7 @@ class TwoFactorLoginHandler:
     def load_user_session(self, session_key):
         session_data = redis_client.get(f"2fa_session:{session_key}")
         if not session_data:
-            return Response({"error": "Session expired or invalid."}, status=403)
+            return Response({"error": "Session expired or invalid."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             value = session_data.decode("utf-8") if isinstance(session_data, bytes) else session_data
@@ -602,16 +606,16 @@ class TwoFactorLoginHandler:
             self.user = User.objects.get(username=self.username)
             self.profile = self.user.userprofile
         except (User.DoesNotExist, UserProfile.DoesNotExist):
-            return Response({"error": "User or profile not found."}, status=404)
+            return Response({"error": "User or profile not found."}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
-            return Response({"error": "Corrupted session data."}, status=400)
+            return Response({"error": "Corrupted session data."}, status=status.HTTP_400_BAD_REQUEST)
 
         return None
 
     def verify_totp(self, code):
         totp = pyotp.TOTP(self.profile.totp_secret)
         if not totp.verify(code):
-            return Response({"error": "Invalid 2FA code."}, status=400)
+            return Response({"error": "Invalid 2FA code."}, status=status.HTTP_400_BAD_REQUEST)
         return None
 
     def resolve_project(self):
@@ -725,13 +729,14 @@ class TwoFactorLoginHandler:
 
 class TWOFALoginView(APIView):
     """
-    Handles TOTP verification and completes the login process.
+    Handles TOTP verification and completes the login process
     """
-    permission_classes = []  # Allow unauthenticated access
+    permission_classes = []
 
     def post(self, request):
         handler = TwoFactorLoginHandler(request)
         return handler.execute()
+
 
 
 class UserListView(APIView):
