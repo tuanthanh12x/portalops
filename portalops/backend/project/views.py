@@ -407,10 +407,10 @@ class ClientChangeVPSTypeView(APIView):
         project_id = request.data.get("project_id")
         new_type_id = request.data.get("project_type_id")
 
-        if not project_id or not new_type_id:
-            return Response({"error": "Missing project_id or project_type_id."}, status=400)
-
-        # Get project and new type
+        if not project_id :
+            return Response({"error": "Missing project_id ."}, status=400)
+        if not new_type_id:
+            return Response({"error": "Missing project_type_id."}, status=400)
         project = get_object_or_404(Project, openstack_id=project_id)
         new_type = get_object_or_404(ProjectType, id=new_type_id)
 

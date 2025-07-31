@@ -22,14 +22,14 @@ export default function AdminProjectDetailPage() {
 
 
 
-       const [projects, setProjects] = useState([]);
-       const [showAssignPopup, setShowAssignPopup] = useState(false);
+       const [setProjects] = useState([]);
+
        const [allUsers, setAllUsers] = useState([]);
        const [selectedUserId, setSelectedUserId] = useState("");
-       const [selectedProjectId, setSelectedProjectId] = useState("");
+
        const [filteredUsers, setFilteredUsers] = useState([]);
-       const [popup, setPopUp] = useState([]);
-       const [filteredProjects, setFilteredProjects] = useState([]);
+      //  const [popup, setPopUp] = useState([]);
+       const [ setFilteredProjects] = useState([]);
 
 
   const IP_DISPLAY_LIMIT = 5;

@@ -20,7 +20,6 @@ const Dashboard = () => (
         <div className="col-span-5 flex flex-col gap-6">
           
           <SectionWrapper><SystemOverview /></SectionWrapper>
-
           <SectionWrapper><ResourceCharts /></SectionWrapper>
           <SectionWrapper><RevenueSection /></SectionWrapper>
           <SectionWrapper><ActiveIncidents /></SectionWrapper>
