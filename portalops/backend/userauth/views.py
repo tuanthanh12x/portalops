@@ -631,7 +631,7 @@ class TwoFactorLoginHandler:
             # fallback: try get last selected from profile or skip
             project = None
 
-            if mappings.count > 1:
+            if mappings.count() > 1:
                 if not selected_project_id:
                     return Response({
                         "require_project_selection": True,
