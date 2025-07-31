@@ -33,6 +33,7 @@ from .models import Project, ProjectType
 class ProjectTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectType
+        fields = '__all__'
 
 class ProjectSerializer(serializers.ModelSerializer):
     type = ProjectTypeSerializer()
