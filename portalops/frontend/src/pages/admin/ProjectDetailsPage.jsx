@@ -19,17 +19,18 @@ export default function AdminProjectDetailPage() {
   const [showAllIPs, setShowAllIPs] = useState(false);
   const [showChangeOwnerPopup, setShowChangeOwnerPopup] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filteredProjects, setFilteredProjects] = useState([]);
 
 
 
-       const [setProjects] = useState([]);
+  const [projects, setProjects] = useState([]);
+
 
        const [allUsers, setAllUsers] = useState([]);
        const [selectedUserId, setSelectedUserId] = useState("");
 
        const [filteredUsers, setFilteredUsers] = useState([]);
       //  const [popup, setPopUp] = useState([]);
-       const [ setFilteredProjects] = useState([]);
 
 
   const IP_DISPLAY_LIMIT = 5;
