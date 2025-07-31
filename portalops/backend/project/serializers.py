@@ -33,7 +33,6 @@ from .models import Project, ProjectType
 class ProjectTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectType
-        exclude = ['id']
 
 class ProjectSerializer(serializers.ModelSerializer):
     type = ProjectTypeSerializer()

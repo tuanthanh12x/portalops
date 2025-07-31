@@ -9,7 +9,7 @@ export const fetchRealProjects = async () => {
 
       return {
         id: project.id,
-        name: project.name,
+        openstack_id: project.openstack_id,
         description: project.description || "No description provided",
         status: type ? "Active" : "Stopped",
         created: new Date(project.created_at).toISOString().split("T")[0],
@@ -30,6 +30,7 @@ export const fetchPackageOptions = async () => {
   try {
     const response = await axiosInstance.get("/project/project-packages/list/");
     return response.data.map((pkg) => ({
+      id: pkg.id,
       name: pkg.name,
       price: parseFloat(pkg.price_per_month),
       vcpus: pkg.vcpus,
