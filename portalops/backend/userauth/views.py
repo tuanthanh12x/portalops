@@ -551,14 +551,8 @@ class CodeOnlySerializer(serializers.Serializer):
     code = serializers.CharField()
 
 
-
 class Verify2FASetupView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def require_fields(data, *fields):
-        missing = [f for f in fields if f not in data or data[f] in [None, ""]]
-        if missing:
-            raise ValueError(f"Missing required field(s): {', '.join(missing)}")
 
     def post(self, request):
         serializer = CodeOnlySerializer(data=request.data)
@@ -568,14 +562,16 @@ class Verify2FASetupView(APIView):
         code = serializer.validated_data["code"]
         profile = request.user.userprofile
 
+        # ✅ Check if secret exists
+        if not profile.totp_secret:
+            return Response({"error": "2FA setup has not been initialized."}, status=400)
+
         totp = pyotp.TOTP(profile.totp_secret)
         if totp.verify(code):
             profile.two_factor_enabled = True
             profile.save()
             return Response({"message": "2FA enabled successfully"})
         return Response({"error": "Invalid code"}, status=400)
-
-
 
 class TwoFactorLoginHandler:
     def __init__(self, request):
