@@ -822,7 +822,10 @@ class AdminProjectVMsView(APIView):
             flavor_map = {str(f.id): f for f in flavors}
             flavor_map.update({str(f.name): f for f in flavors})
 
-            servers = conn.list_servers(all_projects=True, tenant_id=project.openstack_id)
+            servers = conn.list_servers(
+                all_projects=True,
+                filters={'project_id': project.openstack_id}
+            )
 
             vms, cpu_used, ram_used = AdminProjectDetailView().extract_vm_info(servers, project.openstack_id, flavor_map)
 
