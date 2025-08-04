@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect,useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import Navbar from "../../components/client/Navbar";
@@ -16,7 +16,14 @@ import {
   Network,
   Copy,
   CheckCircle,
+  LifeBuoy, Scaling,
+  MoreVertical,
+  SlidersHorizontal,
+  ShieldCheck,
+  HardDriveDownload,
+  KeyRound,
 } from "lucide-react";
+import { purple } from "@mui/material/colors";
 
 const VPSDetailPage = () => {
   const { id } = useParams();
@@ -135,16 +142,16 @@ const VPSDetailPage = () => {
     try {
       const res = await axiosInstance.post(
         `/openstack/network/assign-floating-ip/`,
-        { 
+        {
           ip_id: selectedIpId,
           vm_id: id,
         }
       );
-      setPopup({ 
-        message: res.data.detail || "IP address changed successfully", 
-        type: "success" 
+      setPopup({
+        message: res.data.detail || "IP address changed successfully",
+        type: "success"
       });
-      
+
       // Refresh both VPS data and IP data
       const [vpsRes, ipRes] = await Promise.all([
         axiosInstance.get(`/openstack/vps/${id}/`),
@@ -185,6 +192,10 @@ const VPSDetailPage = () => {
     }
   };
 
+
+  const handleRescue = () => console.log("Rescue"); // <-- Hàm xử lý cho nút Rescue
+const handleChangeResource = () => console.log("Change Resource"); // <-- Hàm xử lý cho nút Change Resource
+
   const handleDeleteSnapshot = async (snapshotId) => {
     if (!window.confirm("Are you sure you want to delete this snapshot?")) return;
     try {
@@ -198,7 +209,7 @@ const VPSDetailPage = () => {
     }
   };
 
-  const handleDestroy = () => {
+  const handleDestroyClick = () => {
     if (
       window.confirm(
         "Are you sure you want to destroy this VPS? This action is irreversible."
@@ -217,6 +228,70 @@ const VPSDetailPage = () => {
       console.error('Failed to copy IP:', err);
     }
   };
+  
+const ActionButton = ({ icon, label, onClick, color, disabled = false }) => {
+  const colorClasses = {
+    green: "bg-green-600 hover:bg-green-700",
+    red: "bg-red-600 hover:bg-red-700",
+    purple:"bg-purple-600 hover:bg-purple-700",
+    yellow: "bg-yellow-500 hover:bg-yellow-600",
+    blue: "bg-blue-600 hover:bg-blue-700",
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-colors ${colorClasses[color]} disabled:opacity-50 disabled:cursor-not-allowed`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+};
+
+const DropdownMenu = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-300"
+      >
+        <MoreVertical size={20} />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-20">
+          <div className="py-1" onClick={() => setIsOpen(false)}>
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DropdownItem = ({ icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+  >
+    {icon}
+    <span>{label}</span>
+  </button>
+);
+
 
   if (loading) {
     return (
@@ -253,10 +328,10 @@ const VPSDetailPage = () => {
               Created on {new Date(vps.created_at).toLocaleDateString()} •{" "}
               <span
                 className={`font-semibold ${vps.status.toLowerCase() === "shutoff"
-                    ? "text-red-500"
-                    : vps.status.toLowerCase() === "active"
-                      ? "text-green-400"
-                      : "text-yellow-400"
+                  ? "text-red-500"
+                  : vps.status.toLowerCase() === "active"
+                    ? "text-green-400"
+                    : "text-yellow-400"
                   }`}
               >
                 {vps.status.toLowerCase() === "shutoff"
@@ -296,12 +371,29 @@ const VPSDetailPage = () => {
               onClick={handleConsole}
               disabled={loadingId === id}
             />
+
+            {/* <ActionButton
+              color="orange" // Màu cam cho hành động cảnh báo/cứu hộ
+              icon={<LifeBuoy size={16} />}
+              label="Rescue"
+              onClick={handleRescue}
+            />
+
+
             <ActionButton
               color="gray"
               icon={<Save size={16} />}
               label="Backup"
               onClick={handleBackup}
             />
+
+            <ActionButton
+              color="indigo" // Màu indigo cho hành động nâng cấp/thay đổi
+              icon={<Scaling size={16} />}
+              label="Change Resource"
+              onClick={handleChangeResource}
+            /> */}
+
             <ActionButton
               color="purple"
               icon={<Network size={16} />}
@@ -313,8 +405,53 @@ const VPSDetailPage = () => {
               color="red"
               icon={<Trash2 size={16} />}
               label="Destroy"
-              onClick={handleDestroy}
+              onClick={handleDestroyClick}
             />
+              <DropdownMenu>
+  <DropdownItem
+    icon={<Save size={16} />}
+    label="Backup"
+    onClick={() => setSnapshotModalOpen(true)}
+  />
+  <DropdownItem
+    icon={<Globe size={16} />}
+    label="Add IP"
+    onClick={() => setChangeIpModalOpen(true)}
+  />
+  <DropdownItem
+    icon={<SlidersHorizontal size={16} />}
+    label="Change Resources"
+    onClick={() => { /* TODO */ }}
+  />
+  <DropdownItem
+    icon={<ShieldCheck size={16} />}
+    label="Rescue Mode"
+    onClick={() => { /* TODO */ }}
+  />
+  <DropdownItem
+    icon={<RefreshCw size={16} />}
+    label="Rebuild"
+    onClick={() => { /* TODO */ }}
+  />
+  <DropdownItem
+    icon={<HardDriveDownload size={16} />}
+    label="Attach Volume"
+    onClick={() => { /* TODO */ }}
+  />
+  <DropdownItem
+    icon={<KeyRound size={16} />}
+    label="Change Password"
+    onClick={() => { /* TODO */ }}
+  />
+
+  <div className="border-t border-gray-700 my-1"></div>
+
+  <DropdownItem
+    icon={<Trash2 size={16} />}
+    label="Destroy"
+    onClick={handleDestroyClick}
+  />
+</DropdownMenu>
           </div>
         </div>
 
@@ -345,9 +482,9 @@ const VPSDetailPage = () => {
                   </div>
                   <div className="space-y-3">
                     {vmIPs.ips.filter(ip => ip.version === "IPv4").map((ip, index) => (
-                      <IPAddressCard 
-                        key={index} 
-                        ip={ip} 
+                      <IPAddressCard
+                        key={index}
+                        ip={ip}
                         onCopy={handleCopyIP}
                         copiedIp={copiedIp}
                       />
@@ -366,9 +503,9 @@ const VPSDetailPage = () => {
                   </div>
                   <div className="space-y-3">
                     {vmIPs.ips.filter(ip => ip.version === "IPv6").map((ip, index) => (
-                      <IPAddressCard 
-                        key={index} 
-                        ip={ip} 
+                      <IPAddressCard
+                        key={index}
+                        ip={ip}
                         onCopy={handleCopyIP}
                         copiedIp={copiedIp}
                       />
@@ -379,7 +516,7 @@ const VPSDetailPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Summary */}
               <div className="bg-indigo-900/20 border border-indigo-600 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -464,7 +601,7 @@ const VPSDetailPage = () => {
 
 const IPAddressCard = ({ ip, onCopy, copiedIp }) => {
   const isFloatingIP = ip.floating_ip && ip.floating_ip !== ip.fixed_ip;
-  
+
   return (
     <div className="bg-gray-700 rounded-md p-4 space-y-3">
       {/* Fixed IP */}
@@ -538,8 +675,8 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
   };
 
   // Filter available IPs (exclude current IP and show only unassigned)
-  const selectableIPs = availableIPs.filter(ip => 
-    ip.ip_address !== currentIp && 
+  const selectableIPs = availableIPs.filter(ip =>
+    ip.ip_address !== currentIp &&
     (!ip.vm_id || ip.status === 'available')
   );
 
@@ -633,8 +770,8 @@ const ChangeIpModal = ({ onClose, onConfirm, currentIp, availableIPs, loading })
 
           <div className="bg-yellow-900/20 border border-yellow-600 rounded-md p-4">
             <p className="text-yellow-300 text-sm">
-              <strong>Warning:</strong> Changing the IP address will assign the selected floating IP to your VPS. 
-              The current IP will be released back to the your pool. This action may require you to update 
+              <strong>Warning:</strong> Changing the IP address will assign the selected floating IP to your VPS.
+              The current IP will be released back to the your pool. This action may require you to update
               DNS records and firewall rules.
             </p>
           </div>
