@@ -822,7 +822,8 @@ class AdminProjectVMsView(APIView):
             flavor_map = {str(f.id): f for f in flavors}
             flavor_map.update({str(f.name): f for f in flavors})
 
-            servers = conn.list_servers()
+            servers = conn.list_servers(all_projects=False, project_id=project.openstack_id)
+
             vms, cpu_used, ram_used = AdminProjectDetailView().extract_vm_info(servers, project.openstack_id, flavor_map)
 
             return Response({
@@ -833,8 +834,6 @@ class AdminProjectVMsView(APIView):
 
         except Exception as e:
             return Response({"error": f"Failed to retrieve VM data: {str(e)}"}, status=500)
-
-
 class ChangeOwnerProjectView(APIView):
     permission_classes = [IsAdmin]
 
