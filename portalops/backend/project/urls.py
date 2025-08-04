@@ -24,5 +24,4 @@ urlpatterns = [
     path('<str:openstack_id>/basic-info/', AdminProjectBasicInfoView.as_view()),
     path('<str:openstack_id>/quota/', AdminProjectQuotaView.as_view()),
     path('<str:openstack_id>/vms/', AdminProjectVMsView.as_view()),
-
 ]
