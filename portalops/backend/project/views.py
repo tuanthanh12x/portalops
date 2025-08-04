@@ -732,6 +732,109 @@ class AdminProjectDetailView(APIView):
         except Exception as e:
             return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
 
+class AdminProjectBasicInfoView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, openstack_id):
+        project = get_object_or_404(Project, openstack_id=openstack_id)
+        owner_mapping = ProjectUserMapping.objects.filter(project=project, is_active=True).first()
+        owner = owner_mapping.user if owner_mapping else None
+
+        return Response({
+            "id": str(project.id),
+            "name": project.name,
+            "description": project.description,
+            "status": "Active",
+            "created_at": project.created_at.isoformat(),
+            "owner": {
+                "name": owner.username if owner else "—",
+                "email": owner.email if owner else "—",
+            },
+            "product_type": {
+                "id": project.type.id,
+                "name": project.type.name,
+                "price_per_month": project.type.price_per_month,
+                "description": project.type.description,
+                "vcpus": project.type.vcpus,
+                "ram": project.type.ram,
+                "total_volume_gb": project.type.total_volume_gb,
+                "floating_ips": project.type.floating_ips,
+                "instances": project.type.instances,
+            } if project.type else None
+        })
+
+class AdminProjectQuotaView(APIView):
+    permission_classes = [IsAdmin]
+
+    @staticmethod
+    def safe_quota_get(quota, key):
+        val = quota.get(key)
+        return (val.get("in_use", 0), val.get("limit", 0)) if isinstance(val, dict) else (0, val or 0)
+
+    def get(self, request, openstack_id):
+        project_id = request.auth.get("project_id")
+        token = AdminProjectDetailView.get_token_from_redis(request.user.username, project_id)
+        if not token:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        try:
+            atoken = get_admin_token()
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                compute_future = executor.submit(AdminProjectDetailView.get_compute_quota, openstack_id, atoken)
+                storage_future = executor.submit(AdminProjectDetailView.get_storage_quota, openstack_id, atoken)
+                nova_quota = compute_future.result()
+                cinder_quota = storage_future.result()
+
+            cores_used, cores_total = self.safe_quota_get(nova_quota, "cores")
+            ram_used, ram_total = self.safe_quota_get(nova_quota, "ram")
+            storage_used, storage_total = self.safe_quota_get(cinder_quota, "gigabytes")
+
+            return Response({
+                "vcpus_used": cores_used,
+                "vcpus_total": cores_total,
+                "ram_used": ram_used,
+                "ram_total": ram_total,
+                "storage_used": storage_used,
+                "storage_total": storage_total,
+            })
+
+        except requests.HTTPError as http_err:
+            return Response({"error": f"Quota fetch failed: {str(http_err)}"}, status=502)
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
+
+
+class AdminProjectVMsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, openstack_id):
+        project = get_object_or_404(Project, openstack_id=openstack_id)
+        project_id = request.auth.get("project_id")
+
+        token = AdminProjectDetailView.get_token_from_redis(request.user.username, project_id)
+        if not token:
+            return Response({"error": "Token not found in Redis."}, status=401)
+
+        try:
+            conn = connect_with_token_v5(token, project_id)
+            flavors = conn.list_flavors()
+            flavor_map = {str(f.id): f for f in flavors}
+            flavor_map.update({str(f.name): f for f in flavors})
+
+            servers = conn.list_servers()
+            vms, cpu_used, ram_used = AdminProjectDetailView().extract_vm_info(servers, project.openstack_id, flavor_map)
+
+            return Response({
+                "cpu_used": cpu_used,
+                "ram_used": ram_used,
+                "vms": vms
+            })
+
+        except Exception as e:
+            return Response({"error": f"Failed to retrieve VM data: {str(e)}"}, status=500)
+
+
 class ChangeOwnerProjectView(APIView):
     permission_classes = [IsAdmin]
 

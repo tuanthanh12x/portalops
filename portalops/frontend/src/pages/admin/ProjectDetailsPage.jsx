@@ -15,54 +15,59 @@ export default function AdminProjectDetailPage() {
   const [showAssignIPModal, setShowAssignIPModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [showAllIPs, setShowAllIPs] = useState(false);
   const [showChangeOwnerPopup, setShowChangeOwnerPopup] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredProjects, setFilteredProjects] = useState([]);
-
-
-
   const [projects, setProjects] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
 
-       const [allUsers, setAllUsers] = useState([]);
-       const [selectedUserId, setSelectedUserId] = useState("");
+   const [basicInfo, setBasicInfo] = useState(null);
+  const [quota, setQuota] = useState(null);
+  const [vms, setVms] = useState(null);
+  const [loading, setLoading] = useState({
+    basic: true,
+    quota: true,
+    vms: true,
+  });
+  const [error, setError] = useState(null);
 
-       const [filteredUsers, setFilteredUsers] = useState([]);
-      //  const [popup, setPopUp] = useState([]);
+
 
 
   const IP_DISPLAY_LIMIT = 5;
-useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const res = await axiosInstance.get("/project/projects/list/");
-                const data = res.data || [];
-                setProjects(data);
-                setFilteredProjects(data);
-            } catch (err) {
-                console.error("❌ Failed to fetch projects:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await axiosInstance.get("/project/projects/list/");
+        const data = res.data || [];
+        setProjects(data);
+        setFilteredProjects(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        fetchProjects();
-    }, []);
+    fetchProjects();
+  }, []);
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await axiosInstance.get("/auth/ausers-list/");
-                setAllUsers(res.data || []);
-                setFilteredUsers(res.data || []);
-            } catch (err) {
-                console.error("❌ Failed to fetch users:", err);
-            }
-        };
-        fetchUsers();
-    }, []);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await axiosInstance.get("/auth/ausers-list/");
+        setAllUsers(res.data || []);
+        setFilteredUsers(res.data || []);
+      } catch (err) {
+        console.error("❌ Failed to fetch users:", err);
+      }
+    };
+    fetchUsers();
+  }, []);
   useEffect(() => {
     fetchProjectDetails();
   }, [id]);
@@ -76,12 +81,58 @@ useEffect(() => {
   useEffect(() => {
     fetchFloatingIPs();
   }, [id]);
+  useEffect(() => {
 
-  const fetchProjectDetails = () => {
-    axiosInstance.get(`/project/${id}/project-detail/`,{ timeout: 300000 })
-      .then((res) => setProject(res.data))
-      .catch((err) => console.error("Failed to fetch project detail:", err));
-  };
+   const fetchAllProjectDetails = async () => {
+      const openstack_id = id;
+
+      // Define endpoints for the new, split API
+      const infoEndpoint = `/project/${openstack_id}/basic-info/`;
+      const quotaEndpoint = `/project/${openstack_id}/quota/`;
+      const vmsEndpoint = `/project/${openstack_id}/vms/`;
+
+      // Promise.allSettled runs all requests in parallel and handles individual failures
+      const results = await Promise.allSettled([
+        axiosInstance.get(infoEndpoint),
+        axiosInstance.get(quotaEndpoint),
+        axiosInstance.get(vmsEndpoint),
+      ]);
+
+      // Handle Basic Info result
+      if (results[0].status === "fulfilled") {
+        setBasicInfo(results[0].value.data);
+      } else {
+        console.error("❌ Failed to fetch basic info:", results[0].reason);
+        setError("Could not load core project details. Please try again.");
+      }
+      setLoading(prev => ({ ...prev, basic: false }));
+
+      // Handle Quota result
+      if (results[1].status === "fulfilled") {
+        setQuota(results[1].value.data);
+      } else {
+        console.error("❌ Failed to fetch quota:", results[1].reason);
+      }
+      setLoading(prev => ({ ...prev, quota: false }));
+
+      // Handle VMs result
+      if (results[2].status === "fulfilled") {
+        setVms(results[2].value.data);
+      } else {
+        console.error("❌ Failed to fetch VMs:", results[2].reason);
+      }
+      setLoading(prev => ({ ...prev, vms: false }));
+    };
+
+    fetchAllProjectDetails();
+    fetchFloatingIPs(); // This can run alongside the main details
+    fetchUsers();
+  }, [id]);
+  useEffect(() => {
+    if (showModal) {
+      fetchPackages();
+    }
+  }, [showModal]);
 
   const fetchPackages = () => {
     axiosInstance.get("/project/project-packages/list/")
@@ -120,7 +171,7 @@ useEffect(() => {
       setLoading(false);
     }
   };
-  
+
 
   const handleAssignIPToProject = async () => {
     if (!selectedIP) {
@@ -173,29 +224,29 @@ useEffect(() => {
       setLoading(false);
     }
   };
-  
+
 
   const handleChangeOwner = async () => {
-  if (!id || !selectedUserId) {
-    alert("⚠️ Project ID or new owner ID is missing.");
-    return;
-  }
+    if (!id || !selectedUserId) {
+      alert("⚠️ Project ID or new owner ID is missing.");
+      return;
+    }
 
-  try {
-    setIsSubmitting(true);
-    await axiosInstance.post("/project/replace-project-owner", {
-      project: id, // taken from useParams()
-      new_owner: selectedUserId,
-    });
-    alert("✅ Project owner updated successfully!");
-    setShowChangeOwnerPopup(false);
-  } catch (err) {
-    console.error("❌ Failed to change owner:", err);
-    alert("❌ Unable to update project owner.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      setIsSubmitting(true);
+      await axiosInstance.post("/project/replace-project-owner", {
+        project: id, // taken from useParams()
+        new_owner: selectedUserId,
+      });
+      alert("✅ Project owner updated successfully!");
+      setShowChangeOwnerPopup(false);
+    } catch (err) {
+      console.error("❌ Failed to change owner:", err);
+      alert("❌ Unable to update project owner.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
 
@@ -268,9 +319,9 @@ useEffect(() => {
     );
   }
 
-  const { owner, usage, vms, product_type } = project;
+  // const { owner, usage, vms, product_type } = project;
   const displayedIPs = getDisplayedIPs();
-
+  if (loading.basic) {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <AdminNavbar />
@@ -280,17 +331,16 @@ useEffect(() => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white">
-                {project.name}
+                {basicInfo.name}
               </h1>
-              <p className="text-gray-400 mt-2">Project ID: {project.id}</p>
+              <p className="text-gray-400 mt-2">Project ID:{basicInfo.id}</p>
             </div>
             <div className="flex items-center space-x-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                project.status === 'Active' ? 'bg-green-600 text-white' :
-                project.status === 'Suspended' ? 'bg-yellow-600 text-white' :
-                'bg-red-600 text-white'
-              }`}>
-                {project.status}
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${basicInfo.status === 'Active' ? 'bg-green-600 text-white' :
+                  basicInfo.status === 'Suspended' ? 'bg-yellow-600 text-white' :
+                    'bg-red-600 text-white'
+                }`}>
+                {basicInfo.status}
               </span>
             </div>
           </div>
@@ -303,44 +353,49 @@ useEffect(() => {
             {/* Basic Information Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card title="Project Information">
-                <Info label="Name" value={project.name} />
-                <Info label="Description" value={project.description || "No description"} />
-                <Info label="Created" value={new Date(project.created_at).toLocaleDateString()} />
-                <Info label="Last Updated" value={new Date(project.updated_at || project.created_at).toLocaleDateString()} />
+                <Info label="Name" value={basicInfo.name} />
+                <Info label="Description" value={basicInfo.description || "No description"} />
+                <Info label="Created" value={new Date(basicInfo.created_at).toLocaleDateString()} />
+                <Info label="Last Updated" value={new Date(basicInfo.updated_at || basicInfo.created_at).toLocaleDateString()} />
               </Card>
 
               <Card title="Owner Information">
-                <Info label="Name" value={owner?.name || "N/A"} />
-                <Info label="Email" value={owner?.email || "N/A"} />
-                <Info label="ID" value={owner?.id || "N/A"} />
+                <Info label="Name" value={basicInfo.owner?.name || "N/A"} />
+                <Info label="Email" value={basicInfo.owner?.email || "N/A"} />
+                <Info label="ID" value={basicInfo.owner?.id || "N/A"} />
               </Card>
             </div>
 
             {/* Usage Statistics */}
             <Card title="Resource Usage">
+               {loading.quota ? <CardSpinner /> : quota ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <UsageStat 
-                  label="vCPUs" 
-                  used={usage.vcpus_used} 
-                  total={usage.vcpus_total} 
+                <UsageStat
+                  label="vCPUs"
+                  used={quota.vcpus_used}
+                  total={quota.vcpus_total}
                 />
-                <UsageStat 
-                  label="RAM" 
-                  used={usage.ram_used} 
-                  total={usage.ram_total} 
-                  unit="MB" 
+                <UsageStat
+                  label="RAM"
+                  used={quota.ram_used}
+                  total={quota.ram_total}
+                  unit="MB"
                 />
-                <UsageStat 
-                  label="Storage" 
-                  used={usage.storage_used} 
-                  total={usage.storage_total} 
-                  unit="GB" 
+                <UsageStat
+                  label="Storage"
+                  used={quota.storage_used}
+                  total={quota.storage_total}
+                  unit="GB"
                 />
               </div>
+               ) : (
+                <p className="py-8 text-center text-yellow-400">Could not load usage data.</p>
+              )}
             </Card>
 
             {/* Virtual Machines */}
             <Card title="Virtual Machines">
+                 {loading.vms ? <CardSpinner /> : vms?.vms?.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
@@ -356,11 +411,10 @@ useEffect(() => {
                       <tr key={vm.id} className="border-b border-gray-700 hover:bg-gray-800">
                         <td className="py-3 px-4 font-medium text-white">{vm.name}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            vm.status === "Running" ? "bg-green-600 text-white" : 
-                            vm.status === "Stopped" ? "bg-red-600 text-white" :
-                            "bg-yellow-600 text-white"
-                          }`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${vm.status === "Running" ? "bg-green-600 text-white" :
+                              vm.status === "Stopped" ? "bg-red-600 text-white" :
+                                "bg-yellow-600 text-white"
+                            }`}>
                             {vm.status}
                           </span>
                         </td>
@@ -377,14 +431,19 @@ useEffect(() => {
                   </tbody>
                 </table>
               </div>
+                ) : (
+                <div className="py-8 text-center text-gray-400">
+                  {vms ? "No virtual machines found" : "Could not load VM data."}
+                </div>
+              )}
             </Card>
 
             {/* Floating IPs */}
             <Card title="Floating IP Addresses">
               <div className="mb-6">
-                <ActionBtn 
-                  label="Assign New IP" 
-                  color="blue" 
+                <ActionBtn
+                  label="Assign New IP"
+                  color="blue"
                   onClick={openAssignIPModal}
                   disabled={loading}
                 />
@@ -404,11 +463,10 @@ useEffect(() => {
                       <tr key={ip.id} className="border-b border-gray-700 hover:bg-gray-800">
                         <td className="py-3 px-4 font-mono text-white font-medium">{ip.ip_address}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            ip.status === "allocated" ? "bg-green-600 text-white" :
-                            ip.status === "reserved" ? "bg-blue-600 text-white" :
-                            "bg-gray-600 text-white"
-                          }`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${ip.status === "allocated" ? "bg-green-600 text-white" :
+                              ip.status === "reserved" ? "bg-blue-600 text-white" :
+                                "bg-gray-600 text-white"
+                            }`}>
                             {ip.status}
                           </span>
                         </td>
@@ -453,7 +511,7 @@ useEffect(() => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Show More/Less Button */}
               {floatingIPs.length > IP_DISPLAY_LIMIT && (
                 <div className="mt-4 text-center">
@@ -461,7 +519,7 @@ useEffect(() => {
                     onClick={() => setShowAllIPs(!showAllIPs)}
                     className="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 border border-blue-400 hover:border-blue-300 rounded transition-colors"
                   >
-                    {showAllIPs 
+                    {showAllIPs
                       ? `Show Less (${IP_DISPLAY_LIMIT} of ${floatingIPs.length})`
                       : `Show More (${floatingIPs.length - IP_DISPLAY_LIMIT} more)`
                     }
@@ -475,6 +533,7 @@ useEffect(() => {
           <div className="space-y-8">
             {/* Current Package */}
             <Card title="Current Package">
+                   {basicInfo.product_type ? (
               <div className="space-y-4">
                 <Info label="Plan" value={product_type?.name} />
                 <Info label="Price" value={`$${product_type?.price_per_month}/month`} valueClass="text-green-400 font-bold" />
@@ -497,47 +556,49 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
+              ) : (
+                <p>No package assigned.</p>
+              )}
             </Card>
 
             {/* Management Actions */}
-       <Card title="Project Management">
-  <div className="space-y-3">
-    {/* Change Owner */}
-    <button
-      onClick={() => setShowChangeOwnerPopup(true)}
-      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold transition-all duration-300"
-    >
-      🧑‍💼 Change Owner
-    </button>
+            <Card title="Project Management">
+              <div className="space-y-3">
+                {/* Change Owner */}
+                <button
+                  onClick={() => setShowChangeOwnerPopup(true)}
+                  className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold transition-all duration-300"
+                >
+                  🧑‍💼 Change Owner
+                </button>
 
-    {/* Update Package */}
-    <button
-      onClick={() => setShowModal(true)}
-      disabled={loading}
-      className={`w-full px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-semibold transition-all duration-300 ${
-        loading ? "opacity-50 cursor-not-allowed" : ""
-      }`}
-    >
-      📦 Update Package
-    </button>
+                {/* Update Package */}
+                <button
+                  onClick={() => setShowModal(true)}
+                  disabled={loading}
+                  className={`w-full px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-semibold transition-all duration-300 ${loading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                >
+                  📦 Update Package
+                </button>
 
-    {/* Suspend Project */}
-    <button
-      onClick={() => console.log("Suspend clicked")}
-      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-black font-semibold transition-all duration-300"
-    >
-      🚫 Suspend Project
-    </button>
+                {/* Suspend Project */}
+                <button
+                  onClick={() => console.log("Suspend clicked")}
+                  className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-black font-semibold transition-all duration-300"
+                >
+                  🚫 Suspend Project
+                </button>
 
-    {/* Delete Project */}
-    <button
-      onClick={() => console.log("Delete clicked")}
-      className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white font-semibold transition-all duration-300"
-    >
-      ❌ Delete Project
-    </button>
-  </div>
-</Card>
+                {/* Delete Project */}
+                <button
+                  onClick={() => console.log("Delete clicked")}
+                  className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white font-semibold transition-all duration-300"
+                >
+                  ❌ Delete Project
+                </button>
+              </div>
+            </Card>
 
           </div>
         </div>
@@ -545,8 +606,8 @@ useEffect(() => {
 
       {/* Modals */}
       {showAssignIPModal && (
-        <Modal 
-          title="Assign Floating IP" 
+        <Modal
+          title="Assign Floating IP"
           onClose={() => setShowAssignIPModal(false)}
         >
           <div className="space-y-4">
@@ -557,11 +618,11 @@ useEffect(() => {
               onChange={(e) => setSelectedIP(e.target.value)}
             >
               <option value="">-- Select an IP Address --</option>
-             {availableIPs.map((ip, index) => (
-  <option key={`${ip.ip_address}-${index}`} value={ip.ip_address}>
-    {ip.ip_address} {ip.note ? `- ${ip.note}` : ""}
-  </option>
-))}
+              {availableIPs.map((ip, index) => (
+                <option key={`${ip.ip_address}-${index}`} value={ip.ip_address}>
+                  {ip.ip_address} {ip.note ? `- ${ip.note}` : ""}
+                </option>
+              ))}
 
             </select>
             <div className="flex justify-end gap-3 pt-4">
@@ -585,8 +646,8 @@ useEffect(() => {
       )}
 
       {showModal && (
-        <Modal 
-          title="Select New Package" 
+        <Modal
+          title="Select New Package"
           onClose={() => setShowModal(false)}
           size="lg"
         >
@@ -597,11 +658,10 @@ useEffect(() => {
                 <div
                   key={pkg.id}
                   onClick={() => setSelectedPackageId(pkg.id)}
-                  className={`cursor-pointer border p-4 rounded transition-all hover:border-blue-400 ${
-                    selectedPackageId === pkg.id 
-                      ? "border-blue-500 bg-blue-500/10" 
+                  className={`cursor-pointer border p-4 rounded transition-all hover:border-blue-400 ${selectedPackageId === pkg.id
+                      ? "border-blue-500 bg-blue-500/10"
                       : "border-gray-600 hover:bg-gray-800"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -637,68 +697,67 @@ useEffect(() => {
           </div>
         </Modal>
       )}
-  {showChangeOwnerPopup && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl">
-      <h2 className="text-xl font-semibold mb-4 text-indigo-400">Change Project Owner</h2>
+      {showChangeOwnerPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl">
+            <h2 className="text-xl font-semibold mb-4 text-indigo-400">Change Project Owner</h2>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-indigo-300 mb-2">
-          Select New Owner
-        </label>
-        <input
-          type="text"
-          placeholder="Search by username or email..."
-          className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-2"
-          onChange={(e) => {
-            const keyword = e.target.value.toLowerCase();
-            const filtered = allUsers.filter(
-              (u) =>
-                u.username.toLowerCase().includes(keyword) ||
-                (u.email && u.email.toLowerCase().includes(keyword))
-            );
-            setFilteredUsers(filtered);
-          }}
-        />
-        <select
-          value={selectedUserId}
-          onChange={(e) => setSelectedUserId(e.target.value)}
-          className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white"
-        >
-          <option value="" disabled>-- Select a user --</option>
-          {filteredUsers.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.username}
-            </option>
-          ))}
-        </select>
-      </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-indigo-300 mb-2">
+                Select New Owner
+              </label>
+              <input
+                type="text"
+                placeholder="Search by username or email..."
+                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white mb-2"
+                onChange={(e) => {
+                  const keyword = e.target.value.toLowerCase();
+                  const filtered = allUsers.filter(
+                    (u) =>
+                      u.username.toLowerCase().includes(keyword) ||
+                      (u.email && u.email.toLowerCase().includes(keyword))
+                  );
+                  setFilteredUsers(filtered);
+                }}
+              />
+              <select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full p-2 rounded bg-gray-800 border border-gray-600 text-white"
+              >
+                <option value="" disabled>-- Select a user --</option>
+                {filteredUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.username}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={() => setShowChangeOwnerPopup(false)}
-          className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleChangeOwner}
-          disabled={!selectedUserId || isSubmitting}
-          className={`px-4 py-2 rounded font-semibold text-white ${
-            isSubmitting ? "bg-green-700 cursor-not-allowed" : "bg-green-600 hover:bg-green-500"
-          }`}
-        >
-          {isSubmitting ? "Processing..." : "Confirm"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowChangeOwnerPopup(false)}
+                className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangeOwner}
+                disabled={!selectedUserId || isSubmitting}
+                className={`px-4 py-2 rounded font-semibold text-white ${isSubmitting ? "bg-green-700 cursor-not-allowed" : "bg-green-600 hover:bg-green-500"
+                  }`}
+              >
+                {isSubmitting ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {showConfirmModal && confirmAction && (
-        <Modal 
-          title="Confirm Action" 
+        <Modal
+          title="Confirm Action"
           onClose={() => setShowConfirmModal(false)}
         >
           <div className="space-y-4">
@@ -730,7 +789,7 @@ useEffect(() => {
 function Modal({ title, children, onClose, size = "md" }) {
   const sizeClasses = {
     sm: "max-w-md",
-    md: "max-w-lg", 
+    md: "max-w-lg",
     lg: "max-w-2xl",
     xl: "max-w-4xl"
   };
@@ -791,9 +850,9 @@ function UsageStat({ label, used, total, unit = "" }) {
         {used} / {total} {unit}
       </div>
       <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-        <div 
-          className={`${barColor} h-full transition-all duration-300`} 
-          style={{ width: `${percent}%` }} 
+        <div
+          className={`${barColor} h-full transition-all duration-300`}
+          style={{ width: `${percent}%` }}
         />
       </div>
     </div>
@@ -811,14 +870,15 @@ function ActionBtn({ label, color, onClick, disabled = false }) {
   };
 
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       disabled={disabled}
-      className={`${base} ${colorVariants[color] || colorVariants.gray} ${
-        disabled ? 'opacity-50 cursor-not-allowed' : ''
-      }`}
+      className={`${base} ${colorVariants[color] || colorVariants.gray} ${disabled ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
     >
       {label}
     </button>
   );
+}
+
 }
